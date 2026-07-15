@@ -1,0 +1,36 @@
+{
+    "name": "blowfish-js",
+    "version": "1.0.0",
+    "description": "Pure Javascript implementation of Blowfish block cipher.",
+    "main": "blowfish.js",
+    "scripts": {
+        "test": "node ./test/blowfish-test.js"
+    },
+    "engines": {
+        "node": ">=6.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/rinne/node-blowfish-js.git"
+    },
+    "keywords": [
+        "cipher",
+        "encryption",
+        "decryption",
+        "security",
+        "ECB",
+        "CBC",
+        "CFB",
+        "OFB"
+    ],
+    "author": {
+        "name": "Timo J. Rinne",
+        "email": "tri@iki.fi",
+        "url": "https://github.com/rinne/"
+    },
+    "license": "GPL-2.0",
+    "bugs": {
+        "url": "https://github.com/rinne/node-blowfish-js/issues"
+    },
+    "homepage": "https://github.com/rinne/node-blowfish-js#readme"
+}
