@@ -1,0 +1,873 @@
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Orbitron:wght@500;600;700;800;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@keyframes breathing {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.animate-breathing {
+  animation: breathing 3s ease-in-out infinite;
+}
+
+@import "tailwindcss";
+
+html {
+  color-scheme: dark;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(112, 162, 168, 0.3) #020912;
+}
+
+/* Custom text selection highlights to preserve the cyber/dark theme */
+::selection {
+  background-color: rgba(112, 162, 168, 0.3) !important;
+  color: #b3e2e6 !important;
+}
+::-moz-selection {
+  background-color: rgba(112, 162, 168, 0.3) !important;
+  color: #b3e2e6 !important;
+}
+
+/* Remove default focus outlines that break the dark HUD aesthetic */
+button:focus, a:focus, input:focus, textarea:focus, select:focus {
+  outline: none !important;
+}
+
+@theme {
+  --color-bg-void: #020912;
+  --color-bg-panel: rgba(18, 32, 38, 0.45);
+  --color-cyan-primary: #70a2a8;
+  --color-cyan-dim: #456c70;
+  --color-cyan-text: #b3e2e6;
+  --color-accent-primary: #00f3ff;
+  --color-glow-highlight: #ffffff;
+  --color-amber-alert: #ff9d2e;
+  --color-red-threat: #ff3b4e;
+  --color-green-verified: #70a2a8;
+  --color-text-primary: #f5f8f9;
+  --color-text-dim: #f5f8f9;
+  --color-border-hairline: rgba(112, 162, 168, 0.15);
+
+  --font-orbitron: "Orbitron", sans-serif;
+  --font-chakra: "Chakra Petch", sans-serif;
+  --font-share: "Share Tech Mono", monospace;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "Inter", sans-serif;
+
+  --animate-shine: shine 5s linear infinite;
+  --animate-radar-sweep: radar-sweep 6s linear infinite;
+  --animate-lock-on-snap: lock-on-snap 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  --animate-lock-on-flash: lock-on-flash 0.8s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  --animate-signal-bar-tick: signal-bar-tick 1.2s ease-in-out infinite;
+  --animate-scramble-settle: scramble-settle 0.4s ease-out forwards;
+  --animate-stroke-draw: stroke-draw 2s ease-out forwards;
+  --animate-clip-reveal: clip-reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-stagger-in: stagger-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-hex-pulse-flicker: hex-pulse-flicker 4s infinite;
+  --animate-byte-flicker: byte-flicker 1.2s infinite;
+  --animate-glow-pass: glow-pass 2s ease-in-out infinite;
+  --animate-scanline-drift: scanline-drift 30s linear infinite;
+  --animate-ping-cyan: ping-cyan 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-spin-slow: radar-sweep 12s linear infinite;
+  --animate-spin-reverse: radar-sweep-reverse 6s linear infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
+
+  @keyframes shimmer {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
+  }
+
+  @keyframes radar-sweep-reverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+
+  @keyframes ping-cyan {
+    0% { transform: scale(1); opacity: 1; }
+    75%, 100% { transform: scale(2); opacity: 0; }
+  }
+
+  @keyframes scanline-drift {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes shine {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* 
+    Intended for:
+    - Dashboard: radar sweep
+    - Audio Forensics: sonar/triangulation rings
+  */
+  @keyframes radar-sweep {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* 
+    Intended for:
+    - Dashboard: lock-on snap
+    - Crypto Lab: lock-on flash
+  */
+  @keyframes lock-on-snap {
+    0% {
+      transform: scale(1.15);
+      opacity: 0;
+      border-color: rgba(112, 162, 168, 0);
+      background-color: transparent;
+      box-shadow: none;
+    }
+    25% {
+      transform: scale(0.98);
+      opacity: 0.85;
+      border-color: var(--color-cyan-primary);
+      background-color: transparent;
+      box-shadow: none;
+    }
+    50% {
+      transform: scale(1);
+      opacity: 0.5;
+      border-color: var(--color-cyan-primary);
+      background-color: transparent;
+      box-shadow: none;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0;
+      border-color: rgba(112, 162, 168, 0);
+      background-color: transparent;
+      box-shadow: none;
+    }
+  }
+
+  @keyframes lock-on-flash {
+    0% {
+      transform: scale(1.2);
+      opacity: 0;
+      border-color: var(--color-accent-primary);
+    }
+    15% {
+      transform: scale(1);
+      opacity: 1;
+      border-color: var(--color-accent-primary);
+      box-shadow: 0 0 20px var(--color-accent-primary);
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0;
+      border-color: var(--color-cyan-primary);
+      box-shadow: 0 0 0px transparent;
+    }
+  }
+
+  /* 
+    Intended for:
+    - Dashboard: signal bars, diagnostic ticks
+    - Global chrome: signal-strength blip
+  */
+  @keyframes signal-bar-tick {
+    0%, 100% {
+      transform: scaleY(0.2);
+      opacity: 0.3;
+    }
+    50% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  /* 
+    Intended for:
+    - Crypto Lab: char scramble/settle
+    - CyberChef Pipeline: stage-to-stage transform
+  */
+  @keyframes scramble-settle {
+    0% {
+      opacity: 0;
+      transform: skewX(-10deg) translateY(-2px);
+      filter: blur(2px);
+    }
+    20% {
+      opacity: 0.5;
+      transform: skewX(10deg) translateY(1px);
+    }
+    40% {
+      opacity: 0.8;
+      transform: skewX(-5deg) translateY(-1px);
+    }
+    60% {
+      opacity: 1;
+      transform: skewX(0deg) translateY(0);
+      filter: blur(0);
+    }
+    100% {
+      opacity: 1;
+      transform: skewX(0);
+    }
+  }
+
+  /* 
+    Intended for:
+    - Detective Board: animated stroke-dashoffset connections
+    - Audio Forensics: signal-lock draw-on
+  */
+  @keyframes stroke-draw {
+    from {
+      stroke-dashoffset: 1000;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* 
+    Intended for:
+    - Detective Board: clip-path dossier unfold
+    - Image Forensics: reveal
+    - Tool Database: expanding dossier-card reveal
+  */
+  @keyframes clip-reveal {
+    from {
+      clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+      opacity: 0;
+    }
+    to {
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+      opacity: 1;
+    }
+  }
+
+  /* 
+    Intended for:
+    - Detective Board: timeline build
+    - Dossier: stagger-in retrieval
+  */
+  @keyframes stagger-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 
+    Intended for:
+    - File Analysis: tree growth, signature-match sweep
+    - Global chrome: irregular alert-klaxon flicker
+  */
+  @keyframes hex-pulse-flicker {
+    0%, 75%, 100% {
+      opacity: 0.4;
+      box-shadow: inset 0 0 4px rgba(112, 162, 168, 0.05);
+    }
+    80% { opacity: 0.8; }
+    82% { opacity: 0.5; }
+    85% { opacity: 0.9; }
+    88% { opacity: 0.4; }
+    92% { opacity: 0.7; }
+    95% { opacity: 0.4; }
+  }
+
+  /* 
+    Intended for:
+    - Crypto Lab: cipher-wheel rotation
+    - File Analysis: hex-byte flicker, binary rain
+  */
+  @keyframes byte-flicker {
+    0%, 70%, 100% {
+      opacity: 0.9;
+      color: var(--color-cyan-text);
+      text-shadow: 0 0 4px var(--color-cyan-primary);
+    }
+    75% {
+      opacity: 0.3;
+      color: var(--color-cyan-dim);
+      text-shadow: none;
+    }
+    85% {
+      opacity: 0.95;
+      color: var(--color-accent-primary);
+      text-shadow: 0 0 6px var(--color-accent-primary);
+    }
+    92% {
+      opacity: 0.5;
+      color: rgba(112, 162, 168, 0.3);
+      text-shadow: none;
+    }
+  }
+
+  /* 
+    Intended for:
+    - Image Forensics: pixel-row scan sweep
+    - CyberChef Pipeline: per-stage processing glow
+    - Dossier: biometric verification wipe, archive indexing sweep
+  */
+  @keyframes glow-pass {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.45;
+    }
+    90% {
+      opacity: 0.45;
+    }
+    100% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+}
+
+/* Base resets & HUD Ambient Texture */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #020912;
+  color: #eaf6f6;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 17px; /* Increased for HUD legibility */
+  overflow: hidden;
+}
+
+/* Background grid overlay + edges vignette */
+.hud-bg-grid {
+  background-image: 
+    linear-gradient(rgba(112, 162, 168, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(112, 162, 168, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center;
+}
+
+.hud-vignette {
+  background: radial-gradient(circle, transparent 35%, rgba(2, 9, 18, 0.95) 100%);
+  pointer-events: none;
+}
+
+.bat-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(112, 162, 168, 0.03) 0%, transparent 70%);
+  z-index: -1;
+}
+
+.circuit-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  background-image: radial-gradient(var(--color-cyan-primary) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+
+/* Custom Scrollbar Utility */
+.hud-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.hud-scrollbar::-webkit-scrollbar-track {
+  background: rgba(2, 9, 18, 0.5);
+  border-left: 1px solid rgba(112, 162, 168, 0.05);
+}
+
+.hud-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(112, 162, 168, 0.2);
+  border-radius: 0px;
+  border: 1px solid rgba(112, 162, 168, 0.1);
+}
+
+.hud-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(112, 162, 168, 0.5);
+  box-shadow: 0 0 8px rgba(112, 162, 168, 0.3);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020912;
+  border-left: 1px solid rgba(112, 162, 168, 0.08);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(112, 162, 168, 0.3);
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(112, 162, 168, 0.6);
+}
+
+/* Custom Clip-Path Angular Panels */
+.bat-panel-clip {
+  clip-path: polygon(
+    12px 0, 
+    100% 0, 
+    100% calc(100% - 12px), 
+    calc(100% - 12px) 100%, 
+    0 100%, 
+    0 12px
+  );
+  background-image: linear-gradient(to right, transparent, rgba(150, 190, 190, 0.06) 50%, transparent) !important;
+}
+
+.bat-panel-clip-sm {
+  clip-path: polygon(
+    8px 0, 
+    100% 0, 
+    100% calc(100% - 8px), 
+    calc(100% - 8px) 100%, 
+    0 100%, 
+    0 8px
+  );
+  background-image: linear-gradient(to right, transparent, rgba(150, 190, 190, 0.06) 50%, transparent) !important;
+}
+
+/* Diagonal flag marker utility */
+.bat-flag-marker::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 12px;
+  background-color: var(--color-cyan-primary);
+  transform: skewX(-20deg);
+  margin-right: 8px;
+}
+
+/* Cyber Glow Effects: Softened with a diffuse desaturated primary and secondary white bloom */
+.cyan-glow, .glow-text {
+  text-shadow: 
+    0 0 4px rgba(112, 162, 168, 0.45),
+    0 0 10px rgba(255, 255, 255, 0.25);
+}
+
+.cyan-glow-border {
+  box-shadow: 
+    0 0 6px rgba(112, 162, 168, 0.2), 
+    0 0 14px rgba(255, 255, 255, 0.08),
+    inset 0 0 4px rgba(112, 162, 168, 0.12),
+    inset 0 0 8px rgba(255, 255, 255, 0.04);
+}
+
+.red-glow {
+  text-shadow: 0 0 8px rgba(255, 59, 78, 0.5);
+}
+
+.amber-glow {
+  text-shadow: 0 0 8px rgba(255, 157, 46, 0.5);
+}
+
+/* Micro-interactions: brief glow-intensify on hover for buttons rather than instant state swap */
+button, .btn-interactive {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+button:hover, .btn-interactive:hover {
+  text-shadow: 
+    0 0 4px rgba(112, 162, 168, 0.5), 
+    0 0 10px rgba(255, 255, 255, 0.35);
+  box-shadow: 
+    0 0 6px rgba(112, 162, 168, 0.25), 
+    0 0 14px rgba(255, 255, 255, 0.12);
+}
+
+/* Sidebar glow-pulse animations */
+@keyframes glowPulse {
+  0%, 100% {
+    text-shadow: 0 0 3px rgba(112, 162, 168, 0.35), 0 0 8px rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 0 4px rgba(112, 162, 168, 0.08);
+  }
+  50% {
+    text-shadow: 0 0 6px rgba(112, 162, 168, 0.6), 0 0 12px rgba(255, 255, 255, 0.3);
+    box-shadow: inset 0 0 6px rgba(112, 162, 168, 0.15);
+  }
+}
+
+@keyframes glowPulseSubtle {
+  0%, 100% {
+    text-shadow: 0 0 2px rgba(112, 162, 168, 0.2), 0 0 5px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    text-shadow: 0 0 4px rgba(112, 162, 168, 0.4), 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+}
+
+.cyan-glow-pulse {
+  animation: glowPulse 2s infinite ease-in-out;
+}
+
+.cyan-glow-pulse-subtle:hover {
+  animation: glowPulseSubtle 1.5s infinite ease-in-out;
+}
+
+/* Scanning / Telemetry animations */
+@keyframes beamSweep {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.scan-beam-effect {
+  animation: beamSweep 4s linear infinite;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(112, 162, 168, 0.12) 50%,
+    rgba(112, 162, 168, 0.35) 95%,
+    rgba(112, 162, 168, 0.6) 100%
+  );
+  height: 4px;
+  box-shadow: 
+    0 0 4px rgba(112, 162, 168, 0.4),
+    0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+/* Unique Forensic Lab Animations */
+
+/* 1. Image Forensics: Grid Pulse & Noise */
+@keyframes gridPulse {
+  0%, 100% { opacity: 0.1; }
+  50% { opacity: 0.25; }
+}
+.image-forensic-grid {
+  background-image: linear-gradient(rgba(112, 162, 168, 0.2) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(112, 162, 168, 0.2) 1px, transparent 1px);
+  background-size: 20px 20px;
+  animation: gridPulse 4s ease-in-out infinite;
+}
+
+@keyframes noiseDrift {
+  0% { transform: translate(0,0); }
+  25% { transform: translate(-1%, 1%); }
+  50% { transform: translate(1%, -1%); }
+  75% { transform: translate(-0.5%, -0.5%); }
+  100% { transform: translate(0,0); }
+}
+.lsb-noise-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  animation: noiseDrift 0.2s steps(4) infinite;
+}
+
+/* 2. Audio Forensics: Sonar & Waves */
+@keyframes sonarRipple {
+  0% { transform: scale(0.8); opacity: 0; }
+  20% { opacity: 0.5; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.audio-sonar-ring {
+  border: 1px solid rgba(112, 162, 168, 0.4);
+  border-radius: 50%;
+  position: absolute;
+  animation: sonarRipple 3s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+}
+
+@keyframes waveGlitch {
+  0% { clip-path: inset(0 0 0 0); }
+  5% { clip-path: inset(10% 0 85% 0); }
+  10% { clip-path: inset(80% 0 5% 0); }
+  15% { clip-path: inset(0 0 0 0); }
+}
+.audio-wave-glitch {
+  animation: waveGlitch 8s steps(1) infinite;
+}
+
+/* 3. File Analysis: Binary Rain */
+@keyframes binaryRain {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+.binary-rain-stream {
+  animation: binaryRain 20s linear infinite;
+  background: linear-gradient(to bottom, transparent, rgba(112, 162, 168, 0.1) 50%, transparent);
+}
+
+@keyframes threatPulse {
+  0%, 100% { background-color: rgba(255, 59, 78, 0.05); }
+  50% { background-color: rgba(255, 59, 78, 0.15); }
+}
+.file-threat-pulse {
+  animation: threatPulse 1s ease-in-out infinite;
+}
+
+@keyframes textReveal {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes scanlineSweep {
+  0% { transform: translateY(-100%); opacity: 0.9; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes rgb-split-flicker {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); transform: translateX(0); }
+  15% { filter: drop-shadow(4px 0 0 rgba(255,0,0,0.6)) drop-shadow(-4px 0 0 rgba(0,255,255,0.6)); transform: translateX(1px); }
+  30% { filter: drop-shadow(0 0 0 transparent); transform: translateX(0); }
+  45% { filter: drop-shadow(-4px 0 0 rgba(255,0,0,0.6)) drop-shadow(4px 0 0 rgba(0,255,255,0.6)); transform: translateX(-1px); }
+}
+
+@keyframes spectral-hue-shift {
+  0% { filter: hue-rotate(0deg) saturate(1); }
+  50% { filter: hue-rotate(180deg) saturate(2); }
+  100% { filter: hue-rotate(360deg) saturate(1); }
+}
+
+@keyframes scanline-sweep-vertical {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+.animate-rgb-split {
+  animation: rgb-split-flicker 0.2s infinite;
+}
+
+.animate-spectral-shift {
+  animation: spectral-hue-shift 3s infinite linear;
+}
+
+.animate-scanline-vertical {
+  animation: scanline-sweep-vertical 2s linear infinite;
+}
+
+.animate-scanline-sweep {
+  animation: scanlineSweep 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Hexagon Ambient background circuit dots */
+.crt-scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+}
+
+/* Motion Reduction Safety Override */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+  
+  .animate-radar-sweep,
+  .animate-lock-on-snap,
+  .animate-signal-bar-tick,
+  .animate-scramble-settle,
+  .animate-stroke-draw,
+  .animate-clip-reveal,
+  .animate-stagger-in,
+  .animate-hex-pulse-flicker,
+  .animate-byte-flicker,
+  .animate-glow-pass,
+  .animate-scanline-drift,
+  .animate-ping-cyan,
+  .animate-spin-slow,
+  .animate-spin-reverse,
+  .animate-rgb-split,
+  .animate-spectral-shift,
+  .animate-scanline-vertical,
+  .scan-beam-effect,
+  .image-forensic-grid,
+  .audio-sonar-ring,
+  .audio-wave-glitch,
+  .binary-rain-stream,
+  .file-threat-pulse,
+  .animate-scanline-sweep,
+  .cyan-glow-pulse,
+  .cyan-glow-pulse-subtle {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+}
+
+
+
+@keyframes signal-lock-draw {
+  0% {
+    clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%);
+    opacity: 0;
+    transform: scale(1.5) rotate(45deg);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.animate-signal-lock {
+  animation: signal-lock-draw 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-signal-lock {
+    animation: none;
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* =====================================================================
+   BATCOMPUTER PHASE 0 — SHARED PRIMITIVES
+   Signature Arkham-console touches consumed across every module.
+   Additive & opt-in: nothing here changes existing markup on its own.
+   ===================================================================== */
+
+/* ---- 1. Targeting-reticle hover ------------------------------------
+   Add `hud-target` to any interactive element. On hover, four corner
+   ticks snap in with a faint lock-on glow — "you are operating this
+   system," not just pointing at it. Pure CSS, GPU-cheap, no JS.
+   Tune per-element with --reticle-color / --reticle-size / --reticle-weight. */
+.hud-target {
+  position: relative;
+  --reticle-color: var(--color-accent-primary);
+  --reticle-size: 10px;
+  --reticle-weight: 1.5px;
+}
+.hud-target::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  z-index: 30;
+  opacity: 0;
+  transform: scale(1.05);
+  transition: opacity 0.22s ease, transform 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+  background:
+    linear-gradient(var(--reticle-color), var(--reticle-color)) left 0 top 0 / var(--reticle-size) var(--reticle-weight),
+    linear-gradient(var(--reticle-color), var(--reticle-color)) left 0 top 0 / var(--reticle-weight) var(--reticle-size),
+    linear-gradient(var(--reticle-color), var(--reticle-color)) right 0 top 0 / var(--reticle-size) var(--reticle-weight),
+    linear-gradient(var(--reticle-color), var(--reticle-color)) right 0 top 0 / var(--reticle-weight) var(--reticle-size),
+    linear-gradient(var(--reticle-color), var(--reticle-color)) left 0 bottom 0 / var(--reticle-size) var(--reticle-weight),
+    linear-gradient(var(--reticle-color), var(--reticle-color)) left 0 bottom 0 / var(--reticle-weight) var(--reticle-size),
+    linear-gradient(var(--reticle-color), var(--reticle-color)) right 0 bottom 0 / var(--reticle-size) var(--reticle-weight),
+    linear-gradient(var(--reticle-color), var(--reticle-color)) right 0 bottom 0 / var(--reticle-weight) var(--reticle-size);
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 3px var(--reticle-color));
+}
+.hud-target:hover::after,
+.hud-target:focus-visible::after {
+  opacity: 0.9;
+  transform: scale(1);
+}
+/* amber/threat reticle variants for alert-context interactives */
+.hud-target-amber { --reticle-color: var(--color-amber-alert); }
+.hud-target-threat { --reticle-color: var(--color-red-threat); }
+
+/* ---- 2. Console panel material -------------------------------------
+   Opt-in richer material than flat glass: brushed vertical sheen,
+   top inner highlight, sunken bottom — reads as a physical console
+   panel. Layer under existing GlassPanel content or use standalone. */
+.panel-console {
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(112, 162, 168, 0.02) 12%, rgba(2, 9, 18, 0) 45%),
+    linear-gradient(180deg, rgba(18, 32, 38, 0.55) 0%, rgba(9, 18, 24, 0.5) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -30px 50px -30px rgba(0, 0, 0, 0.65);
+}
+
+/* ---- 3. Authenticate -> decrypt -> reveal ---------------------------
+   Panel/data entrance that reads like unlocking a classified record:
+   a top-down clip wipe with a brief high-brightness "decrypt" flash
+   that settles to full fidelity. For elements resolving in on load. */
+@keyframes auth-decrypt-reveal {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    filter: brightness(1.9) saturate(0.35) contrast(1.2);
+  }
+  45% {
+    opacity: 1;
+    filter: brightness(1.25) saturate(0.7) contrast(1.1);
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1) saturate(1) contrast(1);
+  }
+}
+.animate-decrypt-reveal {
+  animation: auth-decrypt-reveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ---- 4. Decrypt band -----------------------------------------------
+   A single bright scan band that sweeps down over a panel as it
+   resolves — the "reveal" beat, cheaper than filtering a whole subtree.
+   Place as an absolutely-positioned overlay child. */
+@keyframes decrypt-band-sweep {
+  0% { transform: translateY(-110%); opacity: 0; }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.9; }
+  100% { transform: translateY(110%); opacity: 0; }
+}
+.decrypt-band {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 40%;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(0, 243, 255, 0.06) 60%,
+    rgba(0, 243, 255, 0.18) 92%,
+    rgba(0, 243, 255, 0.5) 100%
+  );
+  box-shadow: 0 6px 14px rgba(0, 243, 255, 0.25);
+  animation: decrypt-band-sweep 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ---- 5. Ambient honeycomb energize --------------------------------
+   Very low-intensity breathing pulse for background hex layers, so the
+   ambient grid feels powered rather than static. */
+@keyframes honeycomb-energize {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+.animate-honeycomb-energize {
+  animation: honeycomb-energize 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-target::after {
+    transition: none;
+  }
+  .animate-decrypt-reveal,
+  .decrypt-band,
+  .animate-honeycomb-energize {
+    animation: none !important;
+    clip-path: none !important;
+    filter: none !important;
+    opacity: 1;
+  }
+  .decrypt-band { display: none; }
+}
