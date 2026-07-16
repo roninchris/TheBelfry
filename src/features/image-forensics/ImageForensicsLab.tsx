@@ -722,7 +722,7 @@ export default function ImageForensicsLab() {
                 <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-cyan-primary/45" />
 
                 {scanComplete && (
-                  <div className="absolute bottom-4 left-4 z-30 font-mono text-[10px] text-cyan-primary/70 bg-bg-void/90 px-2 py-0.5 border border-cyan-primary/20 uppercase tracking-widest backdrop-blur-md">
+                  <div className="animate-data-assemble absolute bottom-4 left-4 z-30 font-mono text-[10px] text-cyan-primary/70 bg-bg-void/90 px-2 py-0.5 border border-cyan-primary/20 uppercase tracking-widest backdrop-blur-md">
                     CARRIER ANALYSIS COMPLETE
                   </div>
                 )}
@@ -740,7 +740,7 @@ export default function ImageForensicsLab() {
                 </button>
                 {!hasRealFile && (
                   <p className="text-[10px] font-mono text-amber-alert/80 uppercase tracking-wider text-center mt-2">
-                    Preset sample: metadata only — upload a real file to run byte-level decode/extract/anomaly analysis.
+                    Metadata only — upload a real file to run byte-level decode/extract/anomaly analysis.
                   </p>
                 )}
               </div>

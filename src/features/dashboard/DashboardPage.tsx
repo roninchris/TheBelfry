@@ -529,7 +529,7 @@ export default function DashboardPage() {
 
           {/* SCANNED EVIDENCE RESULT PANEL (Rendered after successful scan) */}
           {scannedEvidence && !isScanning && (
-            <div className="mt-4 border border-cyan-primary/40 bg-cyan-primary/[0.02] p-4 relative animate-stagger-in overflow-hidden"
+            <div className="mt-4 border border-cyan-primary/40 bg-cyan-primary/[0.02] p-4 relative animate-stagger-in overflow-hidden power-sweep"
                  style={{ clipPath: "polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)" }}>
               {/* Subtle CorrelationNetwork success background animation */}
               <div className="absolute inset-0 opacity-20 pointer-events-none z-0">
