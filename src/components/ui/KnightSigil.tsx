@@ -1,0 +1,45 @@
+import { motion } from "motion/react";
+import { getKnight, type KnightId } from "../../lib/identity";
+
+interface KnightSigilProps {
+  /** Author of the evidence. Guest-authored (undefined) renders nothing. */
+  knightId?: KnightId | null;
+  size?: number;
+  /** Suppresses the entrance animation for reduced-motion sessions. */
+  reducedMotion?: boolean;
+  className?: string;
+}
+
+/**
+ * Attribution mark pinned to a piece of evidence — who put this on the board.
+ * Renders nothing for guests, since a solo local board has only one author.
+ */
+export default function KnightSigil({
+  knightId,
+  size = 30,
+  reducedMotion = false,
+  className = "",
+}: KnightSigilProps) {
+  const knight = getKnight(knightId);
+  if (!knight) return null;
+
+  return (
+    <motion.div
+      initial={reducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.4 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: reducedMotion ? 0 : 0.35, delay: reducedMotion ? 0 : 0.18, ease: "backOut" }}
+      className={`pointer-events-none absolute -top-3.5 -left-3.5 z-20 ${className}`}
+      style={{ width: size, height: size }}
+      title={`PLACED BY // ${knight.label.toUpperCase()}`}
+      aria-label={`Placed by ${knight.label}`}
+    >
+      <img
+        src={knight.sigil}
+        alt=""
+        draggable={false}
+        className="w-full h-full object-contain"
+        style={{ filter: `drop-shadow(0 0 5px ${knight.accent}90) drop-shadow(0 0 1px #020912)` }}
+      />
+    </motion.div>
+  );
+}
