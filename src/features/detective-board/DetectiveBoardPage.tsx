@@ -18,6 +18,7 @@ import {
   playDetectiveBoardLoad
 } from "../../lib/soundEngine";
 import GlassPanel from "../../components/ui/GlassPanel";
+import KnightSigil from "../../components/ui/KnightSigil";
 import Badge from "../../components/ui/Badge";
 import ParticleReveal from "../../components/ui/ParticleReveal";
 import ShinyText from "../../components/react-bits/ShinyText";
@@ -1095,6 +1096,9 @@ export default function DetectiveBoardPage() {
                     <div className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 border-cyan-primary" />
                     <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-cyan-primary" />
                   </div>
+
+                  {/* Authorship mark — absent on guest boards */}
+                  <KnightSigil knightId={node.createdBy} reducedMotion={prefersReducedMotion} />
 
                   <GlassPanel 
                     className={`p-2.5 h-full flex flex-col justify-between transition-all duration-300 relative ${

@@ -6,6 +6,7 @@ import { identifyImage, identifyAudio } from "../lib/tools/identify/forensics";
 import { detectHiddenMessageInFile, loadImageAsCanvas } from "../lib/tools/image-stego";
 import { detectMorse, detectDTMF } from "../lib/audioAnalysis";
 import { getAudioContext } from "../lib/soundEngine";
+import type { KnightId } from "../lib/identity";
 
 export interface ForensicLog {
   id: string;
@@ -38,6 +39,7 @@ export interface EvidenceNode {
   height?: number;
   color?: string;
   createdAt: string;
+  createdBy?: KnightId;      // absent = authored by a guest on their local board
 }
 
 export interface EvidenceConnection {
@@ -46,6 +48,7 @@ export interface EvidenceConnection {
   fromNodeId: string;
   toNodeId: string;
   label?: string;
+  createdBy?: KnightId;      // absent = authored by a guest on their local board
 }
 
 export interface EvidenceItem {
@@ -65,6 +68,14 @@ export interface NoteEntry {
 }
 
 interface AppState {
+  /**
+   * The signed-in knight, or null for a guest. Deliberately excluded from
+   * persistence: it is derived from the auth session on boot, never restored
+   * from localStorage, so a cleared session always falls back to guest.
+   */
+  currentIdentity: KnightId | null;
+  setIdentity: (id: KnightId | null) => void;
+
   currentModule: string;
   logs: ForensicLog[];
   cases: Case[];
@@ -124,6 +135,9 @@ const formatTime = () => {
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
+      currentIdentity: null,
+      setIdentity: (id) => set({ currentIdentity: id }),
+
       currentModule: "dashboard",
       isScanning: false,
       scanProgress: 0,
@@ -356,7 +370,8 @@ export const useAppStore = create<AppState>()(
           id,
           caseId: activeCaseId,
           notes: "",
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          createdBy: get().currentIdentity ?? undefined
         };
         set((state) => ({
           evidenceNodes: [...state.evidenceNodes, newNode]
@@ -399,7 +414,8 @@ export const useAppStore = create<AppState>()(
           caseId: activeCaseId,
           fromNodeId: fromId,
           toNodeId: toId,
-          label
+          label,
+          createdBy: get().currentIdentity ?? undefined
         };
         set((state) => ({
           evidenceConnections: [...state.evidenceConnections, newConnection]
