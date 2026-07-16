@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { NotebookPen, X, Send, Trash2, Plus } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { NotebookPen, X, Send, Trash2, Plus, Check } from "lucide-react";
 import GlassPanel from "./GlassPanel";
 import DatabaseTag from "./DatabaseTag";
 import { useAppStore } from "../../store/appStore";
@@ -15,6 +15,27 @@ export default function NotesPanel() {
   const updateNote = useAppStore((s) => s.updateNote);
   const deleteNote = useAppStore((s) => s.deleteNote);
   const sendNoteToBoard = useAppStore((s) => s.sendNoteToBoard);
+
+  /**
+   * Notes that were just pinned, held briefly so the button can acknowledge it.
+   * The board is usually off-screen from here, so this is the only confirmation
+   * the user gets that anything happened.
+   */
+  const [justPinned, setJustPinned] = useState<Record<string, boolean>>({});
+  const pinTimers = useRef<Record<string, number>>({});
+
+  useEffect(() => () => {
+    Object.values(pinTimers.current).forEach(window.clearTimeout);
+  }, []);
+
+  const handleSendToBoard = (id: string) => {
+    if (!sendNoteToBoard(id)) return;
+    setJustPinned((prev) => ({ ...prev, [id]: true }));
+    window.clearTimeout(pinTimers.current[id]);
+    pinTimers.current[id] = window.setTimeout(() => {
+      setJustPinned((prev) => ({ ...prev, [id]: false }));
+    }, 1600);
+  };
   const activeCaseId = useAppStore((s) => s.activeCaseId);
 
   return (
@@ -69,13 +90,26 @@ export default function NotesPanel() {
                   />
                   <div className="flex items-center justify-end space-x-1.5 mt-1 opacity-70 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={() => sendNoteToBoard(note.id)}
-                      disabled={!activeCaseId || !note.text.trim()}
-                      className="flex items-center space-x-1 px-2 py-0.5 text-[9.5px] font-orbitron font-bold uppercase tracking-wider text-cyan-text hover:text-bg-void hover:bg-cyan-primary border border-cyan-primary/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      onClick={() => handleSendToBoard(note.id)}
+                      disabled={!activeCaseId || !note.text.trim() || justPinned[note.id]}
+                      className={`flex items-center space-x-1 px-2 py-0.5 text-[10.5px] font-orbitron font-bold uppercase tracking-wider border transition-colors disabled:cursor-not-allowed ${
+                        justPinned[note.id]
+                          ? "text-accent-primary border-accent-primary/60 bg-accent-primary/10 opacity-100 shadow-[0_0_10px_rgba(0,243,255,0.25)]"
+                          : "text-cyan-text border-cyan-primary/30 hover:text-bg-void hover:bg-cyan-primary disabled:opacity-30"
+                      }`}
                       title={activeCaseId ? "Send to Detective Board" : "Select an active case first"}
                     >
-                      <Send className="w-3 h-3" />
-                      <span>BOARD</span>
+                      {justPinned[note.id] ? (
+                        <>
+                          <Check className="w-3 h-3" />
+                          <span>PINNED</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-3 h-3" />
+                          <span>BOARD</span>
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={() => deleteNote(note.id)}

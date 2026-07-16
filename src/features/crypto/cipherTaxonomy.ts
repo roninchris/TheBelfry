@@ -32,7 +32,7 @@ export const CIPHER_GROUPS: CipherGroup[] = [
   { id: "polygraphic", label: "Polygraphic & Grid", short: "GRID", blurb: "Matrix & fractionation ciphers" },
   { id: "transposition", label: "Transposition", short: "TRANS", blurb: "Character-reordering schemes" },
   { id: "modern", label: "Machine & Modern", short: "MODERN", blurb: "Rotor machines & computational crypto" },
-  { id: "symbolic", label: "Symbolic & Puzzle", short: "SYMBOL", blurb: "Visual, glyphic & ARG ciphers" },
+  { id: "symbolic", label: "Symbolic & Puzzle", short: "SYMBOL", blurb: "Visual, glyphic & cryptographic ciphers" },
   { id: "specialty", label: "Specialty", short: "MISC", blurb: "Uncategorized engines" },
 ];
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Shield, Radio, Wifi, Lock } from "lucide-react";
 import { useAppStore } from "../../store/appStore";
 import ShinyText from "../react-bits/ShinyText";
+import KnightBadge from "../ui/KnightBadge";
 
 export default function TopBar() {
   const currentModule = useAppStore((state) => state.currentModule);
@@ -96,6 +97,9 @@ export default function TopBar() {
           <span className="text-text-dim opacity-40">|</span>
           <span className="text-cyan-primary font-bold tracking-widest bg-cyan-primary/5 px-1.5 py-0.5 border border-cyan-primary/20">{time}</span>
         </div>
+
+        {/* Active operative — absent for guests */}
+        <KnightBadge />
       </div>
     </header>
   );

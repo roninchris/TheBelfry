@@ -22,6 +22,15 @@ export interface Knight {
   sigil: string;
   /** Identity color: sigil glow now, presence/cursors later. */
   accent: string;
+  /**
+   * Optical size correction, multiplied into the rendered box.
+   *
+   * The sigils share a 160px square canvas, but the artwork inside does not
+   * share a silhouette: a wide, flat bat fills far less of that square than an
+   * upright letterform, so at identical box sizes it reads noticeably smaller.
+   * This nudges the wide marks back to matching visual weight. Defaults to 1.
+   */
+  sigilScale?: number;
 }
 
 export const KNIGHTS: Record<KnightId, Knight> = {
@@ -31,6 +40,8 @@ export const KNIGHTS: Record<KnightId, Knight> = {
     label: "Red Hood",
     sigil: "/assets/Logos/sigil-redhood.png",
     accent: "#ff3b4e",
+    // Widest, flattest mark of the four — needs the most correction.
+    sigilScale: 1.3,
   },
   redrobin: {
     id: "redrobin",
