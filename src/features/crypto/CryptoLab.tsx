@@ -592,7 +592,7 @@ export default function CryptoLab() {
                     })}
 
                     {/* Rotating center core dial wheel */}
-                    <div className="w-14 h-14 rounded-full bg-bg-void border border-cyan-primary/30 flex items-center justify-center relative shadow-[0_0_10px_rgba(47,241,228,0.15)] z-10">
+                    <div className="charge-ring w-14 h-14 rounded-full bg-bg-void border border-cyan-primary/30 flex items-center justify-center relative shadow-[0_0_10px_rgba(47,241,228,0.15)] z-10">
                       <Disc className="w-10 h-10 text-cyan-primary/15 absolute animate-[spin_12s_linear_infinite_reverse]" />
                       <RefreshCw 
                         className="w-7 h-7 text-cyan-primary drop-shadow-[0_0_6px_rgba(47,241,228,0.4)]" 
@@ -646,7 +646,7 @@ export default function CryptoLab() {
                       );
                     })}
 
-                    <div className="w-14 h-14 rounded-full bg-bg-void border border-cyan-primary/30 flex items-center justify-center relative shadow-[0_0_10px_rgba(47,241,228,0.15)] z-10">
+                    <div className="charge-ring w-14 h-14 rounded-full bg-bg-void border border-cyan-primary/30 flex items-center justify-center relative shadow-[0_0_10px_rgba(47,241,228,0.15)] z-10">
                       <Disc className="w-10 h-10 text-cyan-primary/15 absolute animate-[spin_12s_linear_infinite_reverse]" />
                       <RefreshCw 
                         className="w-7 h-7 text-cyan-primary drop-shadow-[0_0_6px_rgba(47,241,228,0.4)]" 
