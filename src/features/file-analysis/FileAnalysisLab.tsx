@@ -472,7 +472,7 @@ ${currentData.threatSummary}`;
         </div>
       )}
       
-      {/* ================= LEFT COLUMN: UPLOADER & PRESETS ================= */}
+      {/* ================= LEFT COLUMN: BINARY UPLOADER ================= */}
       <div className="col-span-12 xl:col-span-3 flex flex-col space-y-4 min-h-0">
         
         {/* Header Block */}
@@ -666,7 +666,7 @@ ${currentData.threatSummary}`;
               AWAITING BINARY CARRIER TARGET
             </h2>
             <p className="text-xs text-text-dim font-share uppercase tracking-widest max-w-sm mt-1.5 leading-relaxed">
-              Load an external file from the binary buffer port or select a preset archive record from the registry to parse byte alignments and extract hidden characters.
+              Load an external file into the binary buffer port to parse byte alignments, verify magic-byte signatures, and extract hidden characters.
             </p>
             <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-cyan-primary/30 to-transparent mt-6" />
           </GlassPanel>
@@ -740,9 +740,9 @@ ${currentData.threatSummary}`;
 
                   {/* Warning anomaly box if signature mismatch */}
                   {scanComplete && (
-                    <div className={`mt-3 p-3 border font-mono text-[11px] flex items-start space-x-2 relative overflow-hidden ${
-                      currentData.isMismatch 
-                        ? "bg-red-threat/10 border-red-threat/30 text-red-threat" 
+                    <div className={`power-sweep mt-3 p-3 border font-mono text-[11px] flex items-start space-x-2 relative overflow-hidden ${
+                      currentData.isMismatch
+                        ? "bg-red-threat/10 border-red-threat/30 text-red-threat"
                         : "bg-bg-void/40 border-border-hairline/10 text-text-dim"
                     }`}>
                       <div className="absolute inset-0 opacity-25 pointer-events-none z-0">
