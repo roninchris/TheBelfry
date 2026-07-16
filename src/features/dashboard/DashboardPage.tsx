@@ -59,7 +59,6 @@ export default function DashboardPage() {
 
   const [textInput, setTextInput] = useState("");
   const [dragActive, setDragActive] = useState(false);
-  const [selectedSample, setSelectedSample] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [targetCaseId, setTargetCaseId] = useState(activeCaseId || "");
   const [uptimeSeconds, setUptimeSeconds] = useState(0);
@@ -88,13 +87,13 @@ export default function DashboardPage() {
   const gadgets: RadialDialItem[] = [
     { id: "batarang", icon: Shield, label: "BATARANG", description: "Intercepts low-power local RF signals" },
     { id: "sequencer", icon: Lock, label: "SEQUENCER", description: "Overrides lock-system registry grids" },
-    { id: "hacker", icon: Cpu, label: "HACK DEV", description: "Disables GCPD camera and transceiver relays" },
+    { id: "hacker", icon: Cpu, label: "HACK DEV", description: "Disables local camera and transceiver relays" },
     { id: "scanner", icon: Fingerprint, label: "SCANNER", description: "Deconstructs physical crime scene residues" },
     { id: "launcher", icon: Network, label: "LAUNCHER", description: "Calculates coordinate line trajectories" },
   ];
 
   const handleGadgetSelect = (item: RadialDialItem) => {
-    addLog(`TACTICAL UPLINK ENGAGED: ${item.label} // ${item.description.toUpperCase()}`, "warning", "WAYNETECH");
+    addLog(`TACTICAL UPLINK ENGAGED: ${item.label} // ${item.description.toUpperCase()}`, "warning", "BELFRY");
     if (item.id === "sequencer") {
       setModule("crypto-lab");
     } else if (item.id === "hacker") {
@@ -107,52 +106,17 @@ export default function DashboardPage() {
   // Get active case file details
   const activeCase = cases.find(c => c.id === activeCaseId) || cases[0];
 
-  // Preloaded forensic samples for fast-testing
-  const samples = [
-    {
-      id: "cipher",
-      name: "intercepted_transmission.txt",
-      type: "ciphertext" as const,
-      preview: "U1lTVEVNIERJQUdOT1NUSUM6IHNlbnNvciBhcnJheSBub21pbmFsLiBFbmNvZGVkIHBheWxvYWQgcmVhZHkgZm9yIGFuYWx5c2lzLg==",
-      rawContent: "U1lTVEVNIERJQUdOT1NUSUM6IHNlbnNvciBhcnJheSBub21pbmFsLi4u"
-    },
-    {
-      id: "stego",
-      name: "sample_image_lsb.png",
-      type: "image" as const,
-      preview: "[PNG pixel raster: LSB alteration signature found on red planes]",
-      rawContent: "EXIF_BLOCK_RECOVERY_GPS: 40.7128° N, 74.0060° W"
-    },
-    {
-      id: "audio",
-      name: "sample_audio_spectral.wav",
-      type: "audio" as const,
-      preview: "[Acoustic spectral humming: 60Hz hum interference + synthetic pitch]",
-      rawContent: "Spectral overlay waveform sample"
-    }
-  ];
-
-  const handleSampleClick = (sample: typeof samples[0]) => {
-    setSelectedSample(sample.id);
-    setTextInput(sample.preview);
-    addLog(`LOADED PRELOADED SAMPLE: "${sample.name}" into analysis buffer`, "info", "BUFFER");
-  };
-
   const handleScanTrigger = () => {
     if (!textInput.trim()) {
       addLog("SCAN ABORTED: Input buffer is completely empty", "warning", "SYS");
-      setScanAlert("NO SIGNAL // ANALYSIS BUFFER EMPTY — LOAD A SAMPLE OR PASTE INTERCEPT DATA");
+      setScanAlert("NO SIGNAL // ANALYSIS BUFFER EMPTY — PASTE INTERCEPT DATA");
       return;
     }
     setScanAlert(null);
 
-    const currentSample = samples.find(s => s.id === selectedSample);
-    const name = currentSample ? currentSample.name : `PASTED_INPUT_${Date.now()}`;
-    const type = currentSample ? currentSample.type : "ciphertext";
-
     triggerForensicScan({
-      name,
-      type,
+      name: `PASTED_INPUT_${Date.now()}`,
+      type: "ciphertext",
       rawContent: textInput
     });
   };
@@ -175,7 +139,6 @@ export default function DashboardPage() {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       setTextInput(`[Raw binary stream from File: ${file.name}] size: ${file.size} bytes`);
-      setSelectedSample(null);
       addLog(`EXTERNAL FILE DROP: "${file.name}" loaded into buffer`, "info", "DEPOSITION");
       
       // Auto trigger scan
@@ -236,7 +199,7 @@ export default function DashboardPage() {
 
           {/* Telemetry Item 3: Core Uptime */}
           <div className="bg-bg-void/40 border border-border-hairline/10 p-2 flex flex-col justify-center relative">
-            <DatabaseTag text="SECURE BAT-UPLINK" className="mb-1.5 self-start" />
+            <DatabaseTag text="SECURE UPLINK" className="mb-1.5 self-start" />
             <div className="flex items-baseline space-x-1.5 mt-1">
               <span className="font-mono text-[11.5px] text-green-verified leading-none font-bold uppercase animate-pulse">● ONLINE</span>
               <span className="font-mono text-[11px] text-cyan-dim/80">{formatUptime(uptimeSeconds)}</span>
@@ -296,9 +259,29 @@ export default function DashboardPage() {
           {/* List of Dossiers */}
           <div className="space-y-1.5 flex-1 overflow-y-auto max-h-[180px] xl:max-h-none scrollbar-thin scrollbar-thumb-cyan-dim/20 pr-1">
             {cases.length === 0 ? (
-              <div className="p-4 text-center text-[11px] font-share text-text-dim/60">
-                NO ACTIVE CASES. USE THE CASE FILES OR DETECTIVE BOARD TAB TO CREATE ONE.
-              </div>
+              <button
+                onClick={() => setModule("case-files")}
+                onMouseEnter={() => playHoverBlip()}
+                className="hud-target w-full p-5 flex flex-col items-center justify-center text-center gap-2.5 border border-dashed border-border-hairline/25 bg-bg-void/30 relative overflow-hidden group"
+                style={{ clipPath: "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)" }}
+              >
+                {/* Idle radar sweep — the archive is listening, just empty */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none">
+                  <div className="w-40 h-40 border border-cyan-primary/40 rounded-full animate-radar-sweep">
+                    <div className="w-full h-[1px] bg-cyan-primary/30 mt-[80px]" />
+                  </div>
+                </div>
+                <Database className="w-6 h-6 text-cyan-dim/60 group-hover:text-cyan-primary transition-colors relative z-10" />
+                <span className="font-orbitron text-[11px] font-black tracking-widest text-text-dim uppercase relative z-10">
+                  NO DOSSIERS ON FILE
+                </span>
+                <span className="font-share text-[10.5px] text-text-dim/60 tracking-wide uppercase relative z-10 leading-relaxed">
+                  Archive standing by — open Case Files to register the first record
+                </span>
+                <span className="font-share text-[10px] text-cyan-primary/70 tracking-[0.2em] uppercase mt-1 relative z-10 group-hover:text-cyan-primary transition-colors">
+                  › INITIALIZE ARCHIVE
+                </span>
+              </button>
             ) : (
               cases.map((c) => {
                 const isSelected = c.id === activeCaseId;
@@ -356,7 +339,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Selected Dossier Profile Sheet (Wayne Bio reference design) */}
+          {/* Selected Dossier Profile Sheet (Subject Bio reference design) */}
           {activeCase ? (
             <GlassPanel className="p-3.5 mt-3 space-y-3 bg-bg-void/30 relative overflow-hidden" clipSize="md" showCornerTicks={true}>
               {/* Target-acquisition snap box overlay */}
@@ -426,12 +409,12 @@ export default function DashboardPage() {
             <VignetteBackdrop intensity="medium" />
             
             {/* Scanning Animation */}
-          <ScannerAnimation active={isScanning} scanLabel={selectedSample ? `DECODING ${samples.find(s => s.id === selectedSample)?.name}` : "SCANNING INPUT SPECTRUM"} />
+          <ScannerAnimation active={isScanning} scanLabel="SCANNING INPUT SPECTRUM" />
 
           {/* Top border header banner */}
           <div className="border-b border-border-hairline/25 pb-3 mb-4 flex justify-between items-center relative z-10">
             <div>
-              <h2 className="font-orbitron text-base font-black tracking-widest text-cyan-text flex items-center uppercase">
+              <h2 className="font-orbitron text-base font-black tracking-widest text-cyan-text flex items-center uppercase animate-data-assemble">
                 <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
                 <ShinyText text="FORENSIC SCANNER // ANALYZE ANY EVIDENCE" speed={6} />
               </h2>
@@ -449,7 +432,6 @@ export default function DashboardPage() {
               <button
                 onClick={() => {
                   setTextInput("");
-                  setSelectedSample(null);
                   addLog("CLEARED ANALYSIS BUFFER STACK", "info", "BUFFER");
                 }}
                 disabled={isScanning}
@@ -458,41 +440,6 @@ export default function DashboardPage() {
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
-            </div>
-          </div>
-
-          {/* Preloaded Samples Selector */}
-          <div className="mb-4 relative z-10 space-y-2">
-            <span className="text-[10.5px] font-share text-text-dim tracking-wider uppercase block">
-              AVAILABLE FORENSIC SAMPLES (CLICK TO TEST INSTANTLY):
-            </span>
-            <div className="grid grid-cols-3 gap-2.5">
-              {samples.map((s) => {
-                const isSelected = selectedSample === s.id;
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => handleSampleClick(s)}
-                    onMouseEnter={() => !isScanning && playHoverBlip()}
-                    disabled={isScanning}
-                    className={`hud-target p-2 border text-left flex flex-col justify-between transition-all duration-300 relative group ${
-                      isSelected
-                        ? "bg-cyan-primary/10 border-cyan-primary text-text-primary"
-                        : "bg-bg-void/50 border-border-hairline/20 text-text-dim hover:border-cyan-dim/40 hover:text-text-primary"
-                    }`}
-                    style={{
-                      clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)"
-                    }}
-                  >
-                    <span className="font-chakra text-[11px] font-extrabold uppercase tracking-wide truncate w-full">
-                      {s.name}
-                    </span>
-                    <span className="font-share text-[10px] tracking-widest uppercase mt-1 opacity-70">
-                      [{s.type}]
-                    </span>
-                  </button>
-                );
-              })}
             </div>
           </div>
 
@@ -525,7 +472,6 @@ export default function DashboardPage() {
                 value={textInput}
                 onChange={(e) => {
                   setTextInput(e.target.value);
-                  setSelectedSample(null);
                 }}
                 disabled={isScanning}
                 placeholder="PASTE CIPHERTEXT, RAW HEX ENCODING OR BINARY TELEMETRY STRINGS HERE FOR FORENSIC DECODING... OR DROP FILE DIRECTLY IN THIS STAGE CONTAINER"
@@ -564,13 +510,13 @@ export default function DashboardPage() {
           <div className="mt-4 flex space-x-3 relative z-10">
             <button
               onClick={handleScanTrigger}
-              disabled={isScanning || !textInput.trim()}
-              className={`hud-target flex-1 font-orbitron font-black text-xs uppercase tracking-widest py-3 border transition-all duration-300 relative overflow-hidden flex items-center justify-center space-x-2 ${
+              disabled={isScanning}
+              className={`hud-target ${!isScanning && !textInput.trim() ? "hud-target-amber" : ""} flex-1 font-orbitron font-black text-xs uppercase tracking-widest py-3 border transition-all duration-300 relative overflow-hidden flex items-center justify-center space-x-2 ${
                 isScanning
                   ? "bg-cyan-primary/5 border-cyan-primary/30 text-cyan-dim cursor-not-allowed"
                   : textInput.trim()
                   ? "bg-cyan-primary/10 border-cyan-primary text-cyan-primary hover:bg-cyan-primary hover:text-bg-void hover:shadow-[0_0_15px_rgba(47,241,228,0.5)] cursor-pointer"
-                  : "bg-bg-void/40 border-border-hairline/25 text-text-dim cursor-not-allowed"
+                  : "bg-bg-void/40 border-amber-alert/25 text-amber-alert/70 hover:border-amber-alert/60 hover:text-amber-alert cursor-pointer"
               }`}
               style={{
                 clipPath: "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)"

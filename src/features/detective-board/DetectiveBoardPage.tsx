@@ -856,7 +856,7 @@ export default function DetectiveBoardPage() {
         onDoubleClick={handleBgDoubleClick}
       >
         {/* Subtle grid mesh background that stretches with pan and scales with zoom */}
-        <div 
+        <div
           className="absolute inset-0 canvas-bg pointer-events-none"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
@@ -866,6 +866,14 @@ export default function DetectiveBoardPage() {
             transition: isPanning ? "none" : "transform 0.1s ease-out"
           }}
         />
+
+        {/* Holographic projection scan sweep — reinforces the "live HUD projection" feel */}
+        {!prefersReducedMotion && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-[0.5]">
+            <div className="absolute -top-full left-0 w-full h-[200%] crt-scanlines opacity-[0.04] animate-scanline-drift" />
+            <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-cyan-primary/[0.04] to-transparent animate-[beamSweep_9s_linear_infinite]" />
+          </div>
+        )}
 
         {/* Dynamic Zoom/Pan Workspace Content Container */}
         <div 
@@ -973,6 +981,30 @@ export default function DetectiveBoardPage() {
                             ? "opacity-60"
                             : "opacity-0"
                           : "opacity-15"
+                      }`}
+                    />
+                  )}
+
+                  {/* Holographic data pulse: a glowing packet travels the link, faster/brighter when highlighted */}
+                  {!prefersReducedMotion && (
+                    <motion.circle
+                      r={isConnHighlighted ? 3.5 : 2.2}
+                      fill="#00f3ff"
+                      initial={{ cx: x1, cy: y1 }}
+                      animate={{ cx: [x1, x2], cy: [y1, y2] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: isConnHighlighted ? 1.4 : 2.6,
+                        ease: "linear",
+                        delay: index * 0.35
+                      }}
+                      style={{ filter: "drop-shadow(0 0 5px #00f3ff)" }}
+                      className={`pointer-events-none transition-opacity duration-300 ${
+                        hoveredNodeId
+                          ? isConnHighlighted
+                            ? "opacity-95"
+                            : "opacity-0"
+                          : "opacity-45"
                       }`}
                     />
                   )}
@@ -1138,7 +1170,7 @@ export default function DetectiveBoardPage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteEvidenceNode(node.id);
-                              addLog("CLUE PURGED FROM DETECTIVE BOARD MATRIX", "warning", "WAYNETECH");
+                              addLog("CLUE PURGED FROM DETECTIVE BOARD MATRIX", "warning", "BELFRY");
                               playUnpinTear();
                             }}
                             className="p-0.5 hover:bg-red-threat/25 text-text-dim hover:text-red-threat rounded transition-all cursor-pointer"

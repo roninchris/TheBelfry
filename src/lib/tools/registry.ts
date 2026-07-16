@@ -154,7 +154,7 @@ const tools: ToolEntry[] = [
     encode: vigenereEncode,
     decode: vigenereDecode,
     optionsSchema: [
-      { name: "key", type: "text", label: "Key", defaultValue: "BATMAN" }
+      { name: "key", type: "text", label: "Key", defaultValue: "SECRET" }
     ]
   },
   {
@@ -284,8 +284,8 @@ const tools: ToolEntry[] = [
     encode: nihilistEncode,
     decode: nihilistDecode,
     optionsSchema: [
-      { name: "keyword", type: "text", label: "Polybius Keyword", defaultValue: "BATMAN" },
-      { name: "key", type: "text", label: "Numeric Key", defaultValue: "ROBIN" }
+      { name: "keyword", type: "text", label: "Polybius Keyword", defaultValue: "SECRET" },
+      { name: "key", type: "text", label: "Numeric Key", defaultValue: "CIPHER" }
     ]
   },
   {
@@ -303,7 +303,7 @@ const tools: ToolEntry[] = [
     encode: keyedCaesarEncode,
     decode: keyedCaesarDecode,
     optionsSchema: [
-      { name: "keyword", type: "text", label: "Keyword", defaultValue: "BATMAN" },
+      { name: "keyword", type: "text", label: "Keyword", defaultValue: "SECRET" },
       { name: "shift", type: "number", label: "Shift", defaultValue: 3, min: 1, max: 25 }
     ]
   },
@@ -324,7 +324,7 @@ const tools: ToolEntry[] = [
     encode: amscoEncode,
     decode: amscoDecode,
     optionsSchema: [
-      { name: "key", type: "text", label: "Keyword", defaultValue: "BATMAN" }
+      { name: "key", type: "text", label: "Keyword", defaultValue: "SECRET" }
     ]
   },
   {
@@ -334,8 +334,8 @@ const tools: ToolEntry[] = [
     encode: doubleTranspositionEncode,
     decode: doubleTranspositionDecode,
     optionsSchema: [
-      { name: "key1", type: "text", label: "Key 1", defaultValue: "BATMAN" },
-      { name: "key2", type: "text", label: "Key 2", defaultValue: "ROBIN" }
+      { name: "key1", type: "text", label: "Key 1", defaultValue: "SECRET" },
+      { name: "key2", type: "text", label: "Key 2", defaultValue: "CIPHER" }
     ]
   },
   {
@@ -371,7 +371,7 @@ const tools: ToolEntry[] = [
     encode: vigenereAutokeyEncode,
     decode: vigenereAutokeyDecode,
     optionsSchema: [
-      { name: "key", type: "text", label: "Primer Key", defaultValue: "BATMAN" }
+      { name: "key", type: "text", label: "Primer Key", defaultValue: "SECRET" }
     ]
   },
   {
@@ -381,7 +381,7 @@ const tools: ToolEntry[] = [
     encode: beaufortEncode,
     decode: beaufortDecode,
     optionsSchema: [
-      { name: "key", type: "text", label: "Key", defaultValue: "BATMAN" }
+      { name: "key", type: "text", label: "Key", defaultValue: "SECRET" }
     ]
   },
   {
@@ -391,7 +391,7 @@ const tools: ToolEntry[] = [
     encode: beaufortAutokeyEncode,
     decode: beaufortAutokeyDecode,
     optionsSchema: [
-      { name: "key", type: "text", label: "Primer Key", defaultValue: "BATMAN" }
+      { name: "key", type: "text", label: "Primer Key", defaultValue: "SECRET" }
     ]
   },
   {
@@ -401,7 +401,7 @@ const tools: ToolEntry[] = [
     encode: variantBeaufortEncode,
     decode: variantBeaufortDecode,
     optionsSchema: [
-      { name: "key", type: "text", label: "Key", defaultValue: "BATMAN" }
+      { name: "key", type: "text", label: "Key", defaultValue: "SECRET" }
     ]
   },
   {
@@ -549,7 +549,13 @@ const tools: ToolEntry[] = [
     label: "Base62",
     category: "encoding",
     encode: base62Encode,
-    decode: base62Decode,
+    decode: (text, options) => {
+      try {
+        return base62Decode(text);
+      } catch (err: any) {
+        return "ERROR: " + err.message;
+      }
+    },
     optionsSchema: []
   },
   {

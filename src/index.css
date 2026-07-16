@@ -871,3 +871,76 @@ button:hover, .btn-interactive:hover {
   }
   .decrypt-band { display: none; }
 }
+
+/* =====================================================================
+   FRESH MOTION PACK
+   New signature animations layered on top of the Phase 0 primitives.
+   ===================================================================== */
+
+/* ---- Data-assemble: text/blocks materialize from a blurred, spread state ---- */
+@keyframes data-assemble {
+  0% { opacity: 0; filter: blur(6px); letter-spacing: 0.28em; transform: translateY(-2px); }
+  60% { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; filter: blur(0); letter-spacing: normal; transform: translateY(0); }
+}
+.animate-data-assemble { animation: data-assemble 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ---- Hologram flicker: subtle instability for holographic HUD text ---- */
+@keyframes hologram-flicker {
+  0%, 89%, 100% { opacity: 1; filter: brightness(1); }
+  90% { opacity: 0.55; filter: brightness(1.5); }
+  91% { opacity: 1; filter: brightness(1); }
+  94% { opacity: 0.8; }
+  95% { opacity: 1; }
+}
+.animate-hologram-flicker { animation: hologram-flicker 6s steps(80) infinite; }
+
+/* ---- Power sweep: a bright bar sweeps across a panel once on mount ---- */
+@keyframes power-sweep {
+  0% { transform: translateX(-140%); opacity: 0; }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.9; }
+  100% { transform: translateX(340%); opacity: 0; }
+}
+.power-sweep { position: relative; overflow: hidden; }
+.power-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 28%;
+  pointer-events: none;
+  z-index: 40;
+  background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.18) 50%, transparent);
+  animation: power-sweep 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ---- Charge ring: rotating conic energy ring for active/processing states ---- */
+@keyframes charge-ring-spin { to { transform: rotate(360deg); } }
+.charge-ring { position: relative; }
+.charge-ring::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 20;
+  background: conic-gradient(from 0deg, transparent 0deg, var(--color-accent-primary) 55deg, transparent 130deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+  opacity: 0.7;
+  animation: charge-ring-spin 2.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-data-assemble,
+  .animate-hologram-flicker,
+  .power-sweep::after,
+  .charge-ring::before {
+    animation: none !important;
+    filter: none !important;
+    opacity: 1;
+    letter-spacing: normal;
+    transform: none;
+  }
+  .power-sweep::after { display: none; }
+}

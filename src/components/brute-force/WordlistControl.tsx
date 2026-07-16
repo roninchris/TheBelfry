@@ -84,7 +84,7 @@ export default function WordlistControl({ onWordlistChange }: WordlistControlPro
       
       <p className="text-[10.5px] text-text-dim/60 leading-tight">
         {isUsingDefault 
-          ? "Currently using built-in dictionary with common English and Gotham-related terms." 
+          ? "Currently using built-in dictionary with common English forensic terms."
           : "Using custom wordlist. Brute force will attempt every entry provided."}
       </p>
     </div>

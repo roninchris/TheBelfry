@@ -206,7 +206,7 @@ export default function DossierPage() {
       
       {/* ================= LEFT SECTION: ARG CASES INDEX ================= */}
       <div className="col-span-12 lg:col-span-4 flex flex-col space-y-4">
-        <GlassPanel className="p-4 flex flex-col h-full" clipSize="md">
+        <GlassPanel className="panel-console p-4 flex flex-col h-full" clipSize="md">
           
           {/* Header */}
           <div className="border-b border-border-hairline/25 pb-2 mb-4 flex justify-between items-center">
@@ -222,7 +222,8 @@ export default function DossierPage() {
             
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-2 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[10.5px] font-black uppercase tracking-widest flex items-center"
+              onMouseEnter={() => playHoverEvidence()}
+              className="hud-target px-2 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[10.5px] font-black uppercase tracking-widest flex items-center"
               style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
             >
               <Plus className="w-3 h-3 mr-1" />
@@ -268,7 +269,7 @@ export default function DossierPage() {
                         stiffness: 100,
                         damping: 15
                       }}
-                      className={`relative p-3 border transition-all duration-300 flex flex-col text-left group ${
+                      className={`hud-target relative p-3 border transition-all duration-300 flex flex-col text-left group ${
                         isSelected
                           ? "bg-cyan-primary/[0.04] border-cyan-primary text-text-primary shadow-[0_0_10px_rgba(0,243,255,0.08)]"
                           : "bg-bg-void/40 border-border-hairline/15 text-text-dim hover:border-border-hairline/35 hover:text-text-primary"
@@ -362,7 +363,7 @@ export default function DossierPage() {
               )}
             </AnimatePresence>
 
-            <GlassPanel className="flex-1 flex flex-col relative overflow-hidden" clipSize="md" showScanlines={true}>
+            <GlassPanel className="panel-console flex-1 flex flex-col relative overflow-hidden" clipSize="md" showScanlines={true}>
             <div className="flex flex-col md:flex-row h-full">
               
               {/* Left Portion of details (Text layout & notes editing) */}
@@ -564,7 +565,7 @@ export default function DossierPage() {
                 <input
                   type="text"
                   required
-                  placeholder="E.g. RED QUEEN PUZZLE LOG"
+                  placeholder="E.g. INTERCEPTED SIGNAL ANALYSIS"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   className="w-full bg-bg-void/80 border border-border-hairline/30 p-2 text-text-primary rounded-sm font-sans focus:outline-none focus:border-cyan-primary"
@@ -606,7 +607,8 @@ export default function DossierPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[11px] font-black uppercase tracking-widest"
+                  onMouseEnter={() => playHoverEvidence()}
+                  className="hud-target px-4 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[11px] font-black uppercase tracking-widest"
                   style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
                 >
                   INITIALIZE INDEX
@@ -642,7 +644,8 @@ export default function DossierPage() {
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="px-4 py-1.5 border border-red-threat/50 text-red-threat hover:bg-red-threat hover:text-bg-void transition-colors text-[11px] font-black uppercase tracking-widest"
+                onMouseEnter={() => playHoverEvidence()}
+                className="hud-target hud-target-threat px-4 py-1.5 border border-red-threat/50 text-red-threat hover:bg-red-threat hover:text-bg-void transition-colors text-[11px] font-black uppercase tracking-widest"
                 style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
               >
                 DELETE FOREVER

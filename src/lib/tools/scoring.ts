@@ -106,9 +106,9 @@ export function scoreDecodedPlaintext(text: string): number {
   // 3. Common English words check (case-insensitive)
   const commonWords = [
     "THE", "AND", "THAT", "HAVE", "FOR", "NOT", "WITH", "YOU", "THIS", "BUT",
-    "FROM", "GOTHAM", "WAYNE", "SAFE", "COORDINATES", "SECRET", "SECURED",
+    "FROM", "TARGET", "ACCESS", "SAFE", "COORDINATES", "SECRET", "SECURED",
     "EAST", "WEST", "NORTH", "SOUTH", "MEET", "NINE", "SEVEN", "ZERO", "FOUR",
-    "BATMAN", "ARKHAM", "PLAZA", "CLOCK", "CODE", "ROBBERY", "HEIST"
+    "SIGNAL", "SECTOR", "PACKET", "CLOCK", "CODE", "CIPHER", "DECODE"
   ];
   
   let wordPoints = 0;

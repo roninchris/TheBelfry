@@ -6,7 +6,7 @@ import { ToolOptions } from "../types";
  * Decoding is P = (C + K) mod 26.
  */
 export function variantBeaufortEncode(text: string, options?: ToolOptions): string {
-  const key = (options?.key as string) || "BATMAN";
+  const key = (options?.key as string) || "SECRET";
   if (!key) return text;
   const cleanKey = key.toUpperCase().replace(/[^A-Z]/g, "");
   if (!cleanKey) return text;
@@ -33,7 +33,7 @@ export function variantBeaufortEncode(text: string, options?: ToolOptions): stri
 }
 
 export function variantBeaufortDecode(text: string, options?: ToolOptions): string {
-  const key = (options?.key as string) || "BATMAN";
+  const key = (options?.key as string) || "SECRET";
   if (!key) return text;
   const cleanKey = key.toUpperCase().replace(/[^A-Z]/g, "");
   if (!cleanKey) return text;

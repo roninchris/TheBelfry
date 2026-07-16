@@ -57,8 +57,8 @@ function coordsToChar(coords: number, square: string[][]): string {
 }
 
 export function nihilistEncode(text: string, options?: ToolOptions): string {
-  const keyword = (options?.keyword as string) || "BATMAN";
-  const key = (options?.key as string) || "ROBIN";
+  const keyword = (options?.keyword as string) || "SECRET";
+  const key = (options?.key as string) || "CIPHER";
   const square = getPolybiusSquare(keyword);
 
   const plainCoords = text
@@ -84,8 +84,8 @@ export function nihilistEncode(text: string, options?: ToolOptions): string {
 }
 
 export function nihilistDecode(text: string, options?: ToolOptions): string {
-  const keyword = (options?.keyword as string) || "BATMAN";
-  const key = (options?.key as string) || "ROBIN";
+  const keyword = (options?.keyword as string) || "SECRET";
+  const key = (options?.key as string) || "CIPHER";
   const square = getPolybiusSquare(keyword);
 
   const keyCoords = key

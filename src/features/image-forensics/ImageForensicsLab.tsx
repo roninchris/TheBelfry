@@ -66,76 +66,7 @@ interface TacticalSample {
   badgeLabel: string;
 }
 
-const TACTICAL_SAMPLES: TacticalSample[] = [
-  {
-    id: "belfry-blueprint",
-    name: "classified_belfry_blueprint.png",
-    type: "success",
-    imageUrl: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&q=80&w=600",
-    dimensions: "2048 x 1536",
-    fileSize: "4.2 MB",
-    format: "PNG (Lossless)",
-    colors: "RGBA 32-bit",
-    entropy: 7.82,
-    camera: "WayneTech Sentinel Scan-Unit v4",
-    software: "SecureDraw Alpha build.88",
-    gps: "40.7128° N, 74.0060° W",
-    date: "2026-07-09 23:14:02",
-    lens: "Tactical Laser LIDAR scanner",
-    badgeLabel: "THREAT - UNKNOWN SIGNATURE RECOVERED"
-  },
-  {
-    id: "wayne-manor-thermal",
-    name: "wayne_manor_thermal.jpg",
-    type: "failure",
-    imageUrl: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=600",
-    dimensions: "1280 x 720",
-    fileSize: "824 KB",
-    format: "JPEG (Lossy)",
-    colors: "RGB 24-bit",
-    entropy: 3.12,
-    camera: "thermal_optic_flir_H2",
-    software: "FLIR Thermography OS 1.1",
-    gps: "40.7484° N, 73.9857° W",
-    date: "2026-07-10 04:11:15",
-    lens: "Germanium IR 35mm f/1.2",
-    badgeLabel: "SECURE - CLEAN CHANNELS"
-  },
-  {
-    id: "gotham-dock-manifest",
-    name: "gotham_dock_manifest.webp",
-    type: "success",
-    imageUrl: "https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&q=80&w=600",
-    dimensions: "1920 x 1080",
-    fileSize: "1.4 MB",
-    format: "WEBP (Hybrid)",
-    colors: "RGB 24-bit",
-    entropy: 7.94,
-    camera: "CCTV Gotham Harbor Cam 12",
-    software: "Harbor Security Rec v2.0",
-    gps: "40.6925° N, 74.0203° W",
-    date: "2026-07-08 01:55:40",
-    lens: "Vari-focal 12-120mm f/1.8",
-    badgeLabel: "HIGH RISK - CARRIER DETECTED"
-  },
-  {
-    id: "arkham-security-feed",
-    name: "arkham_corridor_infrared.png",
-    type: "success",
-    imageUrl: "https://images.unsplash.com/photo-1558441719-ff34b0524a24?auto=format&fit=crop&q=80&w=600",
-    dimensions: "1600 x 1200",
-    fileSize: "3.1 MB",
-    format: "PNG (Lossless)",
-    colors: "RGB 24-bit",
-    entropy: 7.65,
-    camera: "Arkham Secure Unit B4",
-    software: "Arkham Surveillance OS v9.4",
-    gps: "40.7829° N, 73.9654° W",
-    date: "2026-07-09 19:30:11",
-    lens: "9mm f/2.8 Ultra-wide",
-    badgeLabel: "HIGH RISK - CRYPTIC SIGNAL DETECTED"
-  }
-];
+const TACTICAL_SAMPLES: TacticalSample[] = [];
 
 // Helper to calculate Shannon entropy of individual RGB channels and return their values and average
 function calculateShannonEntropy(imageData: ImageData) {
@@ -691,7 +622,7 @@ export default function ImageForensicsLab() {
                 </h1>
               </div>
               <p className="text-[11px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
-                WayneTech Content Integrity Suite. Decode/extract-only — carves embedded files, decodes hidden LSB/DCT payloads, and analyzes entropy signatures.
+                Belfry Content Integrity Suite. Decode/extract-only — carves embedded files, decodes hidden LSB/DCT payloads, and analyzes entropy signatures.
               </p>
             </div>
             <Badge variant="cyan" size="xs">OFFLINE SECURE LAB</Badge>
@@ -801,7 +732,7 @@ export default function ImageForensicsLab() {
                 <button
                   disabled={isScanningLocal}
                   onClick={triggerScan}
-                  className="w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-orbitron uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
+                  className="hud-target w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-orbitron uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
                   style={{ clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)" }}
                 >
                   <Search className="w-4 h-4" />
@@ -817,46 +748,6 @@ export default function ImageForensicsLab() {
           )}
         </GlassPanel>
 
-        <GlassPanel className="p-4" clipSize="sm">
-          <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5">
-            <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
-              <Compass className="w-3.5 h-3.5 mr-2 text-cyan-primary" />
-              SELECT TACTICAL PRESET CARRIERS
-            </h3>
-            <p className="text-[10.5px] text-text-dim uppercase tracking-wider font-share">
-              Click to load pre-configured forensic targets (demo metadata only)
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            {TACTICAL_SAMPLES.map((sample) => (
-              <button
-                key={sample.id}
-                onClick={() => selectPresetSample(sample)}
-                className={`text-left p-2 border transition-all duration-200 group flex items-start space-x-2 ${
-                  selectedSampleId === sample.id
-                    ? "bg-cyan-primary/[0.04] border-cyan-primary"
-                    : "bg-bg-void/30 border-border-hairline/15 hover:border-cyan-primary/40 hover:bg-cyan-primary/[0.01]"
-                }`}
-              >
-                <div className="w-8 h-8 border border-border-hairline/25 shrink-0 overflow-hidden relative">
-                  <img src={sample.imageUrl} alt={sample.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                  <div className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${
-                    sample.type === "success" ? "bg-red-threat" : "bg-green-verified"
-                  }`} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-mono text-[10px] font-bold text-cyan-text truncate group-hover:text-white transition-colors uppercase">
-                    {sample.name.replace(".png", "").replace(".jpg", "").replace(".webp", "")}
-                  </h4>
-                  <p className="font-share text-[10px] text-text-dim uppercase tracking-wider mt-0.5">
-                    {sample.type === "success" ? "Threat Carrier" : "Clean Source"}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </GlassPanel>
       </div>
 
       {/* ================= RIGHT COLUMN: TABBED ANALYSIS SIDEBAR ================= */}
@@ -1057,7 +948,7 @@ export default function ImageForensicsLab() {
                   STEGHIDE / OUTGUESS EXTRACTION
                 </h3>
                 <p className="font-share text-[10.5px] text-text-dim uppercase leading-relaxed">
-                  Extraction only, adapted from the public algorithms (see WayneTech Advisory below for fidelity caveats). Steghide supports JPEG/BMP/WAV covers; OutGuess needs a JPEG.
+                  Extraction only, adapted from the public algorithms (see Belfry Advisory below for fidelity caveats). Steghide supports JPEG/BMP/WAV covers; OutGuess needs a JPEG.
                 </p>
               </div>
 
@@ -1379,7 +1270,7 @@ export default function ImageForensicsLab() {
               <AlertTriangle className="w-3.5 h-3.5 text-red-threat" />
             </div>
             <div className="space-y-1">
-              <h4 className="font-orbitron text-[10.5px] font-black text-red-threat uppercase tracking-widest">WAYNETECH ADVISORY</h4>
+              <h4 className="font-orbitron text-[10.5px] font-black text-red-threat uppercase tracking-widest">BELFRY ADVISORY</h4>
               <p className="font-share text-[10px] text-text-dim leading-relaxed uppercase tracking-tighter">
                 Steghide's JPEG/AES-256/CBC path has been verified against a real steghide-embedded file. Other cover formats (BMP/WAV), cipher modes, and OutGuess extraction are adapted from the public algorithms but not yet verified against reference binaries — treat those results as best-effort. Analysis should be performed in an isolated sandbox; hidden payloads may contain malicious content.
               </p>

@@ -26,7 +26,7 @@ export default function OfflineModulePanel({ moduleName, description }: OfflineM
     }, 800);
 
     setTimeout(() => {
-      addLog(`HANDSHAKE COMPLETE: MODULE IS READY BUT GOTHAM ROUTE IS CURRENTLY BLOCKED`, "warning", "SYS");
+      addLog(`HANDSHAKE COMPLETE: MODULE IS READY BUT UPLINK ROUTE IS CURRENTLY BLOCKED`, "warning", "SYS");
       setBooting(false);
     }, 1200);
   };

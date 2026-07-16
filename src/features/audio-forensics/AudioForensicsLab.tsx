@@ -58,85 +58,9 @@ interface AudioSample {
   analysisSummary: string;
 }
 
-const TACTICAL_AUDIO_SAMPLES: AudioSample[] = [
-  {
-    id: "morse-intercept",
-    name: "gotham_ridge_morse.wav",
-    type: "morse",
-    fileSize: "1.8 MB",
-    duration: 12.4,
-    format: "WAV (Uncompressed)",
-    bitrate: "1411 kbps",
-    spectralCentroid: "1250 Hz",
-    rmsEnergy: "-14.2 dB",
-    zeroCrossing: "380 crossings/s",
-    badgeLabel: "HIGH FREQUENCY AUDIO INTERCEPT",
-    revealedSecret: "RECOVERED MORSE TELEMETRY: 'S-O-S- -A-R-K-H-A-M- -S-E-C-T-O-R- -9'",
-    analysisSummary: "Continuous wave carrier tone pulsing at 1.2 kHz. Isolated morse sequence reads: SOS ARKHAM SECTOR 9. Signal likely originated from a low-power backup radio beacon."
-  },
-  {
-    id: "asylum-reversal",
-    name: "asylum_corridor_echo_rev.mp3",
-    type: "reversed",
-    fileSize: "920 KB",
-    duration: 8.5,
-    format: "MP3 (LAME High)",
-    bitrate: "320 kbps",
-    spectralCentroid: "850 Hz",
-    rmsEnergy: "-22.1 dB",
-    zeroCrossing: "620 crossings/s",
-    badgeLabel: "REVERSED VOCAL FREQUENCY",
-    revealedSecret: "REVERSED SPEECH DEMODULATION: 'THE PASSWORD IS REDISTRIBUTE'",
-    analysisSummary: "Vocal tract acoustic resonance envelopes detected backward in time. Reversing playback reveals a whispered passphrase: 'THE PASSWORD IS REDISTRIBUTE'."
-  },
-  {
-    id: "keypad-dtmf",
-    name: "dial_pad_feedback.ogg",
-    type: "dtmf",
-    fileSize: "612 KB",
-    duration: 6.2,
-    format: "OGG (Vorbis)",
-    bitrate: "192 kbps",
-    spectralCentroid: "1450 Hz",
-    rmsEnergy: "-9.8 dB",
-    zeroCrossing: "980 crossings/s",
-    badgeLabel: "DTMF TELEPHONY HARMONICS",
-    revealedSecret: "DTMF FREQUENCY MAP DETECTED: '3 - 5 - 2 - 9 - *'",
-    analysisSummary: "Dual-Tone Multi-Frequency (DTMF) keypad dial feedback. Frequency pairs mapped to 697Hz/1477Hz, 770Hz/1336Hz, etc. Decodes to sequence: 3529*."
-  },
-  {
-    id: "ambient-sewer",
-    name: "sewer_grate_vent_fan.wav",
-    type: "noise",
-    fileSize: "3.4 MB",
-    duration: 24.0,
-    format: "WAV (Uncompressed)",
-    bitrate: "1411 kbps",
-    spectralCentroid: "450 Hz",
-    rmsEnergy: "-28.4 dB",
-    zeroCrossing: "140 crossings/s",
-    badgeLabel: "LOW FREQUENCY AMBIENCE",
-    revealedSecret: "No high-frequency modulated signals or dual-tone markers found. Spectrum contains standard high-amplitude brown noise corresponding to air vent exhaust turbine.",
-    analysisSummary: "Clean background thermal flow. No steganography or modulated intelligence detected. Consistent with typical infrastructure ventilation acoustics."
-  },
-  {
-    id: "forensic-midi-carrier",
-    name: "gotham_bell_tower_beacon.mid",
-    type: "noise",
-    fileSize: "164 B",
-    duration: 8.0,
-    format: "SMF (Standard MIDI)",
-    bitrate: "--",
-    spectralCentroid: "N/A",
-    rmsEnergy: "N/A",
-    zeroCrossing: "N/A",
-    badgeLabel: "FORENSIC BINARY MIDI CODE",
-    revealedSecret: "FORENSIC NOTES SEQUENCED: C4 - E4 - G4 - C5 (CODE INTERCEPT)",
-    analysisSummary: "Decoded binary MThd/MTrk events. Sequential MIDI note events form a repetitive frequency-modulated sequence. Translates to pitch sequence: C4, E4, G4, C5."
-  }
-];
+const TACTICAL_AUDIO_SAMPLES: AudioSample[] = [];
 
-// In-memory SMF MIDI file generator for Gotham ARG preset
+// In-memory SMF MIDI file generator for the forensic beacon preset
 const generateForensicMidiBuffer = (): ArrayBuffer => {
   const bytes = new Uint8Array([
     // MThd Header Chunk
@@ -634,8 +558,8 @@ export default function AudioForensicsLab() {
         rmsEnergy: decodedMetadata ? decodedMetadata.rmsEnergy : "Calculating...",
         zeroCrossing: decodedMetadata ? decodedMetadata.zeroCrossing : "Calculating...",
         badgeLabel: decodedMetadata ? decodedMetadata.badgeLabel : "ANALYZED UPLOAD CAPTURE",
-        revealedSecret: decodedMetadata ? decodedMetadata.revealedSecret : "RECOVERED CARRIER SIGNAL: 'SECURE_WAYNE_NET_TRANS_OK'",
-        analysisSummary: decodedMetadata ? decodedMetadata.analysisSummary : "Custom audio file analysis. Embedded data detected in spectral bins: SECURE_WAYNE_NET_TRANS_OK. Signal characteristics match secure radio-link standards."
+        revealedSecret: decodedMetadata ? decodedMetadata.revealedSecret : "RECOVERED CARRIER SIGNAL: 'SECURE_NET_TRANS_OK'",
+        analysisSummary: decodedMetadata ? decodedMetadata.analysisSummary : "Custom audio file analysis. Embedded data detected in spectral bins: SECURE_NET_TRANS_OK. Signal characteristics match secure radio-link standards."
       };
     }
     return null;
@@ -1480,13 +1404,13 @@ export default function AudioForensicsLab() {
       const midiBuffer = generateForensicMidiBuffer();
       const parsed = parseMidiFile(midiBuffer);
       setParsedMidi(parsed);
-      setMidiFileName("gotham_bell_tower_beacon.mid");
+      setMidiFileName("bell_tower_beacon.mid");
       setActiveTab("midi");
-      addLog("ACQUIRED RECORD: GOTHAM BELL TOWER BEACON (FORENSIC MIDI)", "info", "SYS");
+      addLog("ACQUIRED RECORD: BELL TOWER BEACON (FORENSIC MIDI)", "info", "SYS");
       return;
     }
 
-    addLog(`ACQUIRED GOTHAM TELEMETRY RECORD: ${TACTICAL_AUDIO_SAMPLES.find(s => s.id === sampleId)?.name}`, "info", "SYS");
+    addLog(`ACQUIRED TELEMETRY RECORD: ${TACTICAL_AUDIO_SAMPLES.find(s => s.id === sampleId)?.name}`, "info", "SYS");
   };
 
   // Synchronize preset audio buffer generation
@@ -1497,8 +1421,8 @@ export default function AudioForensicsLab() {
       let name = "";
       let size = 1000000; // dummy size for preset
       if (selectedSampleId === "morse-intercept") {
-        buffer = generateMorseAudio("SOS ARKHAM SECTOR 9", sampleRate, 12.4);
-        name = "gotham_ridge_morse.wav";
+        buffer = generateMorseAudio("SOS SECTOR NINE", sampleRate, 12.4);
+        name = "sector_ridge_morse.wav";
         size = 1800000;
       } else if (selectedSampleId === "keypad-dtmf") {
         buffer = generateDTMFAudio(["3", "5", "2", "9", "*"], sampleRate, 6.2);
@@ -1590,7 +1514,7 @@ ${currentSample.analysisSummary}`;
               </h1>
             </div>
             <p className="text-[11px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
-              WayneTech Acoustic Analysis Lab. Isolates audio frequencies, deciphers Morse radio intercepts, maps DTMF dial codes, and reconstructs reversed vocal echoes.
+              Belfry Acoustic Analysis Lab. Isolates audio frequencies, deciphers Morse radio intercepts, maps DTMF dial codes, and reconstructs reversed vocal echoes.
             </p>
           </div>
           <Badge variant="cyan" size="xs" className="shrink-0">
@@ -1724,15 +1648,7 @@ ${currentSample.analysisSummary}`;
                 </>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center space-y-3 py-8 text-center h-[140px]">
-                  <span className="text-text-dim uppercase text-[10.5px] tracking-widest">Awaiting MIDI telemetry stream decoder...</span>
-                  <button
-                    onClick={() => {
-                      loadPreset("forensic-midi-carrier");
-                    }}
-                    className="px-3 py-1.5 border border-cyan-primary/30 text-cyan-text bg-cyan-primary/5 hover:bg-cyan-primary hover:text-bg-void transition-all uppercase font-bold text-[10.5px] tracking-wider cursor-pointer"
-                  >
-                    Load Forensic MIDI Preset
-                  </button>
+                  <span className="text-text-dim uppercase text-[10.5px] tracking-widest">Awaiting MIDI telemetry stream decoder — upload a .mid file to begin...</span>
                 </div>
               )}
             </div>
@@ -1861,7 +1777,7 @@ ${currentSample.analysisSummary}`;
             <button
               disabled={!currentSample || isScanning}
               onClick={triggerSpectralScan}
-              className="w-full py-2 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-[11px] font-black tracking-widest font-orbitron uppercase disabled:opacity-35 disabled:pointer-events-none flex items-center justify-center space-x-2"
+              className="hud-target w-full py-2 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-[11px] font-black tracking-widest font-orbitron uppercase disabled:opacity-35 disabled:pointer-events-none flex items-center justify-center space-x-2"
               style={{ clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)" }}
             >
               <Radio className={`w-3.5 h-3.5 text-bg-void ${isScanning ? 'animate-radar-sweep' : 'animate-hex-pulse-flicker'}`} />
@@ -1998,11 +1914,11 @@ ${currentSample.analysisSummary}`;
                 SIGNAL ARCHIVE & INPUT PORT
               </h3>
               <p className="text-[10.5px] text-text-dim uppercase tracking-wider font-share">
-                Upload local raw audio or mount WayneTech micro-relay radio intercepts to execute sweeps
+                Upload local raw audio or MIDI to execute forensic spectral sweeps
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 items-stretch">
+            <div className="grid grid-cols-1 gap-4 flex-1 items-stretch">
               
               {/* Dashed Drag/Drop Box */}
               <div 
@@ -2041,33 +1957,6 @@ ${currentSample.analysisSummary}`;
                 </span>
               </div>
 
-              {/* Radio Presets Grid Column */}
-              <div className="space-y-1.5 overflow-y-auto max-h-[160px] pr-1">
-                {TACTICAL_AUDIO_SAMPLES.map((sample) => (
-                  <button
-                    key={sample.id}
-                    onClick={() => loadPreset(sample.id)}
-                    className={`w-full text-left p-1.5 border transition-all duration-200 group flex items-start space-x-2 ${
-                      selectedSampleId === sample.id 
-                        ? "bg-cyan-primary/[0.04] border-cyan-primary" 
-                        : "bg-bg-void/30 border-border-hairline/15 hover:border-cyan-primary/40 hover:bg-cyan-primary/[0.01]"
-                    }`}
-                  >
-                    <div className="w-6 h-6 border border-border-hairline/25 shrink-0 flex items-center justify-center bg-bg-void">
-                      <Mic className="w-3.5 h-3.5 text-cyan-primary/60 group-hover:text-cyan-primary transition-colors" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-mono text-[10px] font-bold text-cyan-text truncate group-hover:text-white transition-colors uppercase">
-                        {sample.name}
-                      </h4>
-                      <p className="font-share text-[10px] text-text-dim uppercase tracking-wider">
-                        {sample.duration}s • {sample.format.split(" ")[0]}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
             </div>
 
             {/* Current Active Info Bar */}
@@ -2088,8 +1977,8 @@ ${currentSample.analysisSummary}`;
                     onClick={() => {
                       playPinClick();
                       setActiveFile(null);
-                      setSelectedSampleId(TACTICAL_AUDIO_SAMPLES[0].id);
-                      setScanComplete(true);
+                      setSelectedSampleId(null);
+                      setScanComplete(false);
                     }}
                     className="hover:text-red-threat text-text-dim uppercase transition-colors flex items-center font-bold"
                   >

@@ -32,9 +32,9 @@ export function beaufortCipher(text: string, key: string): string {
 }
 
 export function beaufortEncode(text: string, options?: ToolOptions): string {
-  return beaufortCipher(text, (options?.key as string) || "BATMAN");
+  return beaufortCipher(text, (options?.key as string) || "SECRET");
 }
 
 export function beaufortDecode(text: string, options?: ToolOptions): string {
-  return beaufortCipher(text, (options?.key as string) || "BATMAN");
+  return beaufortCipher(text, (options?.key as string) || "SECRET");
 }

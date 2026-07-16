@@ -25,7 +25,9 @@ import { useEffect, useState } from "react";
 
 export default function App() {
   const currentModule = useAppStore((state) => state.currentModule);
-  const [hasBooted, setHasBooted] = useState(false);
+  // Boot plays by default; `?skipboot` bypasses it (dev/verification aid — no effect for normal users).
+  const skipBoot = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("skipboot");
+  const [hasBooted, setHasBooted] = useState(skipBoot);
 
   useEffect(() => {
     preloadSounds();
@@ -96,26 +98,33 @@ export default function App() {
       </AnimatePresence>
 
       <MainLayout>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentModule}
-            initial={{ opacity: 0, clipPath: "inset(0 0 100% 0)" }}
-            animate={{ opacity: 1, clipPath: "inset(0 0 0% 0)" }}
-            exit={{ opacity: 0, clipPath: "inset(100% 0 0 0)" }}
-            onAnimationComplete={() => {
-              if (hasBooted) playLoadTab(currentModule);
-            }}
-            transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full h-full overflow-hidden"
-          >
-            {/* Decrypt band sweeps down over the incoming module as it authenticates & resolves */}
-            <div key={`band-${currentModule}`} className="decrypt-band z-50" style={{ height: "35%" }} />
-            {/* Brief hairline scan-line trailing the reveal */}
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-b from-cyan-primary/95 to-transparent opacity-80 pointer-events-none z-50 animate-scanline-sweep" />
-
+        {skipBoot ? (
+          // Dev/verification path: instant module swap, no transition animation.
+          <div key={currentModule} className="relative w-full h-full overflow-hidden">
             {renderModule()}
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentModule}
+              initial={{ opacity: 0, clipPath: "inset(0 0 100% 0)" }}
+              animate={{ opacity: 1, clipPath: "inset(0 0 0% 0)" }}
+              exit={{ opacity: 0, clipPath: "inset(100% 0 0 0)" }}
+              onAnimationComplete={() => {
+                if (hasBooted) playLoadTab(currentModule);
+              }}
+              transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full h-full overflow-hidden"
+            >
+              {/* Decrypt band sweeps down over the incoming module as it authenticates & resolves */}
+              <div key={`band-${currentModule}`} className="decrypt-band z-50" style={{ height: "35%" }} />
+              {/* Brief hairline scan-line trailing the reveal */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-b from-cyan-primary/95 to-transparent opacity-80 pointer-events-none z-50 animate-scanline-sweep" />
+
+              {renderModule()}
+            </motion.div>
+          </AnimatePresence>
+        )}
       </MainLayout>
     </>
   );

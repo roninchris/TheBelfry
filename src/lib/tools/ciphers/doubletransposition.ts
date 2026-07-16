@@ -75,16 +75,16 @@ function columnarDecode(text: string, key: string): string {
 }
 
 export function doubleTranspositionEncode(text: string, options?: ToolOptions): string {
-  const key1 = (options?.key1 as string) || "BATMAN";
-  const key2 = (options?.key2 as string) || "ROBIN";
+  const key1 = (options?.key1 as string) || "SECRET";
+  const key2 = (options?.key2 as string) || "CIPHER";
   
   const firstPass = columnarEncode(text, key1);
   return columnarEncode(firstPass, key2);
 }
 
 export function doubleTranspositionDecode(text: string, options?: ToolOptions): string {
-  const key1 = (options?.key1 as string) || "BATMAN";
-  const key2 = (options?.key2 as string) || "ROBIN";
+  const key1 = (options?.key1 as string) || "SECRET";
+  const key2 = (options?.key2 as string) || "CIPHER";
   
   const firstPass = columnarDecode(text, key2);
   return columnarDecode(firstPass, key1);

@@ -115,7 +115,7 @@ export default function HexCluster() {
       <div className="w-full border-b border-border-hairline/20 pb-1 mb-2.5 flex justify-between items-center">
         <span className="font-orbitron text-[11px] font-black text-cyan-primary tracking-widest uppercase flex items-center">
           <span className="w-1.5 h-1.5 bg-cyan-primary mr-1.5 inline-block" />
-          WAYNETECH SYNERGY GRID
+          BELFRY SYNERGY GRID
         </span>
         <span className="font-share text-[10px] text-text-dim">SYS: ACTIVE METRICS</span>
       </div>

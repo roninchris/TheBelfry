@@ -197,60 +197,51 @@ export default function EncodingLab() {
     }
   }, [bigIntInput, bigIntMode]);
 
-  // Simultaneous translations
-  const base64Val = useMemo(() => {
-    const tool = getTool("base64")!;
-    return asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
-  }, [inputText, isDecodeMode]);
+  // Crash-proof simultaneous translations.
+  // Some registry decoders throw on invalid input (e.g. base62 on a space), and
+  // the big-integer radix encoders (base58/62/85) are O(n^2). Both are guarded
+  // here so a long or messy paste can never freeze or unmount the app.
+  const HEAVY_RADIX = useMemo(() => new Set(["base58", "base62", "base85"]), []);
+  const HEAVY_MAX = 8192;
 
-  const hexVal = useMemo(() => {
-    const tool = getTool("hex")!;
-    return asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
-  }, [inputText, isDecodeMode]);
+  const encodedValues = useMemo(() => {
+    const ids = [
+      "base32", "base64", "hex", "binary", "ascii", "morse", "url", "base58",
+      "base85", "braille", "base62", "base100", "baudot", "tapcode",
+      "phonekeypad", "piglatin", "geekcode"
+    ];
+    const out: Record<string, string> = {};
+    for (const id of ids) {
+      const tool = getTool(id);
+      if (!tool || !inputText) {
+        out[id] = "";
+        continue;
+      }
+      if (HEAVY_RADIX.has(id) && inputText.length > HEAVY_MAX) {
+        out[id] = `— INPUT TOO LARGE FOR RADIX ENCODER (${inputText.length} B) —`;
+        continue;
+      }
+      try {
+        out[id] = asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
+      } catch (e: any) {
+        out[id] = "ERROR: " + (e?.message || String(e));
+      }
+    }
+    return out;
+  }, [inputText, isDecodeMode, HEAVY_RADIX]);
 
-  const binaryVal = useMemo(() => {
-    const tool = getTool("binary")!;
-    return asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
-  }, [inputText, isDecodeMode]);
-
-  const asciiVal = useMemo(() => {
-    const tool = getTool("ascii")!;
-    return asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
-  }, [inputText, isDecodeMode]);
-
-  const morseVal = useMemo(() => {
-    const tool = getTool("morse")!;
-    return asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
-  }, [inputText, isDecodeMode]);
-
-  const urlVal = useMemo(() => {
-    const tool = getTool("url")!;
-    return asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
-  }, [inputText, isDecodeMode]);
-
-  const base32Val = useMemo(() => {
-    const tool = getTool("base32");
-    if (!tool) return "";
-    return asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
-  }, [inputText, isDecodeMode]);
-
-  const base58Val = useMemo(() => {
-    const tool = getTool("base58");
-    if (!tool) return "";
-    return asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
-  }, [inputText, isDecodeMode]);
-
-  const base85Val = useMemo(() => {
-    const tool = getTool("base85");
-    if (!tool) return "";
-    return asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
-  }, [inputText, isDecodeMode]);
-
-  const brailleVal = useMemo(() => {
-    const tool = getTool("braille");
-    if (!tool) return "";
-    return asText(isDecodeMode ? tool.decode(inputText) : tool.encode(inputText));
-  }, [inputText, isDecodeMode]);
+  // Preserve the original variable names consumed by the breakout rows.
+  const base64Val = encodedValues.base64;
+  const hexVal = encodedValues.hex;
+  const binaryVal = encodedValues.binary;
+  const asciiVal = encodedValues.ascii;
+  const morseVal = encodedValues.morse;
+  const urlVal = encodedValues.url;
+  const base32Val = encodedValues.base32;
+  const base58Val = encodedValues.base58;
+  const base85Val = encodedValues.base85;
+  const brailleVal = encodedValues.braille;
+  const extraEncodingVals = encodedValues;
 
   // Handle Clipboard Copy for rows
   const copyRow = (key: string, val: string) => {
@@ -266,7 +257,12 @@ export default function EncodingLab() {
       setInputText(value);
     } else {
       const tool = getTool(type);
-      const decoded = tool ? asText(tool.decode(value)) : "";
+      let decoded = "";
+      try {
+        decoded = tool ? asText(tool.decode(value)) : "";
+      } catch {
+        decoded = "";
+      }
       if (decoded && !decoded.startsWith("ERROR")) {
         setInputText(decoded);
       } else {
@@ -283,12 +279,19 @@ export default function EncodingLab() {
 
   const pipelineOutput = useMemo(() => {
     let current = inputText;
-    for (const layer of pipelineLayers) {
-      const toolId = pipelineLayerIds[layer];
-      const tool = toolId ? getTool(toolId) : undefined;
-      if (tool) {
-        current = asText(isPipelineDecode ? tool.decode(current) : tool.encode(current));
+    try {
+      for (const layer of pipelineLayers) {
+        const toolId = pipelineLayerIds[layer];
+        const tool = toolId ? getTool(toolId) : undefined;
+        if (tool) {
+          if (current.length > 8192 && ["base58", "base62", "base85"].includes(toolId)) {
+            return `— INPUT TOO LARGE FOR RADIX STAGE (${current.length} B) —`;
+          }
+          current = asText(isPipelineDecode ? tool.decode(current) : tool.encode(current));
+        }
       }
+    } catch (e: any) {
+      return "ERROR: " + (e?.message || String(e));
     }
     return current;
   }, [inputText, pipelineLayers, isPipelineDecode]);
@@ -553,11 +556,53 @@ export default function EncodingLab() {
                   description: isDecodeMode ? "Decode hex-escaped percent character text" : "Hex-safe character encodings"
                 },
                 {
-                  key: "base32",
-                  label: isDecodeMode ? "BASE32 DEMUX DECODER (RFC 4648)" : "BASE32 DEMUX CHANNEL (RFC 4648)",
-                  value: base32Val,
-                  badge: "B32",
-                  description: isDecodeMode ? "Decode radix-32 stream back to text" : "Radix-32 character translation"
+                  key: "base62",
+                  label: isDecodeMode ? "BASE62 ALPHANUMERIC DECODER" : "BASE62 ALPHANUMERIC ENCODER",
+                  value: extraEncodingVals.base62,
+                  badge: "B62",
+                  description: isDecodeMode ? "Decode radix-62 alphanumeric stream to text" : "Radix-62 alphanumeric representation"
+                },
+                {
+                  key: "baudot",
+                  label: isDecodeMode ? "BAUDOT ITA2 TELEPRINTER DECODER" : "BAUDOT ITA2 TELEPRINTER CODE",
+                  value: extraEncodingVals.baudot,
+                  badge: "BAUDOT",
+                  description: isDecodeMode ? "Decode 5-bit teleprinter code to text" : "5-bit ITA2 teleprinter representation"
+                },
+                {
+                  key: "tapcode",
+                  label: isDecodeMode ? "TAP CODE KNOCK DECODER" : "TAP CODE POLYBIUS KNOCKS",
+                  value: extraEncodingVals.tapcode,
+                  badge: "TAP",
+                  description: isDecodeMode ? "Decode Polybius knock grid to text" : "Polybius-square knock representation"
+                },
+                {
+                  key: "phonekeypad",
+                  label: isDecodeMode ? "MULTI-TAP KEYPAD DECODER" : "MULTI-TAP PHONE KEYPAD",
+                  value: extraEncodingVals.phonekeypad,
+                  badge: "KEYPAD",
+                  description: isDecodeMode ? "Decode T9-style keypad presses to text" : "Multi-tap numeric keypad representation"
+                },
+                {
+                  key: "piglatin",
+                  label: isDecodeMode ? "PIG LATIN WORDPLAY DECODER" : "PIG LATIN WORDPLAY ENCODER",
+                  value: extraEncodingVals.piglatin,
+                  badge: "PIGLTN",
+                  description: isDecodeMode ? "Reverse Pig Latin wordplay to text" : "Pig Latin syllable-shift wordplay"
+                },
+                {
+                  key: "base100",
+                  label: isDecodeMode ? "BASE100 EMOJI DECODER" : "BASE100 EMOJI ENCODER",
+                  value: extraEncodingVals.base100,
+                  badge: "B100",
+                  description: isDecodeMode ? "Decode emoji byte stream to text" : "Emoji byte-per-character representation"
+                },
+                {
+                  key: "geekcode",
+                  label: isDecodeMode ? "GEEK CODE BLOCK DECODER" : "GEEK CODE BLOCK ENCODER",
+                  value: extraEncodingVals.geekcode,
+                  badge: "GEEK",
+                  description: isDecodeMode ? "Decode geek-code block to text" : "Classic geek-code block representation"
                 },
                 {
                   key: "base58",
@@ -589,8 +634,8 @@ export default function EncodingLab() {
 
                   {/* Translator Node Port */}
                   <div
-                    className="flex-1 bg-bg-void/50 border border-border-hairline/15 p-2.5 space-y-1.5 relative hover:border-cyan-dim/30 hover:bg-bg-void/65 transition-all duration-300"
-                    style={{ clipPath: "polygon(0 0, 100% 0, 99% 100%, 0 100%)" }}
+                    className="hud-target flex-1 bg-bg-void/50 border border-border-hairline/15 p-2.5 space-y-1.5 relative hover:border-cyan-dim/30 hover:bg-bg-void/65 transition-all duration-300"
+                    style={{ clipPath: "polygon(0 0, 100% 0, 99% 100%, 0 100%)", ["--reticle-size" as any]: "7px" }}
                   >
                     {/* Header label */}
                     <div className="flex justify-between items-center text-[11px]">

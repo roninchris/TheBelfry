@@ -74,8 +74,8 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "Wrap around using modulo 26 if the index exceeds alphabet bounds.",
       "Convert the new numeric index back to its corresponding alphabet character."
     ],
-    exampleInput: "BATMAN",
-    exampleOutput: "EDWPDQ (Shift: 3)",
+    exampleInput: "SIGNAL",
+    exampleOutput: "VLJQDO (Shift: 3)",
     securityClassification: "HISTORICAL",
     forensicValue: "Weakest historic cipher. Cracked instantaneously via frequency analysis or automated 25-key brute-force sweeps."
   },
@@ -93,8 +93,8 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "Non-alphabetic characters (numbers, spaces, punctuation) are bypassed unmodified.",
       "Maintain key alignment indexing only when processing valid alphabetic characters."
     ],
-    exampleInput: "GOTHAM",
-    exampleOutput: "HPTHBM (Key: BATMAN)",
+    exampleInput: "ACCESS",
+    exampleOutput: "SGEVWL (Key: SECRET)",
     securityClassification: "LEGACY",
     forensicValue: "Resistant to simple single-letter frequency analysis. Analyzed forensically by finding repeating letter blocks to estimate key length (Kasiski examination), followed by split frequency cracking."
   },
@@ -129,8 +129,8 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "Preserve case casing: lowercase maps to lowercase, uppercase to uppercase.",
       "Ignore any numeric values or symbol hashes."
     ],
-    exampleInput: "WAYNE",
-    exampleOutput: "DZBKV",
+    exampleInput: "BEACON",
+    exampleOutput: "YVZXLM",
     securityClassification: "HISTORICAL",
     forensicValue: "Extremely simple substitution. Frequently deployed in ARG puzzles to obfuscate secondary clues or hidden location parameters."
   },
@@ -149,7 +149,7 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "To recover, XOR the resulting stream with the identical key byte-array."
     ],
     exampleInput: "HELLO",
-    exampleOutput: "XOR bytes or hex strings (Key: BATMAN)",
+    exampleOutput: "XOR bytes or hex strings (Key: SECRET)",
     securityClassification: "STANDARD",
     forensicValue: "The mathematical backbone of modern cryptography. Single-byte XOR is cracked by checking all 256 keys. Repeating keys are decoded using Hamming distance calculations or index of coincidence."
   },
@@ -166,8 +166,8 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "Delimit consecutive numbers with a hyphen (-) or space to maintain sequence bounds.",
       "Keep non-alphabetic elements as literal spacers or skip them altogether."
     ],
-    exampleInput: "ROBIN",
-    exampleOutput: "18-15-2-9-14",
+    exampleInput: "CIPHER",
+    exampleOutput: "3-9-16-8-5-18",
     securityClassification: "HISTORICAL",
     forensicValue: "Instantly identifiable by its numeric ranges (rarely exceeding 26). Easily decoded manually or via basic substitution script filters."
   },
@@ -185,8 +185,8 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "To decrypt, evaluate: D(c) = a^-1 * (c - b) mod 26, where a^-1 is the modular inverse.",
       "Re-translate the numbers back to alphabetic letters."
     ],
-    exampleInput: "GOTHAM",
-    exampleOutput: "UZBHAW (a: 5, b: 8)",
+    exampleInput: "PACKET",
+    exampleOutput: "FISGCZ (a: 5, b: 8)",
     securityClassification: "LEGACY",
     forensicValue: "Slightly more complex than Caesar Shift, but limited to only 312 possible keys (12 valid multipliers * 26 offsets). Fully cracked via brute force in microseconds."
   },
@@ -221,8 +221,8 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "To hide the code, format 'A's and 'B's using two distinct font styles, colors, or casing in a cover text.",
       "Decode by converting 5-character blocks of cover styles back to 'A's and 'B's, then mapping to letters."
     ],
-    exampleInput: "WAYNE",
-    exampleOutput: "BABBA AAAAA BABBA ABBAB AABAA",
+    exampleInput: "SECURE",
+    exampleOutput: "BAABA AABAA AAABA BABAA BAAAB AABAA",
     securityClassification: "HISTORICAL",
     forensicValue: "Steganographic in nature. Forensic analysis isolates recurring 5-character clusters or binary contrasts in metadata to expose the underlying carrier channel."
   },
@@ -239,8 +239,8 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "To encode, locate the letter, and write down its row index followed by its column index.",
       "To decode, divide the coordinate pairs, and look up the grid cell at (Row, Col)."
     ],
-    exampleInput: "BATMAN",
-    exampleOutput: "12 11 44 32 11 33",
+    exampleInput: "VECTOR",
+    exampleOutput: "51 15 13 44 34 42",
     securityClassification: "HISTORICAL",
     forensicValue: "Easily spotted by its strictly numeric, paired coordinate values (numbers 1-5 only). Often combined with other transposition steps (like ADFGVX) to increase security."
   },
@@ -257,7 +257,7 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "If the resulting value is greater than 126, wrap it around by subtracting 94.",
       "Convert the modified ASCII decimal back to its character representation."
     ],
-    exampleInput: "WayneTech",
+    exampleInput: "Belfry",
     exampleOutput: "(2J?6%649",
     securityClassification: "LEGACY",
     forensicValue: "Pure obfuscation. Used extensively in email headers, web scrapers, and obfuscated shell script payloads to evade primitive keyword filters."
@@ -275,8 +275,8 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "Map each 5-bit block to its matching index on the Base32 alphabet (A-Z, 2-7).",
       "Add '=' padding characters at the end to satisfy standard 8-character block alignment."
     ],
-    exampleInput: "GOTHAM",
-    exampleOutput: "MZXW6Z3B",
+    exampleInput: "STREAM",
+    exampleOutput: "KNKFERKBJU======",
     securityClassification: "BINARY_STREAM",
     forensicValue: "Widely used in authentication protocols (such as Google Authenticator MFA secret keys) and offline physical radio codes because of its case-insensitive clarity."
   },
@@ -293,8 +293,8 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
       "Look up each 6-bit segment value on the index chart (0-63 maps to A-Z, a-z, 0-9, +, /).",
       "Pad the remaining spaces with '=' if the input length is not a multiple of 3 bytes."
     ],
-    exampleInput: "ALFRED",
-    exampleOutput: "QUxGUkVE",
+    exampleInput: "DECODE",
+    exampleOutput: "REVDT0RF",
     securityClassification: "BINARY_STREAM",
     forensicValue: "Ubiquitous in computing. Forensically vital for decoding embedded attachments, images, and obfuscated malware payloads packed inside text scripts."
   },
@@ -395,10 +395,10 @@ export default function ToolDatabase() {
   const [selectedToolId, setSelectedToolId] = useState<string>("caesar");
 
   // Interactive Sandbox testing states
-  const [sandboxInput, setSandboxInput] = useState("GOTHAM FORENSICS");
+  const [sandboxInput, setSandboxInput] = useState("SECTOR FORENSICS");
   const [sandboxDirection, setSandboxDirection] = useState<"encode" | "decode">("encode");
   const [sandboxShift, setSandboxShift] = useState(3);
-  const [sandboxKey, setSandboxKey] = useState("BATMAN");
+  const [sandboxKey, setSandboxKey] = useState("SECRET");
   const [copied, setCopied] = useState(false);
 
   // Filter tools based on search and category
@@ -481,7 +481,7 @@ export default function ToolDatabase() {
                 </h1>
               </div>
               <p className="text-[11px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
-                WayneTech Forensic Databank. A comprehensive reference tracking historical and standard cryptography ciphers, binary stream encoders, and transposition algorithms.
+                Belfry Forensic Databank. A comprehensive reference tracking historical and standard cryptography ciphers, binary stream encoders, and transposition algorithms.
               </p>
             </div>
             <div className="flex items-center space-x-2 shrink-0">
@@ -569,8 +569,8 @@ export default function ToolDatabase() {
           </div>
         </GlassPanel>
 
-        {/* Dynamic Nodes Grid (Bento/Hex Theme matching WayneTech Upgrade Grid) */}
-        <GlassPanel className="p-4 flex-1 flex flex-col justify-between min-h-[460px]" clipSize="md">
+        {/* Dynamic Nodes Grid (Bento/Hex Theme matching Belfry Upgrade Grid) */}
+        <GlassPanel className="panel-console p-4 flex-1 flex flex-col justify-between min-h-[460px]" clipSize="md">
           <div className="border-b border-border-hairline/20 pb-2 mb-4 flex justify-between items-center">
             <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text uppercase flex items-center space-x-2">
               <Layers className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
@@ -634,7 +634,7 @@ export default function ToolDatabase() {
                       }}
                       onClick={() => selectNode(tool.id)}
                       onMouseEnter={playHoverEvidence}
-                      className={`relative cursor-pointer transition-all duration-250 border p-3 flex flex-col justify-between group ${
+                      className={`hud-target ${isCipher ? "hud-target-amber" : ""} relative cursor-pointer transition-all duration-250 border p-3 flex flex-col justify-between group ${
                         isSelected
                           ? isCipher
                             ? "bg-amber-alert/10 border-amber-alert shadow-[0_0_12px_rgba(245,158,11,0.25)] scale-[1.01]"
@@ -965,7 +965,7 @@ export default function ToolDatabase() {
           {/* Dossier footer */}
           <div className="border-t border-border-hairline/10 pt-3 mt-4 text-right">
             <span className="text-[10px] font-mono text-cyan-primary uppercase tracking-wider">
-              [ CRYPTO_ Blueprints Verified // WayneTech Calibration Lab Clear ]
+              [ CRYPTO_ Blueprints Verified // Belfry Calibration Lab Clear ]
             </span>
           </div>
 

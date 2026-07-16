@@ -3,7 +3,7 @@ import { ToolOptions, TransformOutput } from "../types";
 /**
  * Keyed Caesar Cipher
  * Like a standard Caesar shift, but the alphabet is reordered based on a keyword.
- * Example: Keyword "BATMAN" -> Alphabet: BATMNC DEFGHI...
+ * Example: Keyword "SECRET" -> Alphabet: SECRT ABDFGHI...
  */
 
 function getKeyedAlphabet(keyword: string): string {
@@ -30,7 +30,7 @@ function getKeyedAlphabet(keyword: string): string {
 }
 
 export function keyedCaesarEncode(text: string, options?: ToolOptions): string {
-  const keyword = (options?.keyword as string) || "BATMAN";
+  const keyword = (options?.keyword as string) || "SECRET";
   const shift = (options?.shift as number) || 0;
   const keyedAlphabet = getKeyedAlphabet(keyword);
   const standardAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -49,7 +49,7 @@ export function keyedCaesarEncode(text: string, options?: ToolOptions): string {
 }
 
 export function keyedCaesarDecode(text: string, options?: ToolOptions): string {
-  const keyword = (options?.keyword as string) || "BATMAN";
+  const keyword = (options?.keyword as string) || "SECRET";
   const shift = (options?.shift as number) || 0;
   const keyedAlphabet = getKeyedAlphabet(keyword);
 

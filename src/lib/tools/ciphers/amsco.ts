@@ -7,7 +7,7 @@ import { ToolOptions, TransformOutput } from "../types";
  */
 
 export function amscoEncode(text: string, options?: ToolOptions): string {
-  const keyword = (options?.key as string) || "BATMAN";
+  const keyword = (options?.key as string) || "SECRET";
   const cleanText = text.replace(/\s+/g, "");
   const numCols = keyword.length;
   
@@ -46,7 +46,7 @@ export function amscoEncode(text: string, options?: ToolOptions): string {
 }
 
 export function amscoDecode(text: string, options?: ToolOptions): string {
-  const keyword = (options?.key as string) || "BATMAN";
+  const keyword = (options?.key as string) || "SECRET";
   const numCols = keyword.length;
   const keyOrder = keyword
     .split("")

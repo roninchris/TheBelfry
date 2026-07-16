@@ -13,10 +13,11 @@ import {
   ShieldAlert,
   SlidersHorizontal
 } from "lucide-react";
-import { 
-  playPinClick, 
-  playSuccessChime, 
-  playFailBuzz 
+import {
+  playPinClick,
+  playSuccessChime,
+  playFailBuzz,
+  playHoverBlip
 } from "../../lib/soundEngine";
 
 export default function SettingsPage() {
@@ -86,7 +87,7 @@ export default function SettingsPage() {
         
         {/* ================= COLUMN 1: AUDIO SYNTH CONTROLS ================= */}
         <div className="col-span-1 md:col-span-7 flex flex-col space-y-6">
-          <GlassPanel className="p-6 space-y-6 flex-1" clipSize="md">
+          <GlassPanel className="panel-console p-6 space-y-6 flex-1" clipSize="md">
             
             <div className="border-b border-border-hairline/25 pb-2.5">
               <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
@@ -102,9 +103,10 @@ export default function SettingsPage() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={toggleMute}
-                className={`flex flex-col items-start p-3 border transition-all relative ${
-                  isMuted 
-                    ? "bg-red-threat/[0.04] border-red-threat/40 text-red-threat" 
+                onMouseEnter={() => playHoverBlip()}
+                className={`hud-target ${isMuted ? "hud-target-threat" : ""} flex flex-col items-start p-3 border transition-all relative ${
+                  isMuted
+                    ? "bg-red-threat/[0.04] border-red-threat/40 text-red-threat"
                     : "bg-bg-void/40 border-border-hairline/15 text-text-dim hover:border-border-hairline/30 hover:text-text-primary"
                 }`}
                 style={{ clipPath: "polygon(0 0, 100% 0, 94% 100%, 0 100%)" }}
@@ -120,9 +122,10 @@ export default function SettingsPage() {
 
               <button
                 onClick={toggleAmbient}
-                className={`flex flex-col items-start p-3 border transition-all relative ${
-                  ambientEnabled 
-                    ? "bg-cyan-primary/[0.04] border-cyan-primary/40 text-cyan-text" 
+                onMouseEnter={() => playHoverBlip()}
+                className={`hud-target flex flex-col items-start p-3 border transition-all relative ${
+                  ambientEnabled
+                    ? "bg-cyan-primary/[0.04] border-cyan-primary/40 text-cyan-text"
                     : "bg-bg-void/40 border-border-hairline/15 text-text-dim hover:border-border-hairline/30 hover:text-text-primary"
                 }`}
                 style={{ clipPath: "polygon(0 0, 100% 0, 94% 100%, 0 100%)" }}
@@ -173,8 +176,9 @@ export default function SettingsPage() {
             <div className="pt-2 flex justify-start">
               <button
                 onClick={handleTestSound}
+                onMouseEnter={() => !isMuted && !testSoundActive && playHoverBlip()}
                 disabled={isMuted || testSoundActive}
-                className="px-4 py-2 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void disabled:border-border-hairline/20 disabled:text-text-dim/40 disabled:hover:bg-transparent transition-all text-[11px] font-black uppercase tracking-widest flex items-center"
+                className="hud-target px-4 py-2 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void disabled:border-border-hairline/20 disabled:text-text-dim/40 disabled:hover:bg-transparent transition-all text-[11px] font-black uppercase tracking-widest flex items-center"
                 style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
               >
                 <Activity className={`w-3.5 h-3.5 mr-1.5 ${testSoundActive ? "animate-hex-pulse-flicker" : ""}`} />
@@ -187,7 +191,7 @@ export default function SettingsPage() {
 
         {/* ================= COLUMN 2: REGISTRY & SYSTEM UTILITIES ================= */}
         <div className="col-span-1 md:col-span-5 flex flex-col space-y-6">
-          <GlassPanel className="p-6 space-y-6 flex-1" clipSize="md">
+          <GlassPanel className="panel-console p-6 space-y-6 flex-1" clipSize="md">
             
             <div className="border-b border-border-hairline/25 pb-2.5">
               <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
@@ -220,9 +224,10 @@ export default function SettingsPage() {
 
               <button
                 onClick={handleResetLogs}
-                className={`w-full font-orbitron font-black text-[11px] uppercase tracking-widest py-2 px-3 border transition-colors flex items-center justify-center space-x-1.5 ${
-                  resetConfirm 
-                    ? "bg-amber-alert/15 border-amber-alert/40 text-amber-alert hover:bg-amber-alert hover:text-bg-void" 
+                onMouseEnter={() => playHoverBlip()}
+                className={`hud-target ${resetConfirm ? "hud-target-amber" : "hud-target-threat"} w-full font-orbitron font-black text-[11px] uppercase tracking-widest py-2 px-3 border transition-colors flex items-center justify-center space-x-1.5 ${
+                  resetConfirm
+                    ? "bg-amber-alert/15 border-amber-alert/40 text-amber-alert hover:bg-amber-alert hover:text-bg-void"
                     : "bg-red-threat/10 border-red-threat/30 text-red-threat hover:bg-red-threat hover:text-bg-void"
                 }`}
                 style={{ clipPath: "polygon(4px 0, 100% 0, 96% 100%, 0 100%)" }}
@@ -245,7 +250,7 @@ export default function SettingsPage() {
             <div className="text-[10px] font-mono text-text-dim/60 space-y-1 bg-bg-void/25 p-2 border border-border-hairline/5">
               <p>SYSTEM CORE: STABLE</p>
               <p>MEMORY POINTER: 0x2A4F8B3C</p>
-              <p>VERSION: WayneOS-v4.9.5</p>
+              <p>VERSION: BELFRY-OS v4.9.5</p>
             </div>
 
           </GlassPanel>

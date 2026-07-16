@@ -56,15 +56,15 @@ export default function Sidebar() {
       title: "BATCOMPUTER",
       items: [
         { id: "dashboard", label: "Dashboard", icon: Activity },
-        { id: "detective-board", label: "Detective Board", icon: Network },
+        { id: "detective-board", label: "Evidence Board", icon: Network },
         { id: "case-files", label: "Case Files", icon: FolderOpen },
       ],
     },
     {
       title: "INVESTIGATION",
       items: [
-        { id: "crypto-lab", label: "Crypto Lab", icon: Binary },
-        { id: "encoding-lab", label: "Encoding Lab", icon: Hash },
+        { id: "crypto-lab", label: "The Codex", icon: Binary },
+        { id: "encoding-lab", label: "Encoding Deck", icon: Hash },
         { id: "image-forensics", label: "Image Forensics", icon: Eye },
         { id: "audio-forensics", label: "Audio Forensics", icon: Waves },
         { id: "file-analysis", label: "File Analysis", icon: FileCode },
@@ -73,7 +73,7 @@ export default function Sidebar() {
     {
       title: "TOOLS",
       items: [
-        { id: "cyberchef-pipeline", label: "CyberChef Pipeline", icon: GitBranch },
+        { id: "cyberchef-pipeline", label: "Signal Chain", icon: GitBranch },
         { id: "tool-database", label: "Tool Database", icon: Database },
         { id: "settings", label: "Settings", icon: Sliders },
       ],
@@ -106,11 +106,6 @@ export default function Sidebar() {
             <h1 className="font-orbitron text-sm font-black tracking-widest text-text-primary uppercase cyan-glow leading-tight">
               THE BELFRY
             </h1>
-            <ShinyText 
-              text="SECURE BAT-UPLINK"
-              speed={4}
-              className="text-[11.5px] font-share text-cyan-dim font-bold tracking-wider opacity-80"
-            />
           </div>
         )}
       </div>

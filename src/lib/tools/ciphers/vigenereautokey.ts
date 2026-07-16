@@ -5,7 +5,7 @@ import { ToolOptions } from "../types";
  * The key is extended by appending the plaintext itself.
  */
 export function vigenereAutokeyEncode(text: string, options?: ToolOptions): string {
-  const key = (options?.key as string) || "BATMAN";
+  const key = (options?.key as string) || "SECRET";
   const cleanKey = key.toUpperCase().replace(/[^A-Z]/g, "");
   if (!cleanKey) return text;
 
@@ -32,7 +32,7 @@ export function vigenereAutokeyEncode(text: string, options?: ToolOptions): stri
 }
 
 export function vigenereAutokeyDecode(text: string, options?: ToolOptions): string {
-  const key = (options?.key as string) || "BATMAN";
+  const key = (options?.key as string) || "SECRET";
   const cleanKey = key.toUpperCase().replace(/[^A-Z]/g, "");
   if (!cleanKey) return text;
 

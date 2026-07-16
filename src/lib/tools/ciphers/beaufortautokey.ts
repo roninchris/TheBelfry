@@ -5,7 +5,7 @@ import { ToolOptions } from "../types";
  * Beaufort cipher with a running key extended by the plaintext.
  */
 export function beaufortAutokeyEncode(text: string, options?: ToolOptions): string {
-  const key = (options?.key as string) || "BATMAN";
+  const key = (options?.key as string) || "SECRET";
   const cleanKey = key.toUpperCase().replace(/[^A-Z]/g, "");
   if (!cleanKey) return text;
 
@@ -33,7 +33,7 @@ export function beaufortAutokeyEncode(text: string, options?: ToolOptions): stri
 }
 
 export function beaufortAutokeyDecode(text: string, options?: ToolOptions): string {
-  const key = (options?.key as string) || "BATMAN";
+  const key = (options?.key as string) || "SECRET";
   const cleanKey = key.toUpperCase().replace(/[^A-Z]/g, "");
   if (!cleanKey) return text;
 

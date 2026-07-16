@@ -27,14 +27,14 @@ export default function TopBar() {
   const getModuleTitle = () => {
     switch (currentModule) {
       case "dashboard": return "FORENSIC DIAGNOSTICS // ACTIVE COMMAND";
-      case "detective-board": return "EVIDENCE MAP GRID // LINK SYSTEM";
+      case "detective-board": return "EVIDENCE BOARD // LINK SYSTEM";
       case "case-files": return "CASE SYSTEM FILES // INTEL CORRELATION";
-      case "crypto-lab": return "CRYPTOGRAPHIC ANALYSIS LAB";
-      case "encoding-lab": return "ENCODING TRANSLATOR RECEPTOR";
+      case "crypto-lab": return "THE CODEX // CIPHER ANALYSIS";
+      case "encoding-lab": return "ENCODING DECK // FORMAT TRANSLATOR";
       case "image-forensics": return "IMAGE FORENSICS // CANVAS STYLES";
       case "audio-forensics": return "SPECTRAL WAVELENGTH ANALYZER";
       case "file-analysis": return "RAW SECTOR PARSER";
-      case "cyberchef-pipeline": return "RECIPE SEQUENCE CANVAS";
+      case "cyberchef-pipeline": return "SIGNAL CHAIN // OPERATION SEQUENCE";
       case "tool-database": return "DIAGNOSTIC INSTRUMENTS CATALOG";
       case "settings": return "TELEMETRY & HARDWARE CALIBRATION";
       default: return "THE BELFRY SYSTEM";
@@ -46,15 +46,15 @@ export default function TopBar() {
       {/* Edge vignette line */}
       <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-primary/20 to-transparent pointer-events-none" />
 
-      {/* Left: Wayne systems title branding */}
+      {/* Left: Belfry systems title branding */}
       <div className="flex items-center space-x-4">
         <div className="flex items-baseline space-x-2">
-          <span className="font-orbitron text-xs font-black tracking-widest text-text-primary uppercase flex items-center">
+          <span className="font-orbitron text-xs font-black tracking-widest text-text-primary uppercase flex items-center animate-hologram-flicker">
             <span className="w-1.5 h-3 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_8px_#2ff1e4]" />
             BATCOMPUTER
           </span>
           <span className="font-share text-[11px] text-text-dim tracking-wider uppercase font-medium">
-            WAYNE SYSTEMS // FORENSIC PLATFORM
+            BELFRY SYSTEMS // FORENSIC PLATFORM
           </span>
         </div>
       </div>
@@ -62,7 +62,7 @@ export default function TopBar() {
       {/* Center: Module Focus Title */}
       <div className="hidden lg:flex items-center space-x-2 font-orbitron font-extrabold tracking-widest text-sm text-cyan-text cyan-glow">
         <span className="text-xs text-text-dim opacity-70">//</span>
-        <h2>{getModuleTitle()}</h2>
+        <h2 key={currentModule} className="animate-data-assemble">{getModuleTitle()}</h2>
         <span className="text-xs text-text-dim opacity-70">//</span>
       </div>
 

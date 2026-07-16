@@ -69,13 +69,15 @@ interface BruteResult {
   error?: boolean;
 }
 
-// Highly realistic decrypt-direction presets for Recipe Pipeline
+// Realistic decode-direction presets for the Recipe Pipeline. Inputs are
+// generic sample ciphertext that resolve to neutral operational messages —
+// no fictional/narrative content.
 const RECIPE_PRESETS = [
   {
-    id: "intercept-stream-decrypt",
-    name: "Mainframe Intercept Decrypt",
-    description: "Decodes an intercepted Base64 stream, then feeds it through a Caesar Shift Decrypt (shift: 7) to recover a secure safehouse location.",
-    input: "TlZBSE9UX1pITUxMT1ZCWkw=",
+    id: "base64-caesar-decode",
+    name: "Base64 → Caesar Decode",
+    description: "Decodes a Base64 stream, then applies a Caesar shift-7 decrypt to recover the underlying plaintext message.",
+    input: "VExMQVBVTiBZTFNWSkhBTEsgQVYgWkxKQVZZIFVQVUwgSEEgTFNMQ0xVIE9CVUtZTEs=",
     steps: [
       {
         id: "step-1",
@@ -92,10 +94,10 @@ const RECIPE_PRESETS = [
     ]
   },
   {
-    id: "secure-atbash-extract",
-    name: "Holographic Secure Extract",
-    description: "Reverses alphabet using Atbash Decrypt, then decodes Base64 to leak Arkham asylum coordinates.",
-    input: "JEIQHSVFMC0FGDYBCVEGJ==",
+    id: "atbash-base64-decode",
+    name: "Atbash → Base64 Decode",
+    description: "Reverses the alphabet with an Atbash decrypt, then decodes the resulting Base64 to recover the plaintext.",
+    input: "FUQQG1QQEUptJ0sYGp5UGXYGIFMEFpEVRUMFJF5VJoptIp9HRV5UDUJtF1oLJd==",
     steps: [
       {
         id: "step-1",
@@ -112,10 +114,10 @@ const RECIPE_PRESETS = [
     ]
   },
   {
-    id: "hex-xor-leak",
-    name: "Hexadecimal XOR Probe",
-    description: "Parses hexadecimal bytes, then runs a bitwise XOR Decrypt with a mask key to reveal a hidden pass-key.",
-    input: "15000d0304",
+    id: "hex-xor-decode",
+    name: "Hex → XOR Decode",
+    description: "Parses hexadecimal bytes, then runs a bitwise XOR decrypt with a repeating key to recover the plaintext.",
+    input: "0f70171263016b0178",
     steps: [
       {
         id: "step-1",
@@ -127,43 +129,44 @@ const RECIPE_PRESETS = [
         id: "step-2",
         toolId: "xor",
         type: "decode" as const,
-        options: { key: "BATMAN" }
+        options: { key: "N3TW0RK" }
       }
     ]
   }
 ];
 
-// Presets specifically optimized for Brute Force/Auto-Crack demonstration
+// Presets for the Brute Force / Auto-Crack demonstration. Inputs decode to
+// neutral sample text — no fictional/narrative content.
 const BRUTE_FORCE_PRESETS = [
   {
     id: "brute-caesar-7",
-    name: "Caesar Shift 7 Ciphertext",
-    description: "Military-encrypted radio transmission intercept. Crack to recover coordinates in plain English.",
-    input: "NVAHOT KVBYS WAVSH JVBYKPUHALS HYL UPUL ZLCLU GLYV MVBY",
+    name: "Caesar-Shifted Transmission",
+    description: "Ciphertext produced by an unknown Caesar shift. Sweep all 25 shifts to surface the readable plaintext.",
+    input: "ZDLLW HSS ZOPMAZ AV YLJVCLY AOPZ TLZZHNL",
     mode: "sweep" as const,
     cipher: "caesar"
   },
   {
     id: "brute-railfence-3",
-    name: "Rail Fence Depth-3 Zigzag",
-    description: "Transposition cipher splitting text over physical fences. Sweep rail depths to identify the clean grid output.",
+    name: "Rail Fence Zig-Zag",
+    description: "Transposition ciphertext laid across physical rails. Sweep rail depths to identify the clean grid output.",
     input: "GMANAEAENEEOFTHWYELACRNTSRNUEVZYVOUOAOPDINESIELR",
     mode: "sweep" as const,
     cipher: "railfence"
   },
   {
     id: "brute-try-base64",
-    name: "Intercepted Base64 stream",
-    description: "Binary data chunk with unknown schema. Try everything mode will isolate and parse Base64 instantly.",
-    input: "R09USEFNIFdBWU5FIFBMQVpBIENPT1JESU5BVEVTIEFSRSBOSU5FIFNFVkVOIFpFUk8gRk9VUg==",
+    name: "Unknown-Schema Stream",
+    description: "A data chunk with an unknown encoding. Try-everything mode isolates and parses the Base64 automatically.",
+    input: "RElBR05PU1RJQyBDT01QTEVURSBBTEwgU1VCU1lTVEVNUyBOT01JTkFM",
     mode: "auto" as const,
     cipher: ""
   },
   {
     id: "brute-xor-char",
-    name: "XOR Single-Byte Ciphertext",
-    description: "Masked data byte sweep. Sweeps single printable characters as key to find the plaintext.",
-    input: "%\x0f\x14\x08\x01\r\x0fW\x17\x01\x19\x0e\x05W\x10\x0c\x01\x1a\x01W\x03\x0f\x0f\x12\x04\t\x0e\x01\x14\x05\x13W\x01\x12\x05W\x0e\t\x0e\x05W\x13\x05\x16\x05\x0eW\x1a\x05\x12\x0fW\x06\x0f\x15\x12",
+    name: "Single-Byte XOR Ciphertext",
+    description: "Masked with a single repeating byte. Sweep printable characters as the key to recover the plaintext.",
+    input: "\x79\x63\x64\x6d\x66\x6f\x0a\x68\x73\x7e\x6f\x0a\x72\x65\x78\x0a\x78\x6f\x69\x65\x7c\x6f\x78\x73\x0a\x7e\x6f\x79\x7e\x0a\x7c\x6f\x69\x7e\x65\x78",
     mode: "sweep" as const,
     cipher: "xor"
   }
@@ -788,7 +791,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 <button
                   onClick={handleBake}
                   disabled={isBaking || pipelineSteps.length === 0}
-                  className="px-3 py-1 bg-cyan-primary hover:bg-white text-bg-void transition-all duration-150 text-[11px] font-black tracking-widest font-orbitron uppercase disabled:opacity-30 disabled:pointer-events-none flex items-center space-x-1"
+                  className="hud-target px-3 py-1 bg-cyan-primary hover:bg-white text-bg-void transition-all duration-150 text-[11px] font-black tracking-widest font-orbitron uppercase disabled:opacity-30 disabled:pointer-events-none flex items-center space-x-1"
                   style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
                 >
                   <RefreshCw className={`w-3 h-3 ${isBaking ? "animate-radar-sweep" : ""}`} />
@@ -818,7 +821,8 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <button
                         key={preset.id}
                         onClick={() => loadPreset(preset)}
-                        className="p-2 border border-border-hairline/15 bg-bg-void/50 hover:bg-cyan-primary/[0.02] hover:border-cyan-primary/40 transition-all text-left flex flex-col justify-between"
+                        onMouseEnter={() => playHoverEvidence()}
+                        className="hud-target p-2 border border-border-hairline/15 bg-bg-void/50 hover:bg-cyan-primary/[0.02] hover:border-cyan-primary/40 transition-all text-left flex flex-col justify-between"
                       >
                         <span className="font-mono text-[10.5px] font-bold text-cyan-text block truncate uppercase">
                           {preset.name}
@@ -835,6 +839,64 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
             ) : (
               // Populated Horizontal Conveyor Assembly Line
               <div className="flex-1 flex flex-col justify-between min-h-0">
+
+                {/* ===== SEQUENCE PROGRESS RAIL — the "flow" identity for a chain of ops ===== */}
+                <div className="mb-3 flex items-center gap-0.5 overflow-x-auto scrollbar-none pb-1.5 border-b border-border-hairline/10">
+                  {(() => {
+                    // Node state helper: idle | active | done | error
+                    const nodeCls = (state: string, danger = false) =>
+                      state === "active"
+                        ? "border-cyan-primary text-cyan-text bg-cyan-primary/15 shadow-[0_0_10px_rgba(47,241,228,0.4)] animate-pulse"
+                        : state === "done"
+                        ? danger
+                          ? "border-red-threat/60 text-red-threat bg-red-threat/10"
+                          : "border-green-verified/60 text-green-verified bg-green-verified/10"
+                        : "border-border-hairline/25 text-text-dim/60 bg-bg-void/40";
+                    const conn = (filled: boolean) =>
+                      `h-[2px] w-5 shrink-0 transition-colors duration-300 ${filled ? "bg-cyan-primary/70 shadow-[0_0_5px_#2ff1e4]" : "bg-border-hairline/20"}`;
+                    const nodes: React.ReactNode[] = [];
+                    const inState = inputText.trim() ? "done" : "idle";
+                    nodes.push(
+                      <div key="in" className={`shrink-0 flex items-center justify-center w-8 h-8 border font-mono text-[9px] font-black tracking-wider transition-all duration-300 ${nodeCls(inState)}`} style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }} title="Input stream">IN</div>
+                    );
+                    pipelineSteps.forEach((step, i) => {
+                      const state =
+                        activeStepIndex === i ? "active" : intermediateResults[i] !== undefined ? "done" : "idle";
+                      const prevDone = i === 0 ? !!inputText.trim() : intermediateResults[i - 1] !== undefined;
+                      nodes.push(<div key={`c${i}`} className={conn(prevDone || activeStepIndex === i)} />);
+                      nodes.push(
+                        <div
+                          key={step.id}
+                          className={`shrink-0 flex flex-col items-center justify-center w-9 h-8 border font-mono text-[9px] font-black tracking-wider transition-all duration-300 ${nodeCls(state)}`}
+                          style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }}
+                          title={getTool(step.toolId)?.label || step.toolId}
+                        >
+                          L{i + 1}
+                        </div>
+                      );
+                    });
+                    const outState = outputText ? (bakeSuccess ? "done" : "done") : "idle";
+                    nodes.push(<div key="cout" className={conn(!!outputText)} />);
+                    nodes.push(
+                      <div key="out" className={`shrink-0 flex items-center justify-center w-8 h-8 border font-mono text-[9px] font-black tracking-wider transition-all duration-300 ${nodeCls(outState, !bakeSuccess && !!outputText)}`} style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }} title="Output">OUT</div>
+                    );
+                    return (
+                      <>
+                        {nodes}
+                        <span className="ml-auto pl-3 font-share text-[9.5px] tracking-widest uppercase text-text-dim/70 shrink-0">
+                          {isBaking ? (
+                            <span className="text-cyan-text animate-pulse">EXECUTING {activeStepIndex !== null ? `L${activeStepIndex + 1}` : "…"}</span>
+                          ) : outputText ? (
+                            bakeSuccess ? <span className="text-green-verified">SEQUENCE RESOLVED</span> : <span className="text-red-threat">CASCADE FAULT</span>
+                          ) : (
+                            <span>{pipelineSteps.length} OPS · STANDBY</span>
+                          )}
+                        </span>
+                      </>
+                    );
+                  })()}
+                </div>
+
                 <div className="flex-1 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
                   
                   {/* GATE 1: INPUT VESSEL CARD */}
@@ -1720,7 +1782,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 </li>
                 <li className="flex items-start">
                   <span className="text-amber-alert mr-1.5">•</span>
-                  <span><strong>Dictionary Weights</strong>: Interrogates targets for standard tactical terms (Wayne, Gotham, coords, codes).</span>
+                  <span><strong>Dictionary Weights</strong>: Scores candidates against common plaintext terms (the, and, coords, codes).</span>
                 </li>
               </ul>
             </GlassPanel>

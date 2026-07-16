@@ -54,108 +54,7 @@ interface BinaryPreset {
   threatSummary: string;
 }
 
-const TACTICAL_BINARY_PRESETS: BinaryPreset[] = [
-  {
-    id: "joker-scars-trojan",
-    name: "batman_joker_scars.jpg",
-    extension: ".jpg",
-    claimedType: "JPEG Image (Lossy compressed)",
-    detectedType: "PE32 Executable (Windows / Win32 Trojan Binary)",
-    magicBytes: "4D 5A 90 00 03 00 00 00  04 00 00 00 FF FF 00 00",
-    entropy: 7.91,
-    isMismatch: true,
-    fileSize: "1.42 MB",
-    date: "2026-07-09 11:22:45",
-    badgeLabel: "HIGH THREAT - EXTENSION MISMATCH",
-    hexData: [
-      { offset: "00000000", hex: "4D 5A 90 00 03 00 00 00  04 00 00 00 FF FF 00 00", ascii: "MZ.............." },
-      { offset: "00000010", hex: "B8 00 00 00 00 00 00 00  40 00 00 00 00 00 00 00", ascii: "........@......." },
-      { offset: "00000020", hex: "00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00", ascii: "................" },
-      { offset: "00000030", hex: "00 00 00 00 00 00 00 00  00 00 00 00 80 00 00 00", ascii: "................" },
-      { offset: "00000040", hex: "0E 1F BA 0E 00 B4 09 CD  21 B8 01 4C CD 21 54 68", ascii: "........!..L.!Th" },
-      { offset: "00000050", hex: "69 73 20 70 72 6F 67 72  61 6D 20 63 61 6E 6E 6F", ascii: "is program canno" },
-      { offset: "00000060", hex: "74 20 62 65 20 72 75 6E  20 69 6E 20 44 4F 53 20", ascii: "t be run in DOS " },
-      { offset: "00000070", hex: "6D 6F 64 65 2E 0D 0D 0A  24 00 00 00 00 00 00 00", ascii: "mode....$......." },
-      { offset: "000002A0", hex: "4B 45 52 4E 45 4C 33 32  2E 64 6C 6C 00 45 78 69", ascii: "KERNEL32.dll.Exi" },
-      { offset: "000002B0", hex: "74 50 72 6F 63 65 73 73  00 00 57 72 69 74 65 46", ascii: "tProcess..WriteF" },
-      { offset: "000003BC", hex: "47 4F 54 48 41 4D 5F 43  4F 4F 52 44 53 3A 20 34", ascii: "GOTHAM_COORDS: 4" },
-      { offset: "000003CD", hex: "35 2E 31 30 39 2C 20 2D  37 33 2E 30 31 32 00 00", ascii: "5.109, -73.012.." },
-      { offset: "00000E20", hex: "49 4E 49 54 49 41 54 45  5F 4F 56 45 52 52 49 44", ascii: "INITIATE_OVERRID" },
-      { offset: "00000E30", hex: "45 5F 53 45 43 55 52 45  5F 47 52 49 44 5F 32 00", ascii: "E_SECURE_GRID_2." }
-    ],
-    detectedStrings: [
-      { offset: "0x0000004F", stringVal: "This program cannot be run in DOS mode", category: "SYSTEM" },
-      { offset: "0x000002A0", stringVal: "KERNEL32.dll", category: "SYSTEM" },
-      { offset: "0x000002AB", stringVal: "ExitProcess", category: "SYSTEM" },
-      { offset: "0x000002BA", stringVal: "WriteFile", category: "SYSTEM" },
-      { offset: "0x000003BC", stringVal: "GOTHAM_COORDS: 45.109, -73.012", category: "PAYLOAD" },
-      { offset: "0x00000E20", stringVal: "INITIATE_OVERRIDE_SECURE_GRID_2", category: "SECURITY" }
-    ],
-    threatSummary: "CRITICAL MISMATCH: Stated extension is a lossy .jpg image container, but binary header parses directly to magic-bytes '4D 5A' (Windows Portable Executable format). Includes Windows Kernel API system calls and suspicious coordinates. Highly indicative of a steganographic Trojan carrier bypass."
-  },
-  {
-    id: "bank-floorplan-eof",
-    name: "gotham_city_bank_floorplan.png",
-    extension: ".png",
-    claimedType: "PNG Image (Lossless compressed)",
-    detectedType: "PNG Image (With Extraneous Data Appendages)",
-    magicBytes: "89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52",
-    entropy: 7.84,
-    isMismatch: false,
-    fileSize: "892 KB",
-    date: "2026-07-10 09:14:02",
-    badgeLabel: "ANOMALY - EXTRA DATA PAST EOF",
-    hexData: [
-      { offset: "00000000", hex: "89 50 4E 47 0D 0A 1A 0A  00 00 00 0D 49 48 44 52", ascii: ".PNG........IHDR" },
-      { offset: "00000010", hex: "00 00 04 00 00 00 03 00  08 06 00 00 00 E1 C4 F9", ascii: "................" },
-      { offset: "00000020", hex: "00 00 00 09 70 48 59 73  00 00 0B 13 00 00 0B 13", ascii: "....pHYs........" },
-      { offset: "000004F0", hex: "49 44 41 54 78 9C EC BD  7B 7C D4 F5 1D FF FD 99", ascii: "IDATx...{|......" },
-      { offset: "00001BF0", hex: "00 00 00 00 49 45 4E 44  AE 42 60 82 00 00 00 00", ascii: "....IEND.B`....." },
-      { offset: "00001C00", hex: "53 45 43 52 45 54 5F 56  41 55 4C 54 5F 4B 45 59", ascii: "SECRET_VAULT_KEY" },
-      { offset: "00001C10", hex: "5F 43 4F 4D 42 49 4E 41  54 49 4F 4E 3A 20 38 38", ascii: "_COMBINATION: 88" },
-      { offset: "00001C20", hex: "34 2D 58 2D 39 39 00 00  00 00 00 00 00 00 00 00", ascii: "4-X-99.........." },
-      { offset: "00001C30", hex: "54 55 4E 4E 45 4C 5F 41  43 43 45 53 53 5F 45 41", ascii: "TUNNEL_ACCESS_EA" },
-      { offset: "00001C40", hex: "53 54 5F 56 45 4E 54 3D  54 52 55 45 00 00 00 00", ascii: "ST_VENT=TRUE...." }
-    ],
-    detectedStrings: [
-      { offset: "0x0000000C", stringVal: "IHDR", category: "SYSTEM" },
-      { offset: "0x000004F0", stringVal: "IDAT", category: "SYSTEM" },
-      { offset: "0x00001BF4", stringVal: "IEND", category: "SYSTEM" },
-      { offset: "0x00001C00", stringVal: "SECRET_VAULT_KEY_COMBINATION: 884-X-99", category: "PAYLOAD" },
-      { offset: "0x00001C30", stringVal: "TUNNEL_ACCESS_EAST_VENT=TRUE", category: "SECURITY" }
-    ],
-    threatSummary: "CORRUPTED EOF: Stated extension matches PNG headers (true format validated). However, hexadecimal parsing identifies structured string content appended *after* the terminal IEND chunk offset. It reveals a physical vault passcode and security-bypassed ventilation shaft toggles."
-  },
-  {
-    id: "arkham-mainframe-log",
-    name: "arkham_mainframe_core.log",
-    extension: ".log",
-    claimedType: "Plaintext Log File (ASCII Text)",
-    detectedType: "ASCII Plaintext Log Structure",
-    magicBytes: "53 59 53 54 45 4D 20 49  4E 49 54 49 41 4C 49 5A",
-    entropy: 4.12,
-    isMismatch: false,
-    fileSize: "12 KB",
-    date: "2026-07-10 14:11:15",
-    badgeLabel: "SECURE - ALIGNED BLOCK",
-    hexData: [
-      { offset: "00000000", hex: "53 59 53 54 45 4D 20 49  4E 49 54 49 41 4C 49 5A", ascii: "SYSTEM INITIALZ" },
-      { offset: "00000010", hex: "41 54 49 4F 4E 20 4C 4F  47 20 54 45 4C 45 4D 45", ascii: "ATION LOG TELEME" },
-      { offset: "00000020", hex: "54 52 59 0A 3D 3D 3D 3D  3D 3D 3D 3D 3D 3D 3D 3D", ascii: "TRY.====" },
-      { offset: "00000040", hex: "0A 43 4F 52 45 5F 43 50  55 5F 54 45 4D 50 3A 20", ascii: ".CORE_CPU_TEMP: " },
-      { offset: "00000050", hex: "34 32 43 0A 53 54 41 54  55 53 3A 20 4F 4E 4C 49", ascii: "42C.STATUS: ONLI" },
-      { offset: "00000060", hex: "4E 45 0A 00 00 00 00 00  00 00 00 00 00 00 00 00", ascii: "NE.............." },
-      { offset: "00000110", hex: "57 41 52 4E 3A 20 55 4E  49 44 45 4E 54 49 46 49", ascii: "WARN: UNIDENTIFI" },
-      { offset: "00000120", hex: "45 44 20 4E 45 54 57 4F  52 4B 20 42 45 41 43 4F", ascii: "ED NETWORK BEACON" }
-    ],
-    detectedStrings: [
-      { offset: "0x00000000", stringVal: "SYSTEM INITIALIZATION LOG TELEMETRY", category: "SYSTEM" },
-      { offset: "0x00000041", stringVal: "CORE_CPU_TEMP: 42C", category: "SYSTEM" },
-      { offset: "0x00000110", stringVal: "WARN: UNIDENTIFIED NETWORK BEACON ON PORT 443", category: "SECURITY" }
-    ],
-    threatSummary: "SECURE LOG CONTAINER: Stated log format aligns completely with the ASCII text stream parsed. Magic bytes match standard character sets. All strings represent benign, authentic mainframe telemetry diagnostics with no hidden binary offsets."
-  }
-];
+const TACTICAL_BINARY_PRESETS: BinaryPreset[] = [];
 
 export default function FileAnalysisLab() {
   const cases = useAppStore((state) => state.cases);
@@ -544,8 +443,8 @@ ${currentData.threatSummary}`;
   const clearFileBuffer = () => {
     playPinClick();
     setActiveFile(null);
-    setSelectedPresetId(TACTICAL_BINARY_PRESETS[0].id);
-    setScanComplete(true);
+    setSelectedPresetId(null);
+    setScanComplete(false);
     setCustomMetadata(null);
   };
 
@@ -587,7 +486,7 @@ ${currentData.threatSummary}`;
                 </h1>
               </div>
               <p className="text-[11px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
-                WayneTech Hexadecimal Diagnostics Engine. Parses file binary streams to isolate hidden extensions, cross-checks magic byte signatures, and extracts character strings.
+                Belfry Hexadecimal Diagnostics Engine. Parses file binary streams to isolate hidden extensions, cross-checks magic byte signatures, and extracts character strings.
               </p>
             </div>
             <Badge variant="cyan" size="xs">
@@ -636,9 +535,9 @@ ${currentData.threatSummary}`;
 
           {!activeFile && !selectedPresetId ? (
             // Upload Dropzone
-            <div 
+            <div
               onClick={() => fileInputRef.current?.click()}
-              className="flex-1 flex flex-col items-center justify-center border border-dashed border-cyan-primary/30 hover:border-cyan-primary/60 cursor-pointer bg-bg-void/40 hover:bg-cyan-primary/[0.02] p-6 transition-all duration-300 group"
+              className="hud-target flex-1 flex flex-col items-center justify-center border border-dashed border-cyan-primary/30 hover:border-cyan-primary/60 cursor-pointer bg-bg-void/40 hover:bg-cyan-primary/[0.02] p-6 transition-all duration-300 group"
             >
               <input 
                 type="file" 
@@ -738,7 +637,7 @@ ${currentData.threatSummary}`;
                 <button
                   disabled={isScanning}
                   onClick={triggerForensicScan}
-                  className="w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-orbitron uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
+                  className="hud-target w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-orbitron uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
                   style={{ clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)" }}
                 >
                   <Cpu className={`w-4 h-4 text-bg-void ${isScanning ? 'animate-radar-sweep' : ''}`} />
@@ -748,54 +647,6 @@ ${currentData.threatSummary}`;
 
             </div>
           )}
-        </GlassPanel>
-
-        {/* Binary Presets Selector List */}
-        <GlassPanel className="p-4" clipSize="sm">
-          <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5">
-            <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
-              <Compass className="w-3.5 h-3.5 mr-2 text-cyan-primary" />
-              FORENSIC SECTOR ARCHIVES
-            </h3>
-            <p className="text-[10.5px] text-text-dim uppercase tracking-wider font-share">
-              Cross-examine tactical files with known Trojan wrapping and appendage stego anomalies
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {TACTICAL_BINARY_PRESETS.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => {
-                  playPinClick();
-                  setSelectedPresetId(p.id);
-                  setActiveFile(null);
-                  setScanComplete(false);
-                  setCustomMetadata(null);
-                  addLog(`MOUNTED FILE ARCHIVE CONTAINER: ${p.name}`, "info", "SYS");
-                }}
-                className={`text-left p-2 border transition-all duration-200 group flex items-start space-x-2 ${
-                  selectedPresetId === p.id 
-                    ? "bg-cyan-primary/[0.04] border-cyan-primary" 
-                    : "bg-bg-void/30 border-border-hairline/15 hover:border-cyan-primary/40 hover:bg-cyan-primary/[0.01]"
-                }`}
-              >
-                <div className="w-8 h-8 border border-border-hairline/25 shrink-0 flex items-center justify-center bg-bg-void">
-                  <FileText className={`w-4 h-4 ${p.isMismatch ? "text-red-threat" : "text-cyan-primary/60"} group-hover:scale-105 transition-transform`} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="font-mono text-[10.5px] font-bold text-cyan-text truncate group-hover:text-white transition-colors uppercase">
-                    {p.name}
-                  </h4>
-                  <p className={`font-share text-[10px] uppercase tracking-wider mt-0.5 ${
-                    p.isMismatch ? "text-red-threat" : "text-text-dim"
-                  }`}>
-                    {p.isMismatch ? "Trojan Mismatch" : "Aligned Block"}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
         </GlassPanel>
 
       </div>

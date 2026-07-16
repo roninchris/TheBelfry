@@ -38,7 +38,13 @@ import {
 } from "recharts";
 import { getTool, getToolsByCategory, asText, asResult } from "../../lib/tools/registry";
 import type { ToolEntry } from "../../lib/tools/types";
-import { Search } from "lucide-react";
+import { Search, Star, Clock, LayoutGrid } from "lucide-react";
+import {
+  CIPHER_GROUPS,
+  groupForCipher,
+  useCipherPrefs,
+  type CipherGroupId,
+} from "./cipherTaxonomy";
 import { bruteForceTool, DEFAULT_WORDLIST } from "../../lib/tools/bruteForce";
 import WordlistControl from "../../components/brute-force/WordlistControl";
 import { identifyInput } from "../../lib/tools/identify";
@@ -120,14 +126,46 @@ export default function CryptoLab() {
   }, [selectedCipher]);
 
   const [cipherSearchQuery, setCipherSearchQuery] = useState<string>("");
-  const cipherTools = useMemo(() => {
-    const sorted = sortCiphersByArgPriority(getToolsByCategory("cipher"));
+  // Active library filter: everything, favorites, recents, or a taxonomy group.
+  const [activeGroup, setActiveGroup] = useState<"all" | "favorites" | "recents" | CipherGroupId>("all");
+  const { favorites, recents, toggleFavorite, pushRecent } = useCipherPrefs();
+
+  // Full ordered cipher set (ARG priority) — stable source of truth.
+  const allCiphers = useMemo(() => sortCiphersByArgPriority(getToolsByCategory("cipher")), []);
+  // Stable display index per cipher id, independent of the active filter.
+  const orderIndex = useMemo(() => {
+    const m = new Map<string, number>();
+    allCiphers.forEach((c, i) => m.set(c.id, i + 1));
+    return m;
+  }, [allCiphers]);
+
+  // Search + filter applied to the full set.
+  const filteredCiphers = useMemo(() => {
     const query = cipherSearchQuery.trim().toLowerCase();
-    if (!query) return sorted;
-    return sorted.filter(
-      (c) => c.label.toLowerCase().includes(query) || c.id.toLowerCase().includes(query)
-    );
-  }, [cipherSearchQuery]);
+    const matches = (c: ToolEntry) =>
+      !query || c.label.toLowerCase().includes(query) || c.id.toLowerCase().includes(query);
+    const pool = allCiphers.filter(matches);
+    if (activeGroup === "favorites") return pool.filter((c) => favorites.includes(c.id));
+    if (activeGroup === "recents")
+      return recents.map((id) => pool.find((c) => c.id === id)).filter(Boolean) as ToolEntry[];
+    if (activeGroup !== "all") return pool.filter((c) => groupForCipher(c.id) === activeGroup);
+    return pool;
+  }, [allCiphers, cipherSearchQuery, activeGroup, favorites, recents]);
+
+  // When viewing "all", present grouped sections; otherwise a flat list.
+  const groupedSections = useMemo(() => {
+    if (activeGroup !== "all") return null;
+    const byGroup = new Map<CipherGroupId, ToolEntry[]>();
+    for (const c of filteredCiphers) {
+      const g = groupForCipher(c.id);
+      if (!byGroup.has(g)) byGroup.set(g, []);
+      byGroup.get(g)!.push(c);
+    }
+    return CIPHER_GROUPS.filter((g) => byGroup.has(g.id)).map((g) => ({
+      group: g,
+      tools: byGroup.get(g.id)!,
+    }));
+  }, [filteredCiphers, activeGroup]);
 
   // IO buffers
   const [inputText, setInputText] = useState<string>("");
@@ -277,6 +315,88 @@ export default function CryptoLab() {
     }
   };
 
+  const selectCipher = (id: string) => {
+    setSelectedCipher(id);
+    setLastOp("");
+    setOutputText("");
+    pushRecent(id);
+    playPinClick();
+  };
+
+  // Library filter chips: All / Favorites / Recents + the taxonomy groups.
+  const filterChips: { id: "all" | "favorites" | "recents" | CipherGroupId; label: string; icon?: React.ReactNode }[] = [
+    { id: "all", label: "ALL", icon: <LayoutGrid className="w-3 h-3" /> },
+    { id: "favorites", label: "FAV", icon: <Star className="w-3 h-3" /> },
+    { id: "recents", label: "RECENT", icon: <Clock className="w-3 h-3" /> },
+    ...CIPHER_GROUPS.filter((g) => g.id !== "specialty").map((g) => ({ id: g.id, label: g.short })),
+  ];
+
+  const renderCipherRow = (cipher: ToolEntry) => {
+    const isSelected = selectedCipher === cipher.id;
+    const idx = orderIndex.get(cipher.id) ?? 0;
+    const isFav = favorites.includes(cipher.id);
+    return (
+      <button
+        key={cipher.id}
+        onClick={() => selectCipher(cipher.id)}
+        onMouseEnter={() => {
+          playHoverEvidence();
+          playReticleLock();
+        }}
+        className={`hud-target w-full text-left p-2.5 border transition-all duration-300 flex items-center justify-between relative overflow-hidden group ${
+          isSelected
+            ? "bg-cyan-primary/[0.06] border-cyan-primary text-text-primary shadow-[0_0_8px_rgba(47,241,228,0.15)]"
+            : "bg-bg-void/40 border-border-hairline/10 text-text-dim hover:border-cyan-primary/45 hover:bg-cyan-primary/[0.02]"
+        }`}
+        style={{
+          clipPath: "polygon(10px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 10px) 100%, 0 100%, 0 6px)",
+        }}
+      >
+        <div className="absolute inset-y-0 left-0 w-[2px] bg-border-hairline/20 group-hover:bg-cyan-primary/50 transition-colors duration-200" />
+        {isSelected && <div className="absolute inset-y-0 left-0 w-[3px] bg-cyan-primary shadow-[0_0_6px_#2ff1e4]" />}
+
+        <div className="flex items-center space-x-2 min-w-0 z-10 relative">
+          <span className="font-mono text-[10px] text-text-dim group-hover:text-cyan-text transition-colors duration-200">
+            [{String(idx).padStart(2, "0")}]
+          </span>
+          <div className="min-w-0">
+            <p className="font-chakra text-[11px] font-bold uppercase tracking-wider leading-none truncate group-hover:text-cyan-text transition-colors duration-200">
+              {cipher.label}
+            </p>
+            <p className="font-share text-[10px] text-text-dim/75 tracking-wide mt-1 truncate">
+              {cipher.id.toUpperCase()} // SYS_RT_{String(idx).padStart(2, "0")}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-1.5 relative z-10 shrink-0">
+          {/* Favorite toggle — span (not button) to avoid nested interactive elements */}
+          <span
+            role="button"
+            aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(cipher.id);
+              playPinClick();
+            }}
+            className={`p-0.5 transition-all cursor-pointer ${
+              isFav
+                ? "text-amber-alert drop-shadow-[0_0_4px_rgba(255,157,46,0.6)]"
+                : "text-text-dim/30 hover:text-amber-alert/70 opacity-0 group-hover:opacity-100"
+            }`}
+          >
+            <Star className="w-3.5 h-3.5" fill={isFav ? "currentColor" : "none"} />
+          </span>
+          <div
+            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+              isSelected ? "bg-cyan-primary animate-pulse shadow-[0_0_6px_#2ff1e4]" : "bg-text-dim/30"
+            }`}
+          />
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div className="h-full w-full p-4 flex flex-col space-y-4 overflow-y-auto font-chakra select-none">
       
@@ -363,67 +483,79 @@ export default function CryptoLab() {
             />
           </div>
 
-          <div className="space-y-1.5 flex-1 pr-1 overflow-y-auto scrollbar-thin max-h-[380px]">
-            {cipherTools.length === 0 && (
-              <p className="text-text-dim/40 text-center italic py-8 text-xs">
-                -- NO MATCHING CIPHER --
-              </p>
-            )}
-            {cipherTools.map((cipher, idx) => {
-              const isSelected = selectedCipher === cipher.id;
+          {/* Taxonomy filter chips — categorize 47 ciphers into browsable groups */}
+          <div className="flex flex-wrap gap-1 mb-2.5">
+            {filterChips.map((chip) => {
+              const isActive = activeGroup === chip.id;
+              const count =
+                chip.id === "favorites"
+                  ? favorites.length
+                  : chip.id === "recents"
+                  ? recents.length
+                  : chip.id === "all"
+                  ? allCiphers.length
+                  : allCiphers.filter((c) => groupForCipher(c.id) === chip.id).length;
               return (
                 <button
-                  key={cipher.id}
+                  key={chip.id}
                   onClick={() => {
-                    setSelectedCipher(cipher.id as any);
-                    setLastOp("");
-                    setOutputText("");
+                    setActiveGroup(chip.id);
                     playPinClick();
                   }}
-                  onMouseEnter={() => {
-                    playHoverEvidence();
-                    playReticleLock();
-                  }}
-                  className={`w-full text-left p-2.5 border transition-all duration-300 flex items-center justify-between relative overflow-hidden group ${
-                    isSelected
-                      ? "bg-cyan-primary/[0.06] border-cyan-primary text-text-primary shadow-[0_0_8px_rgba(47,241,228,0.15)]"
-                      : "bg-bg-void/40 border-border-hairline/10 text-text-dim hover:border-cyan-primary/45 hover:bg-cyan-primary/[0.02]"
+                  onMouseEnter={() => playHoverEvidence()}
+                  className={`hud-target flex items-center gap-1 px-1.5 py-1 text-[9.5px] font-share font-bold tracking-widest uppercase border transition-all duration-200 ${
+                    isActive
+                      ? "bg-cyan-primary/15 border-cyan-primary text-cyan-text shadow-[0_0_6px_rgba(47,241,228,0.2)]"
+                      : "bg-bg-void/40 border-border-hairline/15 text-text-dim/70 hover:border-cyan-primary/40 hover:text-cyan-text"
                   }`}
-                  style={{
-                    clipPath: "polygon(10px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 10px) 100%, 0 100%, 0 6px)"
-                  }}
+                  style={{ ["--reticle-size" as any]: "6px" }}
                 >
-                  {/* Subtle hover overlay and vertical alignment rail */}
-                  <div className="absolute inset-y-0 left-0 w-[2px] bg-border-hairline/20 group-hover:bg-cyan-primary/50 transition-colors duration-200" />
-                  {isSelected && (
-                    <div className="absolute inset-y-0 left-0 w-[3px] bg-cyan-primary shadow-[0_0_6px_#2ff1e4]" />
-                  )}
-                  
-                  <div className="flex items-center space-x-2 min-w-0 z-10 relative">
-                    <span className="font-mono text-[10px] text-text-dim group-hover:text-cyan-text transition-colors duration-200">
-                      [{String(idx + 1).padStart(2, "0")}]
-                    </span>
-                    <div>
-                      <p className="font-chakra text-[11px] font-bold uppercase tracking-wider leading-none group-hover:text-cyan-text transition-colors duration-200">
-                        {cipher.label}
-                      </p>
-                      <p className="font-share text-[10px] text-text-dim/75 tracking-wide mt-1">
-                        {cipher.id.toUpperCase()} // SYS_RT_0{idx + 1}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-1.5 relative z-10">
-                    <span className={`font-mono text-[10px] font-bold tracking-wider ${isSelected ? "text-cyan-text" : "text-text-dim/60"}`}>
-                      {isSelected ? "ROT_LOCK" : "STANDBY"}
-                    </span>
-                    <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                      isSelected ? "bg-cyan-primary animate-pulse shadow-[0_0_6px_#2ff1e4]" : "bg-text-dim/30"
-                    }`} />
-                  </div>
+                  {chip.icon}
+                  <span>{chip.label}</span>
+                  <span className={`font-mono ${isActive ? "text-cyan-primary" : "text-text-dim/40"}`}>{count}</span>
                 </button>
               );
             })}
+          </div>
+
+          <div className="space-y-1.5 flex-1 pr-1 overflow-y-auto scrollbar-thin max-h-[380px]">
+            {filteredCiphers.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-10 gap-2 border border-dashed border-border-hairline/15 bg-bg-void/20">
+                {activeGroup === "favorites" ? (
+                  <>
+                    <Star className="w-5 h-5 text-amber-alert/40" />
+                    <p className="text-text-dim/50 text-center text-[10.5px] font-share uppercase tracking-wide px-4 leading-relaxed">
+                      No favorites yet — tap the ☆ on any cipher to pin it here
+                    </p>
+                  </>
+                ) : activeGroup === "recents" ? (
+                  <>
+                    <Clock className="w-5 h-5 text-cyan-primary/40" />
+                    <p className="text-text-dim/50 text-center text-[10.5px] font-share uppercase tracking-wide px-4 leading-relaxed">
+                      No recent engines — selected ciphers log here
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-text-dim/40 text-center italic text-xs">-- NO MATCHING CIPHER --</p>
+                )}
+              </div>
+            )}
+
+            {groupedSections
+              ? groupedSections.map((section) => (
+                  <div key={section.group.id} className="space-y-1.5">
+                    <div className="flex items-center gap-2 pt-1.5 pb-1 sticky top-0 bg-bg-panel/95 backdrop-blur-sm z-20">
+                      <span className="w-1 h-2.5 bg-cyan-primary/70 transform -skew-x-12 shadow-[0_0_4px_#2ff1e4]" />
+                      <span className="font-orbitron text-[9.5px] font-black tracking-[0.2em] text-cyan-primary/90 uppercase">
+                        {section.group.label}
+                      </span>
+                      <span className="font-mono text-[9px] text-text-dim/50">{section.tools.length}</span>
+                      <div className="flex-1 h-[1px] bg-gradient-to-r from-cyan-primary/20 to-transparent" />
+                    </div>
+                    {section.tools.map(renderCipherRow)}
+                  </div>
+                ))
+              : filteredCiphers.map(renderCipherRow)}
           </div>
 
           {/* Cipher settings controls */}
@@ -919,7 +1051,7 @@ export default function CryptoLab() {
             </div>
 
             <div className="flex justify-between text-[10px] font-mono text-text-dim border-t border-border-hairline/15 pt-1.5 mt-2">
-              <span>WAYNETECH DATABASE // v2.8</span>
+              <span>BELFRY DATABASE // v2.8</span>
               <span className="text-green-verified font-bold">SECURE LOGIC LINKED</span>
             </div>
           </GlassPanel>

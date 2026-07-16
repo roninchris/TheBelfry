@@ -17,7 +17,7 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
   const bootMessages = [
     "INITIALIZING COLD BOOT SEQUENCE...",
     "LOADING KERNEL BELFRY_OS_v2.8.4",
-    "ESTABLISHING SECURE TUNNEL TO WAYNETECH...",
+    "ESTABLISHING SECURE TUNNEL TO BELFRY CORE...",
     "DECRYPTING CORE MODULES...",
     "MOUNTING FORENSIC DATA VOLUMES...",
     "ORACLE LINK STABILIZED.",
