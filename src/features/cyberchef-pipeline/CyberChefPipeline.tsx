@@ -69,109 +69,6 @@ interface BruteResult {
   error?: boolean;
 }
 
-// Realistic decode-direction presets for the Recipe Pipeline. Inputs are
-// generic sample ciphertext that resolve to neutral operational messages —
-// no fictional/narrative content.
-const RECIPE_PRESETS = [
-  {
-    id: "base64-caesar-decode",
-    name: "Base64 → Caesar Decode",
-    description: "Decodes a Base64 stream, then applies a Caesar shift-7 decrypt to recover the underlying plaintext message.",
-    input: "VExMQVBVTiBZTFNWSkhBTEsgQVYgWkxKQVZZIFVQVUwgSEEgTFNMQ0xVIE9CVUtZTEs=",
-    steps: [
-      {
-        id: "step-1",
-        toolId: "base64",
-        type: "decode" as const,
-        options: {}
-      },
-      {
-        id: "step-2",
-        toolId: "caesar",
-        type: "decode" as const,
-        options: { shift: 7 }
-      }
-    ]
-  },
-  {
-    id: "atbash-base64-decode",
-    name: "Atbash → Base64 Decode",
-    description: "Reverses the alphabet with an Atbash decrypt, then decodes the resulting Base64 to recover the plaintext.",
-    input: "FUQQG1QQEUptJ0sYGp5UGXYGIFMEFpEVRUMFJF5VJoptIp9HRV5UDUJtF1oLJd==",
-    steps: [
-      {
-        id: "step-1",
-        toolId: "atbash",
-        type: "decode" as const,
-        options: {}
-      },
-      {
-        id: "step-2",
-        toolId: "base64",
-        type: "decode" as const,
-        options: {}
-      }
-    ]
-  },
-  {
-    id: "hex-xor-decode",
-    name: "Hex → XOR Decode",
-    description: "Parses hexadecimal bytes, then runs a bitwise XOR decrypt with a repeating key to recover the plaintext.",
-    input: "0f70171263016b0178",
-    steps: [
-      {
-        id: "step-1",
-        toolId: "hex",
-        type: "decode" as const,
-        options: {}
-      },
-      {
-        id: "step-2",
-        toolId: "xor",
-        type: "decode" as const,
-        options: { key: "N3TW0RK" }
-      }
-    ]
-  }
-];
-
-// Presets for the Brute Force / Auto-Crack demonstration. Inputs decode to
-// neutral sample text — no fictional/narrative content.
-const BRUTE_FORCE_PRESETS = [
-  {
-    id: "brute-caesar-7",
-    name: "Caesar-Shifted Transmission",
-    description: "Ciphertext produced by an unknown Caesar shift. Sweep all 25 shifts to surface the readable plaintext.",
-    input: "ZDLLW HSS ZOPMAZ AV YLJVCLY AOPZ TLZZHNL",
-    mode: "sweep" as const,
-    cipher: "caesar"
-  },
-  {
-    id: "brute-railfence-3",
-    name: "Rail Fence Zig-Zag",
-    description: "Transposition ciphertext laid across physical rails. Sweep rail depths to identify the clean grid output.",
-    input: "GMANAEAENEEOFTHWYELACRNTSRNUEVZYVOUOAOPDINESIELR",
-    mode: "sweep" as const,
-    cipher: "railfence"
-  },
-  {
-    id: "brute-try-base64",
-    name: "Unknown-Schema Stream",
-    description: "A data chunk with an unknown encoding. Try-everything mode isolates and parses the Base64 automatically.",
-    input: "RElBR05PU1RJQyBDT01QTEVURSBBTEwgU1VCU1lTVEVNUyBOT01JTkFM",
-    mode: "auto" as const,
-    cipher: ""
-  },
-  {
-    id: "brute-xor-char",
-    name: "Single-Byte XOR Ciphertext",
-    description: "Masked with a single repeating byte. Sweep printable characters as the key to recover the plaintext.",
-    input: "\x79\x63\x64\x6d\x66\x6f\x0a\x68\x73\x7e\x6f\x0a\x72\x65\x78\x0a\x78\x6f\x69\x65\x7c\x6f\x78\x73\x0a\x7e\x6f\x79\x7e\x0a\x7c\x6f\x69\x7e\x65\x78",
-    mode: "sweep" as const,
-    cipher: "xor"
-  }
-];
-
 // Plaintext heuristics scoring engine
 // (Removed local version, now using shared module)
 
@@ -219,6 +116,8 @@ export default function CyberChefPipeline() {
   const [bruteResults, setBruteResults] = useState<BruteResult[]>([]);
   const [bruteNotes, setBruteNotes] = useState<string[]>([]);
   const [bruteFailedCount, setBruteFailedCount] = useState<number>(0);
+  // Candidate registry uses progressive disclosure instead of a cramped inner scroller.
+  const [showAllCandidates, setShowAllCandidates] = useState<boolean>(false);
   const [bruteWordlist, setBruteWordlist] = useState<string[]>(DEFAULT_WORDLIST);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanProgress, setScanProgress] = useState<number>(0);
@@ -327,19 +226,6 @@ export default function CyberChefPipeline() {
       playBakeFailure();
       addLog("BAKED RECIPE COMPILATION FAULT - EXAMINE PIPELINE LAYERS", "warning", "SYS");
     }
-  };
-
-  // Preset loading handler
-  const loadPreset = (preset: typeof RECIPE_PRESETS[0]) => {
-    playPinClick();
-    setInputText(preset.input);
-    setPipelineSteps(preset.steps.map(s => ({
-      id: crypto.randomUUID(),
-      toolId: s.toolId,
-      type: s.type,
-      options: { ...s.options }
-    })));
-    addLog(`LOADED CASCADE RECIPE PRESET: ${preset.name.toUpperCase()}`, "info", "SYS");
   };
 
   // Add tool operation as a new recipe step - defaults to DECODE
@@ -602,18 +488,6 @@ Custom chain processing successfully compiled. Extracted and formatted coordinat
     });
   };
 
-  // Load a Brute Force specific Preset
-  const handleLoadBrutePreset = (preset: typeof BRUTE_FORCE_PRESETS[0]) => {
-    playPinClick();
-    setInputText(preset.input);
-    setBruteSubMode(preset.mode);
-    if (preset.cipher) {
-      setSweepCipher(preset.cipher);
-    }
-    addLog(`LOADED BRUTE MATRIX DATASTREAM: ${preset.name.toUpperCase()}`, "info", "SYS");
-    triggerBruteScan(preset.input, preset.mode, preset.cipher);
-  };
-
   // Dump top Brute Force Match into Detective Dossier
   const handleBruteExportToDossier = (result: BruteResult) => {
     const caseId = activeCaseId || (cases[0]?.id || "");
@@ -808,33 +682,8 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   RECIPE CONTAINER DISCHARGED
                 </h4>
                 <p className="text-[11px] text-text-dim uppercase tracking-widest font-share max-w-sm mt-1.5 leading-relaxed">
-                  Your cascade is currently blank. Search and select decryption tools on the right sidebar to construct an ordered recipe block.
+                  Your cascade is currently blank. Search and select operations in the right sidebar to construct an ordered chain.
                 </p>
-
-                {/* Sample Quickstarts */}
-                <div className="mt-6 w-full max-w-lg">
-                  <span className="text-[10px] font-mono text-cyan-primary uppercase tracking-widest block mb-2 text-center">
-                    TACTICAL PRESETS RECOMMENDATION:
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {RECIPE_PRESETS.map((preset) => (
-                      <button
-                        key={preset.id}
-                        onClick={() => loadPreset(preset)}
-                        onMouseEnter={() => playHoverEvidence()}
-                        className="hud-target p-2 border border-border-hairline/15 bg-bg-void/50 hover:bg-cyan-primary/[0.02] hover:border-cyan-primary/40 transition-all text-left flex flex-col justify-between"
-                      >
-                        <span className="font-mono text-[10.5px] font-bold text-cyan-text block truncate uppercase">
-                          {preset.name}
-                        </span>
-                        <span className="text-[10px] text-text-dim uppercase tracking-wide block truncate mt-1">
-                          {preset.steps.length} ops cascade
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
               </div>
             ) : (
               // Populated Horizontal Conveyor Assembly Line
@@ -1048,15 +897,18 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                                   LAYER OUTPUT BUFFER
                                 </span>
                               </div>
-                              <div className={`bg-bg-void/40 p-1.5 border min-h-[36px] max-h-[36px] overflow-y-auto flex items-center transition-colors duration-500 scrollbar-none ${
+                              {/* Fixed two-line preview — clamped, never a 36px scroll viewport */}
+                              <div className={`bg-bg-void/40 p-1.5 border min-h-[36px] flex items-start transition-colors duration-500 overflow-hidden ${
                                 isProcessing ? "border-cyan-primary/30 bg-cyan-primary/5" : "border-border-hairline/10"
                               }`}>
                                 {hasResult ? (
-                                  <DataStream 
-                                    text={intermediateResults[index]} 
-                                    active={isProcessing || (isBaking && activeStepIndex === null)} 
-                                    className={`text-[10.5px] font-mono transition-colors duration-500 break-all select-text ${isProcessing ? "text-cyan-text" : "text-green-verified/70"}`}
-                                  />
+                                  <div className="line-clamp-2 break-all w-full" title={intermediateResults[index]}>
+                                    <DataStream
+                                      text={intermediateResults[index]}
+                                      active={isProcessing || (isBaking && activeStepIndex === null)}
+                                      className={`text-[10.5px] font-mono transition-colors duration-500 break-all select-text ${isProcessing ? "text-cyan-text" : "text-green-verified/70"}`}
+                                    />
+                                  </div>
                                 ) : (
                                   <span className="text-[10px] font-mono text-text-dim/30 italic">Awaiting bake...</span>
                                 )}
@@ -1152,6 +1004,13 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
         {mode === "brute" && (() => {
           const topMatch = bruteResults.length > 0 ? bruteResults.find((r, idx) => idx === 0 && r.score > 40) : null;
           const alternativeMatches = topMatch ? bruteResults.slice(1) : bruteResults;
+          // One coherent story: how many were evaluated vs. how many cleared the confidence bar.
+          const CONFIDENCE_THRESHOLD = 40;
+          const feasibleCount = bruteResults.filter(r => r.score > CONFIDENCE_THRESHOLD).length;
+          const CANDIDATE_PREVIEW = 6;
+          const visibleAlternatives = showAllCandidates
+            ? alternativeMatches
+            : alternativeMatches.slice(0, CANDIDATE_PREVIEW);
 
           return (
             <GlassPanel className="p-4 flex-1 flex flex-col min-h-[500px]" clipSize="md">
@@ -1522,77 +1381,102 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               {/* SECONDARY ROW: ALTERNATIVE CANDIDATES REGISTER */}
               {bruteResults.length > 0 && alternativeMatches.length > 0 && (
                 <div className="mt-2 pt-3.5 border-t border-border-hairline/15 flex flex-col min-h-0">
-                  <div className="flex items-center justify-between border-b border-border-hairline/10 pb-1.5 mb-2.5">
-                    <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider">
-                      CANDIDATE DECRYPTION REGISTRY MATRIX ({alternativeMatches.length} NODES IDENTIFIED)
+                  {/* Single coherent summary: evaluated vs. cleared the bar vs. skipped */}
+                  <div className="flex items-center justify-between border-b border-border-hairline/10 pb-1.5 mb-2.5 gap-3">
+                    <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider truncate">
+                      CANDIDATE REGISTRY — {alternativeMatches.length} EVALUATED
+                      {bruteFailedCount > 0 && ` · ${bruteFailedCount} SKIPPED`}
                     </span>
-                    <Badge variant="cyan" size="xs">
-                      LOW SCORING MATCHES
+                    <Badge variant={feasibleCount > 0 ? "green" : "dim"} size="xs">
+                      {feasibleCount > 0
+                        ? `${feasibleCount} ABOVE ${CONFIDENCE_THRESHOLD}%`
+                        : `NONE ABOVE ${CONFIDENCE_THRESHOLD}%`}
                     </Badge>
                   </div>
 
-                  {/* Compact scrollable grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[160px] overflow-y-auto pr-1 hud-scrollbar">
-                    {alternativeMatches.map((result, idx) => (
-                      <div 
-                        key={idx} 
-                        className="bg-bg-void/40 border border-border-hairline/10 p-2.5 flex flex-col justify-between hover:border-amber-alert/25 hover:bg-bg-void/75 transition-all"
-                      >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center space-x-1.5 min-w-0">
-                            <span className="font-mono text-[10px] text-text-dim">#{idx + 1}</span>
-                            <span className="font-mono text-[10.5px] text-amber-text font-black truncate">{result.label}</span>
-                            {result.parameter && (
-                              <Badge variant="cyan" size="xs" className="px-1 py-0 font-mono text-[10px] shrink-0">
-                                {result.parameter}
-                              </Badge>
-                            )}
+                  {/* Ranked grid — no inner scroller; expands on demand */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {visibleAlternatives.map((result, idx) => {
+                      const rank = (topMatch ? idx + 2 : idx + 1);
+                      const plausible = result.score > CONFIDENCE_THRESHOLD;
+                      return (
+                        <div
+                          key={idx}
+                          className="hud-target hud-target-amber bg-bg-void/40 border border-border-hairline/10 p-2.5 flex flex-col justify-between hover:border-amber-alert/25 hover:bg-bg-void/75 transition-all"
+                        >
+                          <div className="flex items-center justify-between mb-1.5 gap-2">
+                            <div className="flex items-center space-x-1.5 min-w-0">
+                              <span className="font-mono text-[10px] text-text-dim/60 shrink-0">#{rank}</span>
+                              <span className="font-mono text-[10.5px] text-amber-text font-black truncate">{result.label}</span>
+                              {result.parameter && (
+                                <Badge variant="cyan" size="xs" className="px-1 py-0 font-mono text-[10px] shrink-0">
+                                  {result.parameter}
+                                </Badge>
+                              )}
+                            </div>
+                            {/* Confidence readout + bar, so ranking is legible at a glance */}
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <div className="w-10 h-1 bg-bg-void border border-border-hairline/15 overflow-hidden">
+                                <div
+                                  className={`h-full ${plausible ? "bg-green-verified" : "bg-amber-alert/50"}`}
+                                  style={{ width: `${Math.max(2, Math.min(100, result.score))}%` }}
+                                />
+                              </div>
+                              <span className={`font-mono text-[10px] ${plausible ? "text-green-verified" : "text-text-dim/60"}`}>
+                                {result.score}%
+                              </span>
+                            </div>
                           </div>
-                          <span className="font-mono text-[10px] text-amber-text/70">{result.score}% SCORE</span>
-                        </div>
 
-                        {/* Compact result text */}
-                        <div className="bg-bg-void/50 p-1.5 border border-border-hairline/5 font-mono text-[10.5px] text-text-dim/95 mb-2 truncate select-text">
-                          {result.text}
-                        </div>
+                          <div className="bg-bg-void/50 p-1.5 border border-border-hairline/5 font-mono text-[10.5px] text-text-dim/95 mb-2 truncate select-text">
+                            {result.text}
+                          </div>
 
-                        {/* Quick actions bar */}
-                        <div className="flex justify-end space-x-1.5 text-[10px] font-mono border-t border-border-hairline/5 pt-1.5">
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(result.text);
-                              playPinClick();
-                              addLog(`COPIED RESULT: ${result.label}`, "success", "SYS");
-                            }}
-                            className="hover:text-cyan-text text-text-dim uppercase transition-colors"
-                          >
-                            Copy
-                          </button>
-                          <span className="text-border-hairline/30">|</span>
-                          <button
-                            onClick={() => {
-                              setInputText(result.text);
-                              playPinClick();
-                              addLog(`FED ALTERNATIVE MATCH INTO INPUT`, "info", "SYS");
-                            }}
-                            className="hover:text-amber-text text-text-dim uppercase transition-colors"
-                          >
-                            Use as Input
-                          </button>
+                          <div className="flex justify-end space-x-1.5 text-[10px] font-mono border-t border-border-hairline/5 pt-1.5">
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(result.text);
+                                playPinClick();
+                                addLog(`COPIED RESULT: ${result.label}`, "success", "SYS");
+                              }}
+                              className="hover:text-cyan-text text-text-dim uppercase transition-colors"
+                            >
+                              Copy
+                            </button>
+                            <span className="text-border-hairline/30">|</span>
+                            <button
+                              onClick={() => {
+                                setInputText(result.text);
+                                playPinClick();
+                                addLog(`FED ALTERNATIVE MATCH INTO INPUT`, "info", "SYS");
+                              }}
+                              className="hover:text-amber-text text-text-dim uppercase transition-colors"
+                            >
+                              Use as Input
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
+
+                  {/* Progressive disclosure replaces the cramped scroll viewport */}
+                  {alternativeMatches.length > CANDIDATE_PREVIEW && (
+                    <button
+                      onClick={() => {
+                        setShowAllCandidates(v => !v);
+                        playPinClick();
+                      }}
+                      onMouseEnter={() => playHoverEvidence()}
+                      className="hud-target mt-2 self-center px-3 py-1 border border-border-hairline/20 bg-bg-void/40 hover:border-amber-alert/50 hover:text-amber-text text-text-dim text-[10px] font-mono uppercase tracking-widest transition-all"
+                    >
+                      {showAllCandidates
+                        ? `Collapse — showing all ${alternativeMatches.length}`
+                        : `Show all ${alternativeMatches.length} candidates`}
+                    </button>
+                  )}
                 </div>
               )}
-
-              {/* Bottom statistics alignment */}
-              <div className="mt-4 pt-3 border-t border-border-hairline/15 flex items-center justify-between">
-                <span className="text-[10.5px] text-text-dim font-share uppercase tracking-widest flex items-center select-none">
-                  <Activity className="w-3.5 h-3.5 mr-1 text-amber-alert animate-hex-pulse-flicker" />
-                  DECRYPTION ALIGNED MATCH CHANNELS: {bruteResults.filter(r => r.score > 40).length} FEASIBLE CANDIDATES FOUND
-                </span>
-              </div>
 
             </GlassPanel>
           );
@@ -1605,41 +1489,6 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
         
         {mode === "manual" ? (
           <>
-            {/* Manual Recipe presets (interactive presets) */}
-            <GlassPanel className="p-4" clipSize="sm">
-              <div className="border-b border-border-hairline/20 pb-2 mb-3.5">
-                <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
-                  <Sparkles className="w-3.5 h-3.5 mr-2 text-cyan-primary animate-hex-pulse-flicker" />
-                  CYBER DECODE PRESETS
-                </h3>
-                <p className="text-[10.5px] text-text-dim uppercase tracking-wider font-share mt-0.5">
-                  Demonstrate chain flow by mounting pre-configured tactical decoder cascades.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                {RECIPE_PRESETS.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => loadPreset(p)}
-                    className="p-2 border border-border-hairline/10 bg-bg-void/40 hover:bg-cyan-primary/[0.02] hover:border-cyan-primary/30 transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-mono text-[11px] font-bold text-white group-hover:text-cyan-text transition-colors uppercase">
-                        {p.name}
-                      </h4>
-                      <Badge variant="cyan" size="xs">
-                        {p.steps.length} ops
-                      </Badge>
-                    </div>
-                    <p className="text-[10.5px] text-text-dim uppercase tracking-wider font-share leading-normal">
-                      {p.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </GlassPanel>
-
             {/* Searchable / Browsable Registry of available tools */}
             <GlassPanel className="p-4 flex-1 flex flex-col min-h-[350px]" clipSize="sm">
               <div className="border-b border-border-hairline/20 pb-2 mb-3">
@@ -1729,41 +1578,6 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
         ) : (
           /* Brute Force Modes Sidebar presets & heuristic notes */
           <>
-            {/* Cyber Crack Presets selection */}
-            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[320px]" clipSize="sm">
-              <div className="border-b border-border-hairline/20 pb-2 mb-3.5">
-                <h3 className="font-orbitron text-xs font-black tracking-widest text-amber-text flex items-center uppercase">
-                  <ShieldAlert className="w-3.5 h-3.5 mr-2 text-amber-alert animate-hex-pulse-flicker" />
-                  CYBER BREACH PRESETS
-                </h3>
-                <p className="text-[10.5px] text-text-dim uppercase tracking-wider font-share mt-0.5">
-                  Select raw encrypted intercepts to demonstrate rapid automated decryption sweeps.
-                </p>
-              </div>
-
-              <div className="space-y-3 overflow-y-auto max-h-[360px] pr-1 hud-scrollbar flex-1">
-                {BRUTE_FORCE_PRESETS.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => handleLoadBrutePreset(p)}
-                    className="p-2.5 border border-border-hairline/10 bg-bg-void/40 hover:bg-amber-alert/[0.02] hover:border-amber-alert/30 transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-mono text-[11px] font-bold text-white group-hover:text-amber-text transition-colors uppercase">
-                        {p.name}
-                      </h4>
-                      <Badge variant="amber" size="xs">
-                        {p.mode === "sweep" ? `sweep: ${p.cipher}` : "try all"}
-                      </Badge>
-                    </div>
-                    <p className="text-[10.5px] text-text-dim uppercase tracking-wider font-share leading-normal">
-                      {p.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </GlassPanel>
-
             {/* Heuristics Intelligence Core Panel */}
             <GlassPanel className="p-4" clipSize="sm">
               <div className="border-b border-border-hairline/20 pb-2 mb-3">

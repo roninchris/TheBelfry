@@ -770,50 +770,32 @@ export default function EncodingLab() {
                 </div>
               </div>
 
-              {/* Quick sequence presets */}
+              {/* Chain stage selectors — user-configured, no canned presets */}
               <div className="space-y-1.5 pt-1">
-                <span className="text-text-dim/70 uppercase text-[10px] block">CONVERT PRESET PIPELINES:</span>
+                <span className="text-text-dim/70 uppercase text-[10px] block">CONFIGURE CHAIN STAGES:</span>
                 <div className="grid grid-cols-2 gap-1.5">
-                  <button
-                    onClick={() => {
-                      setPipelineLayers(["Base64", "Hex"]);
-                      playPinClick();
-                    }}
-                    onMouseEnter={() => playHoverEvidence()}
-                    className="p-1 border border-border-hairline/10 bg-bg-void/25 text-center text-text-dim/80 hover:text-cyan-primary hover:border-cyan-primary/30 hover:bg-cyan-primary/5 uppercase text-[10px] leading-tight transition-all cursor-pointer"
-                  >
-                    B64 → HEX
-                  </button>
-                  <button
-                    onClick={() => {
-                      setPipelineLayers(["Hex", "Base64"]);
-                      playPinClick();
-                    }}
-                    onMouseEnter={() => playHoverEvidence()}
-                    className="p-1 border border-border-hairline/10 bg-bg-void/25 text-center text-text-dim/80 hover:text-cyan-primary hover:border-cyan-primary/30 hover:bg-cyan-primary/5 uppercase text-[10px] leading-tight transition-all cursor-pointer"
-                  >
-                    HEX → B64
-                  </button>
-                  <button
-                    onClick={() => {
-                      setPipelineLayers(["Morse", "Hex"]);
-                      playPinClick();
-                    }}
-                    onMouseEnter={() => playHoverEvidence()}
-                    className="p-1 border border-border-hairline/10 bg-bg-void/25 text-center text-text-dim/80 hover:text-cyan-primary hover:border-cyan-primary/30 hover:bg-cyan-primary/5 uppercase text-[10px] leading-tight transition-all cursor-pointer"
-                  >
-                    MORSE → HEX
-                  </button>
-                  <button
-                    onClick={() => {
-                      setPipelineLayers(["Base64", "URL"]);
-                      playPinClick();
-                    }}
-                    onMouseEnter={() => playHoverEvidence()}
-                    className="p-1 border border-border-hairline/10 bg-bg-void/25 text-center text-text-dim/80 hover:text-cyan-primary hover:border-cyan-primary/30 hover:bg-cyan-primary/5 uppercase text-[10px] leading-tight transition-all cursor-pointer"
-                  >
-                    B64 → URL
-                  </button>
+                  {[0, 1].map((stageIdx) => (
+                    <label key={stageIdx} className="flex flex-col gap-0.5">
+                      <span className="text-text-dim/50 text-[9px] uppercase tracking-widest">STAGE {stageIdx + 1}</span>
+                      <select
+                        value={pipelineLayers[stageIdx] || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const next = [...pipelineLayers];
+                          if (val) next[stageIdx] = val;
+                          else next.splice(stageIdx, 1);
+                          setPipelineLayers(next.filter(Boolean));
+                          playPinClick();
+                        }}
+                        className="p-1 bg-bg-void/60 border border-border-hairline/15 text-cyan-text font-mono text-[10px] uppercase outline-none focus:border-cyan-primary/50 cursor-pointer"
+                      >
+                        <option value="">— NONE —</option>
+                        {Object.keys(pipelineLayerIds).map((label) => (
+                          <option key={label} value={label}>{label.toUpperCase()}</option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
                 </div>
               </div>
 
