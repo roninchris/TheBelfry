@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useAppStore, Case } from "../../store/appStore";
+import { getKnight, type KnightId } from "../../lib/identity";
 import { playPinClick, playCaseSolvedSwell, playHoverEvidence, playReticleLock, playUnpinTear } from "../../lib/soundEngine";
 import GlassPanel from "../../components/ui/GlassPanel";
 import Badge from "../../components/ui/Badge";
@@ -237,7 +238,7 @@ export default function DossierPage() {
               <FolderPlus className="w-12 h-12 text-cyan-dim opacity-30 mb-2 animate-hex-pulse-flicker" />
               <p className="text-xs text-text-dim/80 font-bold tracking-widest uppercase">No Cases Indexed</p>
               <p className="text-[10.5px] text-text-dim/50 uppercase max-w-xs mt-1">
-                Create your first ARG case dossier to start pinning clues and charting connections.
+                Create your first case to start pinning clues and charting connections.
               </p>
             </div>
           ) : (
@@ -307,10 +308,11 @@ export default function DossierPage() {
                     </div>
 
                     <div className="mt-2.5 pt-2 border-t border-border-hairline/10 flex items-center justify-between" onClick={() => selectCase(c.id)}>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         <Badge variant={getStatusBadgeVariant(c.status)} size="xs">
                           {c.status}
                         </Badge>
+                        <CaseAuthor knightId={c.createdBy} />
                       </div>
                       <div className="font-mono text-[10px] text-text-dim flex gap-3">
                         <span>CLUES: <strong className="text-cyan-text">{caseNodes.length}</strong></span>
@@ -326,7 +328,7 @@ export default function DossierPage() {
 
           {/* Quick instructions bar */}
           <div className="border-t border-border-hairline/20 pt-3 mt-4 text-[10.5px] font-share text-text-dim">
-            <span className="text-cyan-primary font-bold">TELEMETRY SECURE INTEL:</span> Case databases are safely synced in standard browser LocalStorage and segment nodes survive reload.
+            <span className="text-cyan-primary font-bold">TELEMETRY SECURE INTEL:</span> Case databases are safely synced and encrypted.
           </div>
         </GlassPanel>
       </div>
@@ -340,7 +342,7 @@ export default function DossierPage() {
               NO DOSSIER FOCUS CONTEXT
             </h3>
             <p className="text-[11px] font-share text-text-dim max-w-sm mt-1 leading-normal uppercase">
-              Select an ARG case dossier in the sidebar registry or create a new investigation record to begin telemetry scans.
+              Select a case dossier in the sidebar registry or create a new investigation record to begin telemetry scans.
             </p>
           </GlassPanel>
         ) : (
@@ -391,7 +393,7 @@ export default function DossierPage() {
                         <option value="STALLED">STALLED</option>
                       </select>
                       <span className="font-mono text-[10.5px] text-text-dim tracking-wider uppercase">
-                        ARG_DB: #{activeCase.id.toUpperCase()}
+                        BFRY_DB: #{activeCase.id.toUpperCase()}
                       </span>
                     </div>
 
@@ -441,7 +443,7 @@ export default function DossierPage() {
                   {/* Sub-tabs strip using the bracketed IconTabs component */}
                   <div className="flex items-center justify-between border-t border-border-hairline/15 pt-2.5 shrink-0">
                     <span className="text-[10.5px] font-bold text-cyan-dim tracking-widest uppercase">
-                      ARG SUB-REGISTRIES:
+                      CASE SUB-REGISTRIES:
                     </span>
                     <IconTabs tabs={dossierTabs} activeTabId={activeTab} onChange={(id) => setActiveTab(id)} />
                   </div>
@@ -561,7 +563,7 @@ export default function DossierPage() {
 
             <form onSubmit={handleCreateCaseSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">DOSSIER TITLE / ARG NAME</label>
+                <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">DOSSIER TITLE</label>
                 <input
                   type="text"
                   required
@@ -576,7 +578,7 @@ export default function DossierPage() {
                 <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">INITIAL SYNOPSIS BRIEFING</label>
                 <textarea
                   required
-                  placeholder="What is this ARG about? Summarize the current puzzle path or overarching theme."
+                  placeholder="Log the initial briefing of the investigation..."
                   rows={4}
                   value={newSynopsis}
                   onChange={(e) => setNewSynopsis(e.target.value)}
@@ -656,5 +658,33 @@ export default function DossierPage() {
       )}
 
     </div>
+  );
+}
+
+/**
+ * Who opened this case. Renders nothing for guest-authored cases, since a
+ * solo local board has only one author and the mark would be pure noise.
+ */
+function CaseAuthor({ knightId }: { knightId?: KnightId }) {
+  const knight = getKnight(knightId);
+  if (!knight) return null;
+
+  return (
+    <span
+      className="flex items-center gap-1 font-share text-[10px] tracking-[0.12em] uppercase whitespace-nowrap"
+      title={`Case opened by ${knight.label}`}
+    >
+      <img
+        src={knight.sigil}
+        alt=""
+        className="w-3.5 h-3.5 object-contain shrink-0"
+        style={{
+          transform: `scale(${knight.sigilScale ?? 1})`,
+          filter: `drop-shadow(0 0 3px ${knight.accent}99)`,
+        }}
+      />
+      <span className="text-text-dim">BY</span>
+      <span style={{ color: knight.accent }}>{knight.label.toUpperCase()}</span>
+    </span>
   );
 }

@@ -379,16 +379,21 @@ export function syncAmbientDrone() {
   if (!ctx || !masterGainNode) return;
   const shouldPlay = currentAmbientEnabled && !currentMuted && currentVolume > 0;
   
-  if (shouldPlay && !ambientActive) {
+  if (shouldPlay) {
     ambientActive = true;
-    
-    // Synth texture REMOVED as per requirement
-    
-    // Start random background samples
-    if (ambientBuffers.length > 0) {
+
+    // Start whenever we have buffers but nothing playing, rather than only on
+    // the transition into `ambientActive`.
+    //
+    // The ambient mp3s decode asynchronously, so the first call almost always
+    // lands before they exist: it would flip ambientActive to true, find no
+    // buffers, and start nothing. The call made once decoding finishes then saw
+    // ambientActive already true and did nothing — so the ambient bed could
+    // never start at all.
+    if (!ambientSource && ambientBuffers.length > 0) {
       playNextAmbient();
     }
-  } else if (!shouldPlay && ambientActive) {
+  } else if (ambientActive) {
     ambientActive = false;
     if (ambientSource) {
       try { ambientSource.stop(); } catch(e) {}

@@ -18,7 +18,11 @@ export default function BlurText({
   animateBy = 'letters',
   onAnimationComplete,
 }: BlurTextProps) {
-  const elements = animateBy === 'words' ? text.split(' ') : text.split('');
+  // Splitting on a captured group keeps the whitespace as its own element.
+  // A plain split(' ') consumes the separator, and since every element renders
+  // as an inline-block, the words then run together into one unreadable string.
+  const elements =
+    animateBy === 'words' ? text.split(/(\s+)/).filter(Boolean) : text.split('');
   const [isAnimated, setIsAnimated] = useState(false);
 
   useEffect(() => {
@@ -42,7 +46,7 @@ export default function BlurText({
           }
           className="inline-block whitespace-pre"
         >
-          {char === ' ' ? '\u00A0' : char}
+          {/^\s+$/.test(char) ? '\u00A0'.repeat(char.length) : char}
         </motion.span>
       ))}
     </span>

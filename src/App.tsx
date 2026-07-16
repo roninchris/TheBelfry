@@ -18,6 +18,7 @@ import DossierPage from "./features/dossier/DossierPage";
 import DetectiveBoardPage from "./features/detective-board/DetectiveBoardPage";
 import SettingsPage from "./features/settings/SettingsPage";
 import BelfryBootScreen from "./components/ui/BelfryBootScreen";
+import CredentialChallenge from "./components/ui/CredentialChallenge";
 import ToolDatabase from "./features/tool-database/ToolDatabase";
 import { useAppStore } from "./store/appStore";
 import { playGlitchBurst, playDebouncedTypeKey, playLoadTab, syncAmbientDrone, preloadSounds } from "./lib/soundEngine";
@@ -28,6 +29,14 @@ export default function App() {
   // Boot plays by default; `?skipboot` bypasses it (dev/verification aid — no effect for normal users).
   const skipBoot = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("skipboot");
   const [hasBooted, setHasBooted] = useState(skipBoot);
+
+  /**
+   * The credential challenge never gates the app. Boot goes straight to a
+   * guest session; the challenge opens only from the sidebar emblem, so a
+   * visitor who does not know it exists is never asked to log in.
+   */
+  const isChallengeOpen = useAppStore((state) => state.isChallengeOpen);
+  const closeChallenge = useAppStore((state) => state.closeChallenge);
 
   useEffect(() => {
     preloadSounds();
@@ -95,6 +104,10 @@ export default function App() {
         {!hasBooted && (
           <BelfryBootScreen onComplete={() => setHasBooted(true)} />
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isChallengeOpen && <CredentialChallenge onClose={closeChallenge} />}
       </AnimatePresence>
 
       <MainLayout>

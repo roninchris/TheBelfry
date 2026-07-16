@@ -36,7 +36,7 @@ import HexCluster from "../../components/ui/HexCluster";
 import ShinyText from "../../components/react-bits/ShinyText";
 import BlurText from "../../components/react-bits/BlurText";
 import TreeGrowth from "../../components/react-bits/TreeGrowth";
-import { getAllTools, getTool, asResult } from "../../lib/tools/registry";
+import { getAllTools, getTool, asResult, type ToolEntry } from "../../lib/tools/registry";
 import {
   playPinClick,
   playHoverEvidence,
@@ -47,7 +47,7 @@ import {
 interface ToolDoc {
   id: string;
   name: string;
-  category: "cipher" | "encoding";
+  category: "cipher" | "encoding" | "utility";
   icon: React.ComponentType<any>;
   summary: string;
   howItWorks: string;
@@ -56,6 +56,13 @@ interface ToolDoc {
   exampleOutput: string;
   securityClassification: "HISTORICAL" | "STANDARD" | "LEGACY" | "TRANSPOSITION" | "BINARY_STREAM";
   forensicValue: string;
+  /**
+   * False for instruments present in the tool registry but without a
+   * hand-written field entry yet. They are still listed, searchable and fully
+   * operational in the sandbox — the catalogue's job is to reflect what the
+   * platform actually carries, not only what has been written up.
+   */
+  documented?: boolean;
 }
 
 // Complete in-universe database documentation for all 18 tools
@@ -108,8 +115,7 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
     tutorialSteps: [
       "Scan each alphabetic character in the cipher text.",
       "Shift the character by 13 positions forward or backward (the result is identical).",
-      "Punctuation, numbers, and case formatting remain fully unchanged.",
-      "Commonly used in forums, ARG puzzles, and source code to hide hints or spoilers."
+      "Punctuation, numbers, and case formatting remain fully unchanged."
     ],
     exampleInput: "SECRET",
     exampleOutput: "FRPERG",
@@ -132,7 +138,7 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
     exampleInput: "BEACON",
     exampleOutput: "YVZXLM",
     securityClassification: "HISTORICAL",
-    forensicValue: "Extremely simple substitution. Frequently deployed in ARG puzzles to obfuscate secondary clues or hidden location parameters."
+    forensicValue: "Extremely simple substitution. Frequently deployed to obfuscate secondary clues or hidden location parameters."
   },
   xor: {
     id: "xor",
@@ -389,9 +395,79 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
   }
 };
 
+const CATEGORY_ICON: Record<ToolDoc["category"], React.ComponentType<any>> = {
+  cipher: Shuffle,
+  encoding: Binary,
+  utility: Sliders,
+};
+
+/**
+ * Builds a catalogue entry for a tool the platform carries but that has no
+ * hand-written field entry yet.
+ *
+ * Everything here is derived from the tool itself — its label, its category,
+ * and an example produced by actually running it. Nothing about how the cipher
+ * works is invented: an authoritative-sounding but wrong explanation of a
+ * cryptographic instrument is worse than an honest gap, so the detail view
+ * renders a "pending transcription" state instead of prose.
+ */
+function synthesizeDoc(entry: ToolEntry): ToolDoc {
+  const exampleInput = "SIGNAL";
+  let exampleOutput: string;
+  try {
+    exampleOutput = asResult(entry.encode(exampleInput)).text;
+  } catch {
+    // Tools whose defaults need parameters (keys, rotors, rails) cannot produce
+    // a canned example; the sandbox below still drives them properly.
+    exampleOutput = "";
+  }
+
+  return {
+    id: entry.id,
+    name: entry.label,
+    category: entry.category,
+    icon: CATEGORY_ICON[entry.category] ?? Shuffle,
+    summary: "",
+    howItWorks: "",
+    tutorialSteps: [],
+    exampleInput,
+    exampleOutput,
+    securityClassification: entry.category === "encoding" ? "BINARY_STREAM" : "STANDARD",
+    forensicValue: "",
+    documented: false,
+  };
+}
+
+/**
+ * The catalogue: every tool in the registry, hand-written entry where one
+ * exists. Previously this listed only the ~19 documented tools, which made the
+ * database quietly claim the platform carried no Enigma, no Playfair, and so on.
+ * Documented entries sort first, then alphabetically.
+ *
+ * Built on first use and cached, not at module scope: synthesizing an entry runs
+ * the tool to produce a real example, and this module is imported eagerly by
+ * App.tsx — at module scope every visitor would pay ~50 cipher runs during boot
+ * whether or not they ever open the catalogue.
+ */
+let cachedToolDocs: ToolDoc[] | null = null;
+function getAllToolDocs(): ToolDoc[] {
+  if (!cachedToolDocs) {
+    cachedToolDocs = getAllTools()
+      .map((entry) => {
+        const written = TOOL_DOCS_REGISTRY[entry.id];
+        return written ? { ...written, documented: true } : synthesizeDoc(entry);
+      })
+      .sort((a, b) => {
+        if (a.documented !== b.documented) return a.documented ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+  }
+  return cachedToolDocs;
+}
+
 export default function ToolDatabase() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<"all" | "cipher" | "encoding">("all");
+  const [selectedCategory, setSelectedCategory] = useState<"all" | "cipher" | "encoding" | "utility">("all");
   const [selectedToolId, setSelectedToolId] = useState<string>("caesar");
 
   // Interactive Sandbox testing states
@@ -401,21 +477,24 @@ export default function ToolDatabase() {
   const [sandboxKey, setSandboxKey] = useState("SECRET");
   const [copied, setCopied] = useState(false);
 
+  const allToolDocs = useMemo(() => getAllToolDocs(), []);
+
   // Filter tools based on search and category
   const filteredTools = useMemo(() => {
-    return Object.values(TOOL_DOCS_REGISTRY).filter((tool) => {
+    const q = searchQuery.toLowerCase();
+    return allToolDocs.filter((tool) => {
       const matchesSearch =
-        tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tool.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tool.summary.toLowerCase().includes(searchQuery.toLowerCase());
+        tool.name.toLowerCase().includes(q) ||
+        tool.id.toLowerCase().includes(q) ||
+        tool.summary.toLowerCase().includes(q);
       const matchesCategory = selectedCategory === "all" || tool.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [allToolDocs, searchQuery, selectedCategory]);
 
   const activeToolDoc = useMemo(() => {
-    return TOOL_DOCS_REGISTRY[selectedToolId] || TOOL_DOCS_REGISTRY.caesar;
-  }, [selectedToolId]);
+    return allToolDocs.find((t) => t.id === selectedToolId) ?? allToolDocs[0];
+  }, [allToolDocs, selectedToolId]);
 
   // Compute live sandbox output using the actual tool registry methods!
   const sandboxOutput = useMemo(() => {
@@ -447,7 +526,7 @@ export default function ToolDatabase() {
     playPinClick();
     setSelectedToolId(id);
     // Reset sandbox input with example of chosen tool
-    const doc = TOOL_DOCS_REGISTRY[id];
+    const doc = allToolDocs.find((t) => t.id === id);
     if (doc) {
       setSandboxInput(doc.exampleInput);
       setSandboxDirection("encode");
@@ -564,6 +643,19 @@ export default function ToolDatabase() {
                 }`}
               >
                 Encodings
+              </button>
+              <button
+                onClick={() => {
+                  playPinClick();
+                  setSelectedCategory("utility");
+                }}
+                className={`px-3 py-1 text-[11.5px] font-mono font-bold uppercase tracking-widest transition-all border-l border-border-hairline/15 ${
+                  selectedCategory === "utility"
+                    ? "bg-cyan-primary/15 text-cyan-text font-bold shadow-[inset_0_0_8px_rgba(47,241,228,0.25)]"
+                    : "text-text-dim hover:text-text-primary"
+                }`}
+              >
+                Utilities
               </button>
             </div>
           </div>
@@ -757,77 +849,105 @@ export default function ToolDatabase() {
           {/* Dossier Tabs Container (Scrollable) */}
           <div className="flex-1 overflow-y-auto max-h-[420px] space-y-4 pr-1 scrollbar-thin select-text">
             
-            {/* Short Summary */}
-            <div className="p-3 bg-bg-void/50 border-l-2 border-cyan-primary border-y border-r border-border-hairline/10 w-full">
-              <h4 className="font-orbitron text-[10.5px] font-black tracking-widest text-cyan-text uppercase mb-1.5 flex items-center">
-                <Info className="w-3.5 h-3.5 text-cyan-primary mr-1.5" />
-                <span>Forensic Summary</span>
-              </h4>
-              <p className="text-[11px] text-text-primary uppercase tracking-wide font-share leading-relaxed w-full">
-                <BlurText text={activeToolDoc.summary} animateBy="words" delay={0.02} />
-              </p>
-            </div>
+            {activeToolDoc.documented ? (
+              <>
+                {/* Short Summary */}
+                <div className="p-3 bg-bg-void/50 border-l-2 border-cyan-primary border-y border-r border-border-hairline/10 w-full">
+                  <h4 className="font-orbitron text-[12px] font-black tracking-widest text-cyan-text uppercase mb-1.5 flex items-center">
+                    <Info className="w-3.5 h-3.5 text-cyan-primary mr-1.5" />
+                    <span>Forensic Summary</span>
+                  </h4>
+                  <p className="text-[12.5px] text-text-primary uppercase tracking-wide font-share leading-relaxed w-full">
+                    <BlurText text={activeToolDoc.summary} animateBy="words" delay={0.02} />
+                  </p>
+                </div>
 
-            {/* How it Works Description */}
-            <div className="space-y-1.5 w-full">
-              <h4 className="font-orbitron text-[10.5px] font-black tracking-widest text-text-dim uppercase">
-                MECHANICAL ARCHITECTURE
-              </h4>
-              <div className="flex flex-col sm:flex-row gap-3 bg-bg-void/30 p-3 border border-border-hairline/15 w-full items-center">
-                <p className="flex-1 text-[11px] font-share uppercase tracking-wide text-text-primary leading-relaxed">
-                  {activeToolDoc.howItWorks}
+                {/* How it Works Description */}
+                <div className="space-y-1.5 w-full">
+                  <h4 className="font-orbitron text-[12px] font-black tracking-widest text-text-dim uppercase">
+                    MECHANICAL ARCHITECTURE
+                  </h4>
+                  <div className="flex flex-col sm:flex-row gap-3 bg-bg-void/30 p-3 border border-border-hairline/15 w-full items-center">
+                    <p className="flex-1 text-[12.5px] font-share uppercase tracking-wide text-text-primary leading-relaxed">
+                      {activeToolDoc.howItWorks}
+                    </p>
+                    {/* Visual Branching Cipher Diagram */}
+                    <div key={activeToolDoc.id} className="w-16 h-16 shrink-0 bg-bg-void/60 border border-border-hairline/10 rounded flex items-center justify-center overflow-hidden relative" title="Structural branching mapping">
+                      <TreeGrowth active={true} color="rgba(47, 241, 228, 0.45)" className="scale-35 transform absolute" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step-by-Step Blueprint Instructions */}
+                <div className="space-y-2">
+                  <h4 className="font-orbitron text-[12px] font-black tracking-widest text-text-dim uppercase">
+                    DECRYPTION BLUEPRINT ALGORITHM
+                  </h4>
+                  <ol className="space-y-1.5 pl-4 list-decimal text-[12.5px] uppercase font-share text-text-dim leading-relaxed">
+                    {activeToolDoc.tutorialSteps.map((step, idx) => (
+                      <li key={idx} className="hover:text-white transition-colors">
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </>
+            ) : (
+              /* Carried by the platform, not yet written up. Says so plainly
+                 rather than inventing an explanation that might be wrong. */
+              <div className="p-4 bg-amber-alert/[0.04] border-l-2 border-amber-alert/70 border-y border-r border-border-hairline/10 w-full space-y-2">
+                <h4 className="font-orbitron text-[12px] font-black tracking-widest text-amber-alert uppercase flex items-center">
+                  <Info className="w-3.5 h-3.5 mr-1.5" />
+                  <span>Field entry pending transcription</span>
+                </h4>
+                <p className="text-[12.5px] text-text-primary font-share uppercase tracking-wide leading-relaxed">
+                  This instrument is installed and fully operational — the written analysis
+                  has not been filed yet. Drive it directly from the calibration sandbox below,
+                  or open it in the Codex for full parameter control.
                 </p>
-                {/* Visual Branching Cipher Diagram */}
-                <div key={activeToolDoc.id} className="w-16 h-16 shrink-0 bg-bg-void/60 border border-border-hairline/10 rounded flex items-center justify-center overflow-hidden relative" title="Structural branching mapping">
-                  <TreeGrowth active={true} color="rgba(47, 241, 228, 0.45)" className="scale-35 transform absolute" />
+                <p className="font-mono text-[11px] text-text-dim tracking-wider">
+                  REGISTRY_ID: <span className="text-cyan-text">{activeToolDoc.id}</span>
+                  <span className="opacity-40"> // </span>
+                  CLASS: <span className="text-cyan-text">{activeToolDoc.category.toUpperCase()}</span>
+                </p>
+              </div>
+            )}
+
+            {/* Worked Static Example — omitted when the tool needs parameters
+                to produce one, rather than showing an empty panel. */}
+            {activeToolDoc.exampleOutput && (
+              <div className="grid grid-cols-2 gap-3 pt-1 w-full">
+                <div className="p-2.5 bg-bg-void/80 border border-border-hairline/20 overflow-hidden">
+                  <span className="text-[11px] font-mono text-cyan-primary uppercase tracking-widest block mb-1">
+                    STATIC ENCODE TEST:
+                  </span>
+                  <span className="font-mono text-[12.5px] font-bold text-white block break-all">
+                    {activeToolDoc.exampleInput}
+                  </span>
+                </div>
+                <div className="p-2.5 bg-bg-void/80 border border-border-hairline/20 overflow-hidden">
+                  <span className="text-[11px] font-mono text-amber-alert uppercase tracking-widest block mb-1">
+                    STATIC CASCADE OUTPUT:
+                  </span>
+                  <span className="font-mono text-[12.5px] font-bold text-green-verified block break-all">
+                    {activeToolDoc.exampleOutput}
+                  </span>
                 </div>
               </div>
-            </div>
-
-            {/* Step-by-Step Blueprint Instructions */}
-            <div className="space-y-2">
-              <h4 className="font-orbitron text-[10.5px] font-black tracking-widest text-text-dim uppercase">
-                DECRYPTION BLUEPRINT ALGORITHM
-              </h4>
-              <ol className="space-y-1.5 pl-4 list-decimal text-[11px] uppercase font-share text-text-dim leading-relaxed">
-                {activeToolDoc.tutorialSteps.map((step, idx) => (
-                  <li key={idx} className="hover:text-white transition-colors">
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            {/* Worked Static Example */}
-            <div className="grid grid-cols-2 gap-3 pt-1 w-full">
-              <div className="p-2.5 bg-bg-void/80 border border-border-hairline/20 overflow-hidden">
-                <span className="text-[10px] font-mono text-cyan-primary uppercase tracking-widest block mb-1">
-                  STATIC ENCODE TEST:
-                </span>
-                <span className="font-mono text-[11px] font-bold text-white block break-all">
-                  {activeToolDoc.exampleInput}
-                </span>
-              </div>
-              <div className="p-2.5 bg-bg-void/80 border border-border-hairline/20 overflow-hidden">
-                <span className="text-[10px] font-mono text-amber-alert uppercase tracking-widest block mb-1">
-                  STATIC CASCADE OUTPUT:
-                </span>
-                <span className="font-mono text-[11px] font-bold text-green-verified block break-all">
-                  {activeToolDoc.exampleOutput}
-                </span>
-              </div>
-            </div>
+            )}
 
             {/* Technical Forensic Vulnerability Info */}
-            <div className="p-3 bg-red-threat/5 border border-red-threat/20 w-full">
-              <h4 className="font-orbitron text-[10.5px] font-black tracking-widest text-red-threat uppercase mb-1 flex items-center">
-                <Terminal className="w-3.5 h-3.5 text-red-threat mr-1.5 animate-hex-pulse-flicker" />
-                <span>Forensic Intelligence Vulnerability Report</span>
-              </h4>
-              <p className="text-[10.5px] font-mono text-text-dim uppercase leading-relaxed w-full break-words">
-                {activeToolDoc.forensicValue}
-              </p>
-            </div>
+            {activeToolDoc.forensicValue && (
+              <div className="p-3 bg-red-threat/5 border border-red-threat/20 w-full">
+                <h4 className="font-orbitron text-[12px] font-black tracking-widest text-red-threat uppercase mb-1 flex items-center">
+                  <Terminal className="w-3.5 h-3.5 text-red-threat mr-1.5 animate-hex-pulse-flicker" />
+                  <span>Forensic Intelligence Vulnerability Report</span>
+                </h4>
+                <p className="text-[12px] font-mono text-text-dim uppercase leading-relaxed w-full break-words">
+                  {activeToolDoc.forensicValue}
+                </p>
+              </div>
+            )}
 
             {/* ================= INTERACTIVE WORKSPACE SANDBOX ================= */}
             <div className="border-t border-border-hairline/25 pt-4 space-y-3.5 select-none">

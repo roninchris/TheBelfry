@@ -1,12 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { playSuccessChime, playMaterialize, setSoundVolume, setSoundMuted, setAmbientEnabled } from "../lib/soundEngine";
+import { playSuccessChime, playMaterialize, playPinClick, setSoundVolume, setSoundMuted, setAmbientEnabled } from "../lib/soundEngine";
 import { identifyInput } from "../lib/tools/identify";
 import { identifyImage, identifyAudio } from "../lib/tools/identify/forensics";
 import { detectHiddenMessageInFile, loadImageAsCanvas } from "../lib/tools/image-stego";
 import { detectMorse, detectDTMF } from "../lib/audioAnalysis";
 import { getAudioContext } from "../lib/soundEngine";
 import type { KnightId } from "../lib/identity";
+import { migrateLegacyGuestBoard, storageFor, type BoardStorage } from "../lib/storage";
+import { onSessionLost, resolveSessionIdentity } from "../lib/session";
 
 export interface ForensicLog {
   id: string;
@@ -24,6 +26,7 @@ export interface Case {
   createdAt: string;
   colorTag?: string;         // optional accent color per case
   notes: string;             // freeform markdown/journal notes for the case
+  createdBy?: KnightId;      // absent = opened by a guest on their local board
 }
 
 export interface EvidenceNode {
@@ -67,6 +70,9 @@ export interface NoteEntry {
   updatedAt: string;
 }
 
+/** Board load lifecycle. Drives the board's loading and failure states. */
+export type BoardStatus = "loading" | "ready" | "error";
+
 interface AppState {
   /**
    * The signed-in knight, or null for a guest. Deliberately excluded from
@@ -74,7 +80,44 @@ interface AppState {
    * from localStorage, so a cleared session always falls back to guest.
    */
   currentIdentity: KnightId | null;
-  setIdentity: (id: KnightId | null) => void;
+
+  /**
+   * True once the stored auth session has been probed at boot.
+   *
+   * Until then we cannot know whether this browser holds a knight session, so
+   * the credential challenge must not assume "guest" and show its form — that
+   * would flash a login at someone who is already signed in.
+   */
+  sessionResolved: boolean;
+
+  /**
+   * Whether the credential challenge is on screen.
+   *
+   * There is no route to it and no visible affordance: it opens only from the
+   * Belfry emblem in the sidebar. Guests are never shown a login, and one
+   * opened by accident closes with Escape or the backdrop.
+   */
+  isChallengeOpen: boolean;
+  openChallenge: () => void;
+  closeChallenge: () => void;
+
+  /**
+   * Where the board is read from and written to. Rebound whenever identity
+   * changes; runtime-only and never persisted.
+   */
+  boardStorage: BoardStorage;
+  boardStatus: BoardStatus;
+  boardError: string | null;
+
+  /**
+   * Binds the identity's board and replaces the in-memory board with it.
+   *
+   * Every identity change swaps the whole board wholesale — a guest's board and
+   * the knights' board are never merged, and never both in memory.
+   */
+  setIdentity: (id: KnightId | null) => Promise<void>;
+  /** Re-reads the current board. For retrying a failed load. */
+  reloadBoard: () => Promise<void>;
 
   currentModule: string;
   logs: ForensicLog[];
@@ -103,7 +146,12 @@ interface AppState {
   
   // Evidence Board actions
   addEvidenceNode: (node: Omit<EvidenceNode, "id" | "createdAt" | "caseId" | "notes">) => void;
+  /** Memory-only; per-frame during a drag. Persist with commitEvidenceNode. */
   updateEvidenceNodePosition: (id: string, x: number, y: number) => void;
+  /** Memory-only; per-frame during a resize. Persist with commitEvidenceNode. */
+  resizeEvidenceNode: (id: string, width: number, height: number) => void;
+  /** Persists a node's current state. Call on drag/resize end. */
+  commitEvidenceNode: (id: string) => void;
   updateEvidenceNodeContent: (id: string, updates: Partial<EvidenceNode>) => void;
   updateEvidenceNodeNotes: (id: string, notes: string) => void;
   deleteEvidenceNode: (id: string) => void;
@@ -116,7 +164,8 @@ interface AppState {
   addNote: (text?: string) => string;
   updateNote: (id: string, text: string) => void;
   deleteNote: (id: string) => void;
-  sendNoteToBoard: (id: string) => void;
+  /** Returns whether the note was pinned, so the caller can confirm it. */
+  sendNoteToBoard: (id: string) => boolean;
 
   // Audio settings
   masterVolume: number;
@@ -132,11 +181,81 @@ const formatTime = () => {
   return now.toTimeString().split(' ')[0];
 };
 
+type Logger = (text: string, type?: ForensicLog["type"], sender?: string) => void;
+
+/**
+ * Fire-and-forget a board write.
+ *
+ * In-memory state has already updated, so a failure is surfaced rather than
+ * rolled back: silently discarding the user's work on a transient error would
+ * be worse than a view that is briefly ahead of the server. Reconciliation
+ * arrives with the realtime work.
+ */
+function syncWrite(op: Promise<void>, subject: string, log: Logger): void {
+  op.catch((err) => {
+    const message = err instanceof Error ? err.message : String(err);
+    log(`SYNC FAILED // ${subject}: ${message}`, "warning", "ORACLE-LINK");
+  });
+}
+
+// Ordering matters: board fields are no longer persisted, so the store's first
+// write rewrites the persist blob without them. Any guest board predating the
+// storage adapter has to be lifted out before that happens.
+migrateLegacyGuestBoard();
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       currentIdentity: null,
-      setIdentity: (id) => set({ currentIdentity: id }),
+      sessionResolved: false,
+      isChallengeOpen: false,
+      openChallenge: () => set({ isChallengeOpen: true }),
+      closeChallenge: () => set({ isChallengeOpen: false }),
+      boardStorage: storageFor(null),
+      boardStatus: "ready",
+      boardError: null,
+
+      setIdentity: async (id) => {
+        const previous = get().boardStorage;
+        if (previous.kind === "cloud" || get().currentIdentity !== id) previous.dispose?.();
+
+        const boardStorage = storageFor(id);
+        // Clear the board before loading: the outgoing identity's evidence must
+        // never be visible, even briefly, to the incoming one.
+        set({
+          currentIdentity: id,
+          boardStorage,
+          boardStatus: "loading",
+          boardError: null,
+          cases: [],
+          evidenceNodes: [],
+          evidenceConnections: [],
+        });
+        await get().reloadBoard();
+      },
+
+      reloadBoard: async () => {
+        const storage = get().boardStorage;
+        set({ boardStatus: "loading", boardError: null });
+        try {
+          const snapshot = await storage.load();
+          // A stale load must not overwrite a newer identity's board.
+          if (get().boardStorage !== storage) return;
+
+          const activeCaseId = get().activeCaseId;
+          const stillExists = snapshot.cases.some((c) => c.id === activeCaseId);
+          set({
+            ...snapshot,
+            activeCaseId: stillExists ? activeCaseId : snapshot.cases[0]?.id ?? null,
+            boardStatus: "ready",
+          });
+        } catch (err) {
+          if (get().boardStorage !== storage) return;
+          const message = err instanceof Error ? err.message : String(err);
+          set({ boardStatus: "error", boardError: message });
+          get().addLog(`BOARD LINK FAILURE // ${message}`, "warning", "ORACLE-LINK");
+        }
+      },
 
       currentModule: "dashboard",
       isScanning: false,
@@ -323,12 +442,14 @@ export const useAppStore = create<AppState>()(
           ...caseData,
           id,
           notes: "",
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          createdBy: get().currentIdentity ?? undefined
         };
         set((state) => ({
           cases: [...state.cases, newCase],
           activeCaseId: id
         }));
+        syncWrite(get().boardStorage.putCase(newCase), `CASE ${newCase.title}`, get().addLog);
         get().addLog(`NEW CASE CREATED AND ACTIVATED: ${newCase.title}`, "success", "SYS");
       },
 
@@ -336,12 +457,16 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           cases: state.cases.map((c) => (c.id === caseId ? { ...c, notes } : c))
         }));
+        const updated = get().cases.find((c) => c.id === caseId);
+        if (updated) syncWrite(get().boardStorage.putCase(updated), "CASE NOTES", get().addLog);
       },
 
       updateCaseStatus: (caseId, status) => {
         set((state) => ({
           cases: state.cases.map((c) => (c.id === caseId ? { ...c, status } : c))
         }));
+        const updated = get().cases.find((c) => c.id === caseId);
+        if (updated) syncWrite(get().boardStorage.putCase(updated), "CASE STATUS", get().addLog);
         get().addLog(`CASE STATUS UPDATED: ${status}`, "info", "SYS");
       },
 
@@ -358,6 +483,9 @@ export const useAppStore = create<AppState>()(
             evidenceConnections: state.evidenceConnections.filter((c) => c.caseId !== caseId)
           };
         });
+        // Nodes and connections cascade server-side (and in the local adapter),
+        // so only the case itself is deleted here.
+        syncWrite(get().boardStorage.removeCase(caseId), "CASE DELETE", get().addLog);
         get().addLog(`CASE DELETED`, "warning", "SYS");
       },
 
@@ -376,25 +504,44 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           evidenceNodes: [...state.evidenceNodes, newNode]
         }));
+        syncWrite(get().boardStorage.putNode(newNode), `NODE ${node.title || "UNNAMED"}`, get().addLog);
         get().addLog(`ADDED EVIDENCE NODE: ${node.title || "UNNAMED"}`, "success", "BOARD");
       },
 
+      // Called on every pointermove of a drag, so it is memory-only. The board
+      // calls commitEvidenceNode on pointerup to persist the final position.
+      // Writing here would mean a storage round-trip per frame.
       updateEvidenceNodePosition: (id, x, y) => {
         set((state) => ({
           evidenceNodes: state.evidenceNodes.map((n) => (n.id === id ? { ...n, x, y } : n))
         }));
       },
 
+      // Same contract as updateEvidenceNodePosition: per-frame, memory-only,
+      // committed on pointerup.
+      resizeEvidenceNode: (id, width, height) => {
+        set((state) => ({
+          evidenceNodes: state.evidenceNodes.map((n) => (n.id === id ? { ...n, width, height } : n))
+        }));
+      },
+
+      commitEvidenceNode: (id) => {
+        const node = get().evidenceNodes.find((n) => n.id === id);
+        if (node) syncWrite(get().boardStorage.putNode(node), "NODE LAYOUT", get().addLog);
+      },
+
       updateEvidenceNodeContent: (id, updates) => {
         set((state) => ({
           evidenceNodes: state.evidenceNodes.map((n) => (n.id === id ? { ...n, ...updates } : n))
         }));
+        get().commitEvidenceNode(id);
       },
 
       updateEvidenceNodeNotes: (id, notes) => {
         set((state) => ({
           evidenceNodes: state.evidenceNodes.map((n) => (n.id === id ? { ...n, notes } : n))
         }));
+        get().commitEvidenceNode(id);
       },
 
       deleteEvidenceNode: (id) => {
@@ -402,6 +549,8 @@ export const useAppStore = create<AppState>()(
           evidenceNodes: state.evidenceNodes.filter((n) => n.id !== id),
           evidenceConnections: state.evidenceConnections.filter((c) => c.fromNodeId !== id && c.toNodeId !== id)
         }));
+        // Attached connections cascade with the node.
+        syncWrite(get().boardStorage.removeNode(id), "NODE DELETE", get().addLog);
         get().addLog(`DELETED EVIDENCE NODE`, "warning", "BOARD");
       },
 
@@ -420,6 +569,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           evidenceConnections: [...state.evidenceConnections, newConnection]
         }));
+        syncWrite(get().boardStorage.putConnection(newConnection), "CORRELATION", get().addLog);
         get().addLog(`ESTABLISHED CORRELATION BETWEEN EVIDENCE NODES`, "success", "BOARD");
       },
 
@@ -427,6 +577,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           evidenceConnections: state.evidenceConnections.filter((c) => c.id !== id)
         }));
+        syncWrite(get().boardStorage.removeConnection(id), "CORRELATION DELETE", get().addLog);
         get().addLog(`REMOVED CORRELATION LINE`, "warning", "BOARD");
       },
 
@@ -434,6 +585,10 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           evidenceConnections: state.evidenceConnections.map((c) => (c.id === id ? { ...c, label } : c))
         }));
+        const updated = get().evidenceConnections.find((c) => c.id === id);
+        if (updated) {
+          syncWrite(get().boardStorage.putConnection(updated), "CORRELATION LABEL", get().addLog);
+        }
       },
 
       addNote: (text = "") => {
@@ -457,10 +612,10 @@ export const useAppStore = create<AppState>()(
       sendNoteToBoard: (id) => {
         const { notes, activeCaseId, addEvidenceNode, addLog } = get();
         const note = notes.find((n) => n.id === id);
-        if (!note) return;
+        if (!note) return false;
         if (!activeCaseId) {
           addLog("CANNOT PIN NOTE: NO ACTIVE CASE SELECTED", "warning", "BOARD");
-          return;
+          return false;
         }
         addEvidenceNode({
           type: "text",
@@ -469,6 +624,11 @@ export const useAppStore = create<AppState>()(
           x: 120 + Math.random() * 200,
           y: 120 + Math.random() * 200
         });
+        // The board is almost always off-screen when pinning from the notes
+        // panel, so without a cue here the action is completely silent and
+        // invisible — and gets repeated until the user assumes it is broken.
+        playPinClick();
+        return true;
       },
 
       setMasterVolume: (volume) => {
@@ -486,11 +646,18 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "belfry-app-store",
+      /**
+       * Board data (cases, nodes, connections) is deliberately absent: it is
+       * owned by boardStorage, which for a knight is Supabase. Persisting it
+       * here too would leave a copy of the shared board in localStorage after
+       * sign-out, and would let a stale local copy race the cloud on load.
+       *
+       * What remains is per-device: scratch notes, audio settings, and which
+       * case this browser last had open. Keeping this set small also matters
+       * for drag performance — persist runs on every set().
+       */
       partialize: (state) => ({
-        cases: state.cases,
         activeCaseId: state.activeCaseId,
-        evidenceNodes: state.evidenceNodes,
-        evidenceConnections: state.evidenceConnections,
         notes: state.notes,
         masterVolume: state.masterVolume,
         isMuted: state.isMuted,
@@ -512,3 +679,35 @@ const initialState = useAppStore.getState();
 setSoundVolume(initialState.masterVolume);
 setSoundMuted(initialState.isMuted);
 setAmbientEnabled(initialState.ambientEnabled);
+
+/**
+ * Bind a board on boot.
+ *
+ * Identity comes from the auth session, so a returning knight lands on the
+ * shared board and everyone else lands on their own local one. Runs after
+ * persist has rehydrated (localStorage rehydration is synchronous, so it has
+ * completed by the time this module body executes).
+ */
+void useAppStore.getState().setIdentity(null);
+
+void resolveSessionIdentity()
+  .then((identity) => {
+    // Only re-bind if a knight session exists; the guest board is already bound
+    // above, and rebinding it would discard an in-progress load for no reason.
+    if (identity) return useAppStore.getState().setIdentity(identity);
+  })
+  .catch(() => {
+    // A failed session probe means guest, which is already bound. The user is
+    // not blocked; the credential challenge remains available.
+  })
+  .finally(() => {
+    useAppStore.setState({ sessionResolved: true });
+  });
+
+// An expired refresh token or a deleted account must drop the session to guest
+// rather than leave a shared board on screen that can no longer be written to.
+onSessionLost(() => {
+  if (useAppStore.getState().currentIdentity !== null) {
+    void useAppStore.getState().setIdentity(null);
+  }
+});

@@ -28,6 +28,8 @@ interface SidebarItem {
 
 export default function Sidebar() {
   const currentModule = useAppStore((state) => state.currentModule);
+  const openChallenge = useAppStore((state) => state.openChallenge);
+  const currentIdentity = useAppStore((state) => state.currentIdentity);
   const setModule = useAppStore((state) => state.setModule);
   const [isMinimized, setIsMinimized] = useState(false);
   const wasAutoCollapsedRef = React.useRef(false);
@@ -97,10 +99,28 @@ export default function Sidebar() {
 
       {/* Bat logo visual emblem */}
       <div className={`p-4 border-b border-border-hairline/20 flex items-center bg-gradient-to-r from-cyan-primary/[0.03] to-transparent ${isMinimized ? 'justify-center' : 'space-x-3'}`}>
-        <div className="relative w-12 h-12 flex items-center justify-center bg-cyan-primary/5 border border-cyan-primary/30 rounded-full animate-breathing shrink-0">
-          <img src="/assets/icons/belfry_sidebar.png" alt="Logo" className="w-8 h-8 object-contain filter drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
+        {/*
+          The emblem is the way IN, and only that. Deliberately unlabelled and
+          untitled: a guest has no reason to read it as a login, and an
+          accidental click closes with Escape or the backdrop.
+
+          Once a knight is signed in it goes inert — ending a session belongs to
+          the operative's own sigil in the header (KnightBadge), so there is
+          exactly one way out and it is the one carrying your identity. Two
+          controls doing the same irreversible thing is how people disconnect by
+          accident.
+        */}
+        <button
+          type="button"
+          onClick={() => { if (!currentIdentity) openChallenge(); }}
+          aria-label="Belfry emblem"
+          className={`relative w-14 h-14 flex items-center justify-center bg-cyan-primary/5 border border-cyan-primary/30 rounded-full animate-breathing shrink-0 transition-shadow duration-300 ${
+            currentIdentity ? "cursor-default" : "cursor-pointer hover:shadow-[0_0_12px_rgba(112,162,168,0.35)]"
+          }`}
+        >
+          <img src="/assets/icons/belfry_sidebar.png" alt="" className="w-10 h-10 object-contain filter drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
           <div className="absolute inset-0 border border-dashed border-cyan-primary/10 rounded-full animate-radar-sweep" />
-        </div>
+        </button>
         {!isMinimized && (
           <div className="overflow-hidden whitespace-nowrap">
             <h1 className="font-orbitron text-sm font-black tracking-widest text-text-primary uppercase cyan-glow leading-tight">

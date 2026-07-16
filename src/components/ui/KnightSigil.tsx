@@ -23,13 +23,19 @@ export default function KnightSigil({
   const knight = getKnight(knightId);
   if (!knight) return null;
 
+  // Per-knight optical correction, so a wide bat and an upright R read at the
+  // same visual weight. The box is grown around its centre, keeping the pin
+  // anchored to the card corner.
+  const box = size * (knight.sigilScale ?? 1);
+  const offset = (box - size) / 2;
+
   return (
     <motion.div
       initial={reducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.4 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: reducedMotion ? 0 : 0.35, delay: reducedMotion ? 0 : 0.18, ease: "backOut" }}
-      className={`pointer-events-none absolute -top-3.5 -left-3.5 z-20 ${className}`}
-      style={{ width: size, height: size }}
+      className={`pointer-events-none absolute z-20 ${className}`}
+      style={{ width: box, height: box, top: -14 - offset, left: -14 - offset }}
       title={`PLACED BY // ${knight.label.toUpperCase()}`}
       aria-label={`Placed by ${knight.label}`}
     >

@@ -114,6 +114,8 @@ export default function DetectiveBoardPage() {
   const evidenceConnections = useAppStore((state) => state.evidenceConnections);
   const addEvidenceNode = useAppStore((state) => state.addEvidenceNode);
   const updateEvidenceNodePosition = useAppStore((state) => state.updateEvidenceNodePosition);
+  const resizeEvidenceNode = useAppStore((state) => state.resizeEvidenceNode);
+  const commitEvidenceNode = useAppStore((state) => state.commitEvidenceNode);
   const updateEvidenceNodeContent = useAppStore((state) => state.updateEvidenceNodeContent);
   const updateEvidenceNodeNotes = useAppStore((state) => state.updateEvidenceNodeNotes);
   const deleteEvidenceNode = useAppStore((state) => state.deleteEvidenceNode);
@@ -357,6 +359,8 @@ export default function DetectiveBoardPage() {
     const handlePointerUp = () => {
       stopDragThrum();
       setDraggingNodeId(null);
+      // Position updates are memory-only during the drag; persist the result.
+      commitEvidenceNode(nodeId);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
@@ -383,12 +387,14 @@ export default function DetectiveBoardPage() {
       const dy = (moveEvent.clientY - startY) / zoom;
       const nextWidth = Math.min(MAX_NODE_WIDTH, Math.max(MIN_NODE_WIDTH, Math.round(startWidth + dx)));
       const nextHeight = Math.min(MAX_NODE_HEIGHT, Math.max(MIN_NODE_HEIGHT, Math.round(startHeight + dy)));
-      updateEvidenceNodeContent(nodeId, { width: nextWidth, height: nextHeight });
+      resizeEvidenceNode(nodeId, nextWidth, nextHeight);
       setResizingNodeId(nodeId);
     };
 
     const handlePointerUp = () => {
       setResizingNodeId(null);
+      // Size updates are memory-only during the resize; persist the result.
+      commitEvidenceNode(nodeId);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
     };
@@ -1266,7 +1272,7 @@ export default function DetectiveBoardPage() {
               <SplitText text="THE BELFRY DETECTIVE BOARD" delay={0.03} />
             </h3>
             <p className="text-[11.5px] font-share text-text-dim max-w-sm mb-4 leading-relaxed">
-              Durable multi-ARG tracking canvas is currently locked. To map conspiratorial data, select or establish an active case file.
+              Durable multi tracking canvas is currently locked. To map conspiratorial data, select or establish an active case file.
             </p>
             <button
               onClick={() => setShowNewCaseModal(true)}
@@ -1699,7 +1705,7 @@ export default function DetectiveBoardPage() {
             <GlassPanel className={`p-4 max-w-sm w-full origin-top ${prefersReducedMotion ? "" : "animate-clip-reveal"}`} clipSize="md" showCornerTicks={true}>
               <div className="flex justify-between items-center border-b border-border-hairline/25 pb-2 mb-3">
                 <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
-                  INITIATE NEW ARG INVESTIGATION
+                  INITIATE NEW INVESTIGATION
                 </h3>
                 <button onClick={() => setShowNewCaseModal(false)} className="text-text-dim hover:text-text-primary">
                   <X className="w-4 h-4" />
@@ -1708,7 +1714,7 @@ export default function DetectiveBoardPage() {
 
               <form onSubmit={handleCreateCase} className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">CASE/ARG IDENTIFIER TITLE</label>
+                  <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">CASE IDENTIFIER TITLE</label>
                   <input
                     type="text"
                     required
