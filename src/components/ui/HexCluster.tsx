@@ -113,11 +113,11 @@ export default function HexCluster() {
 
       {/* Title */}
       <div className="w-full border-b border-border-hairline/20 pb-1 mb-2.5 flex justify-between items-center">
-        <span className="font-orbitron text-[11px] font-black text-cyan-primary tracking-widest uppercase flex items-center">
+        <span className="font-orbitron text-[13px] font-black text-cyan-primary tracking-widest uppercase flex items-center">
           <span className="w-1.5 h-1.5 bg-cyan-primary mr-1.5 inline-block" />
           BELFRY SYNERGY GRID
         </span>
-        <span className="font-share text-[10px] text-text-dim">SYS: ACTIVE METRICS</span>
+        <span className="font-share text-[12px] text-text-dim">SYS: ACTIVE METRICS</span>
       </div>
 
       {/* Honeycomb SVG Drawing Stage */}
@@ -261,12 +261,12 @@ export default function HexCluster() {
               />
 
               {/* Progress Count text */}
-              <div className="font-mono text-[10px] font-bold text-text-primary mt-0.5 tracking-tight leading-none">
+              <div className="font-mono text-[12px] font-bold text-text-primary mt-0.5 tracking-tight leading-none">
                 <AnimatedCounter value={node.current} duration={800} />/{node.max}
               </div>
 
               {/* Short Label */}
-              <span className="font-chakra text-[10px] text-text-dim tracking-wider font-extrabold uppercase mt-0.5 text-center truncate w-full leading-none">
+              <span className="font-chakra text-[12px] text-text-dim tracking-wider font-extrabold uppercase mt-0.5 text-center truncate w-full leading-none">
                 {node.label}
               </span>
             </div>
@@ -275,7 +275,7 @@ export default function HexCluster() {
       </div>
 
       {/* Dynamic Summary Strip */}
-      <div className="w-full bg-cyan-primary/[0.02] border border-cyan-primary/10 p-2 mt-2 font-share text-[10.5px] text-text-dim text-center">
+      <div className="w-full bg-cyan-primary/[0.02] border border-cyan-primary/10 p-2 mt-2 font-share text-[12px] text-text-dim text-center">
         <span className="text-cyan-primary font-bold">TOTAL DATABASE DENSITY:</span>{" "}
         <span className="text-text-primary font-mono">
           {totalEvidence} RECOVERY VECTORS

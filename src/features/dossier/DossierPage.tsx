@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { useAppStore, Case } from "../../store/appStore";
+import { useAppStore, Case, THREAT_LEVELS, type ThreatLevel } from "../../store/appStore";
 import { getKnight, type KnightId } from "../../lib/identity";
 import { playPinClick, playCaseSolvedSwell, playHoverEvidence, playReticleLock, playUnpinTear } from "../../lib/soundEngine";
 import GlassPanel from "../../components/ui/GlassPanel";
@@ -27,6 +27,51 @@ import {
   TrendingUp,
   Brain
 } from "lucide-react";
+
+/**
+ * Threat levels escalate along the established alert ramp — cyan is nominal,
+ * amber is caution, red is danger — so severity reads instantly without
+ * introducing colours outside the system.
+ */
+const THREAT_TONE: Record<ThreatLevel, { activeClass: string; text: string; dot: string }> = {
+  LOW: {
+    activeClass: "border-cyan-primary/60 text-cyan-text bg-cyan-primary/15",
+    text: "text-cyan-text",
+    dot: "bg-cyan-primary"
+  },
+  MODERATE: {
+    activeClass: "border-cyan-primary/60 text-cyan-text bg-cyan-primary/10",
+    text: "text-cyan-primary",
+    dot: "bg-cyan-primary"
+  },
+  HIGH: {
+    activeClass: "border-amber-alert/70 text-amber-alert bg-amber-alert/15",
+    text: "text-amber-alert",
+    dot: "bg-amber-alert"
+  },
+  CRITICAL: {
+    activeClass: "border-red-threat/70 text-red-threat bg-red-threat/15",
+    text: "text-red-threat",
+    dot: "bg-red-threat"
+  }
+};
+
+/** Compact threat readout for a case card. Absent on legacy cases. */
+function ThreatTag({ level }: { level?: ThreatLevel }) {
+  if (!level) return null;
+  const tone = THREAT_TONE[level];
+  return (
+    <span
+      className={`flex items-center gap-1 font-mono text-[12px] font-bold tracking-wider uppercase ${tone.text}`}
+      title={`Threat assessment: ${level}`}
+    >
+      <span
+        className={`w-1.5 h-1.5 ${tone.dot} ${level === "CRITICAL" ? "animate-hex-pulse-flicker" : ""}`}
+      />
+      {level}
+    </span>
+  );
+}
 
 // Procedural high-tech hologram radar of case statistics and nodes
 function CaseHologramRadar({
@@ -80,7 +125,7 @@ function CaseHologramRadar({
         ) : (
           <g className="animate-hex-pulse-flicker">
             <rect x="75" y="95" width="50" height="30" fill="currentColor" fillOpacity="0.05" stroke="currentColor" strokeWidth="0.5" strokeDasharray="3 3" />
-            <text x="100" y="113" textAnchor="middle" className="font-orbitron text-[10px] fill-current opacity-60">EMPTY DATABASE</text>
+            <text x="100" y="113" textAnchor="middle" className="font-orbitron text-[12px] fill-current opacity-60">EMPTY DATABASE</text>
           </g>
         )}
       </svg>
@@ -91,7 +136,7 @@ function CaseHologramRadar({
       <div className="absolute bottom-16 left-4 w-4 h-4 border-b border-l border-cyan-primary/50" />
       <div className="absolute bottom-16 right-4 w-4 h-4 border-b border-r border-cyan-primary/50" />
       
-      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center space-x-1 text-[10px] font-mono tracking-widest bg-bg-void/80 px-2 py-0.5 border border-border-hairline/25 text-cyan-text">
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center space-x-1 text-[12px] font-mono tracking-widest bg-bg-void/80 px-2 py-0.5 border border-border-hairline/25 text-cyan-text">
         <Crosshair className="w-2.5 h-2.5 animate-radar-sweep" style={{ animationDuration: "15s" }} />
         <span>INTELLIGENCE_VAULT: ONLINE</span>
       </div>
@@ -110,6 +155,7 @@ export default function DossierPage() {
     deleteCase, 
     updateCaseNotes,
     updateCaseStatus,
+    updateCaseDetails,
     addLog
   } = useAppStore();
 
@@ -118,6 +164,10 @@ export default function DossierPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newSynopsis, setNewSynopsis] = useState("");
   const [newStatus, setNewStatus] = useState<Case["status"]>("ACTIVE");
+  const [newThreat, setNewThreat] = useState<ThreatLevel>("MODERATE");
+
+  /** Set when the modal is amending an existing dossier rather than opening one. */
+  const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -169,18 +219,52 @@ export default function DossierPage() {
     return () => clearTimeout(timeout);
   };
 
-  const handleCreateCaseSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
-    addCase({
-      title: newTitle.trim(),
-      synopsis: newSynopsis.trim(),
-      status: newStatus
-    });
+  const openCreateModal = () => {
+    setEditingCaseId(null);
     setNewTitle("");
     setNewSynopsis("");
     setNewStatus("ACTIVE");
+    setNewThreat("MODERATE");
+    setShowCreateModal(true);
+  };
+
+  const openEditModal = (c: Case) => {
+    setEditingCaseId(c.id);
+    setNewTitle(c.title);
+    setNewSynopsis(c.synopsis);
+    setNewStatus(c.status);
+    setNewThreat(c.threatLevel ?? "MODERATE");
+    setShowCreateModal(true);
+    playPinClick();
+  };
+
+  const handleCreateCaseSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+
+    if (editingCaseId) {
+      updateCaseDetails(editingCaseId, {
+        title: newTitle.trim(),
+        synopsis: newSynopsis.trim(),
+        threatLevel: newThreat
+      });
+      // Status has its own action (it drives the solved chime), so it is applied
+      // separately and only when it actually changed.
+      const existing = cases.find((c) => c.id === editingCaseId);
+      if (existing && existing.status !== newStatus) {
+        updateCaseStatus(editingCaseId, newStatus);
+      }
+    } else {
+      addCase({
+        title: newTitle.trim(),
+        synopsis: newSynopsis.trim(),
+        status: newStatus,
+        threatLevel: newThreat
+      });
+    }
+
     setShowCreateModal(false);
+    setEditingCaseId(null);
     playPinClick();
   };
 
@@ -216,15 +300,15 @@ export default function DossierPage() {
                 <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
                 <ShinyText text="SECURE CASE ARCHIVE" speed={4} />
               </h3>
-              <p className="text-[10.5px] font-share text-text-dim tracking-wide uppercase mt-0.5">
+              <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
                 Load active investigative dossiers
               </p>
             </div>
             
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={openCreateModal}
               onMouseEnter={() => playHoverEvidence()}
-              className="hud-target px-2 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[10.5px] font-black uppercase tracking-widest flex items-center"
+              className="hud-target px-2 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[13px] font-black uppercase tracking-widest flex items-center"
               style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
             >
               <Plus className="w-3 h-3 mr-1" />
@@ -237,7 +321,7 @@ export default function DossierPage() {
             <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
               <FolderPlus className="w-12 h-12 text-cyan-dim opacity-30 mb-2 animate-hex-pulse-flicker" />
               <p className="text-xs text-text-dim/80 font-bold tracking-widest uppercase">No Cases Indexed</p>
-              <p className="text-[10.5px] text-text-dim/50 uppercase max-w-xs mt-1">
+              <p className="text-[12px] text-text-dim/50 uppercase max-w-xs mt-1">
                 Create your first case to start pinning clues and charting connections.
               </p>
             </div>
@@ -287,34 +371,47 @@ export default function DossierPage() {
                           playReticleLock();
                         }}
                       >
-                        <span className="font-orbitron text-[11px] font-extrabold tracking-widest text-cyan-text truncate uppercase block mb-1">
+                        <span className="font-orbitron text-[13px] font-extrabold tracking-widest text-cyan-text truncate uppercase block mb-1">
                           {c.title}
                         </span>
-                        <p className="font-share text-[10.5px] leading-relaxed text-text-dim line-clamp-2 italic">
+                        <p className="font-share text-[12px] leading-relaxed text-text-dim line-clamp-2 italic">
                           "{c.synopsis}"
                         </p>
                       </div>
                       
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteConfirmId(c.id);
-                        }}
-                        className="text-text-dim hover:text-red-threat p-1 transition-colors relative z-10"
-                        title="Delete Case"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center shrink-0 relative z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(c);
+                          }}
+                          className="text-text-dim hover:text-cyan-text p-1 transition-colors"
+                          title="Edit case title, synopsis and threat level"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirmId(c.id);
+                          }}
+                          className="text-text-dim hover:text-red-threat p-1 transition-colors"
+                          title="Delete Case"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="mt-2.5 pt-2 border-t border-border-hairline/10 flex items-center justify-between" onClick={() => selectCase(c.id)}>
-                      <div className="flex gap-2 items-center">
+                      <div className="flex gap-2 items-center flex-wrap">
                         <Badge variant={getStatusBadgeVariant(c.status)} size="xs">
                           {c.status}
                         </Badge>
+                        <ThreatTag level={c.threatLevel} />
                         <CaseAuthor knightId={c.createdBy} />
                       </div>
-                      <div className="font-mono text-[10px] text-text-dim flex gap-3">
+                      <div className="font-mono text-[12px] text-text-dim flex gap-3">
                         <span>CLUES: <strong className="text-cyan-text">{caseNodes.length}</strong></span>
                         <span>LINKS: <strong className="text-cyan-text">{caseConns.length}</strong></span>
                       </div>
@@ -327,7 +424,7 @@ export default function DossierPage() {
           )}
 
           {/* Quick instructions bar */}
-          <div className="border-t border-border-hairline/20 pt-3 mt-4 text-[10.5px] font-share text-text-dim">
+          <div className="border-t border-border-hairline/20 pt-3 mt-4 text-[12px] font-share text-text-dim">
             <span className="text-cyan-primary font-bold">TELEMETRY SECURE INTEL:</span> Case databases are safely synced and encrypted.
           </div>
         </GlassPanel>
@@ -341,7 +438,7 @@ export default function DossierPage() {
             <h3 className="font-orbitron text-sm font-black text-cyan-text tracking-widest uppercase">
               NO DOSSIER FOCUS CONTEXT
             </h3>
-            <p className="text-[11px] font-share text-text-dim max-w-sm mt-1 leading-normal uppercase">
+            <p className="text-[13px] font-share text-text-dim max-w-sm mt-1 leading-normal uppercase">
               Select a case dossier in the sidebar registry or create a new investigation record to begin telemetry scans.
             </p>
           </GlassPanel>
@@ -385,19 +482,19 @@ export default function DossierPage() {
                             playPinClick();
                           }
                         }}
-                        className="bg-bg-void border border-border-hairline/30 text-cyan-text text-[10.5px] font-mono rounded-sm px-1.5 py-0.5 focus:outline-none focus:border-cyan-primary uppercase"
+                        className="bg-bg-void border border-border-hairline/30 text-cyan-text text-[12px] font-mono rounded-sm px-1.5 py-0.5 focus:outline-none focus:border-cyan-primary uppercase"
                       >
                         <option value="ACTIVE">ACTIVE</option>
                         <option value="SOLVED">SOLVED</option>
                         <option value="ARCHIVED">ARCHIVED</option>
                         <option value="STALLED">STALLED</option>
                       </select>
-                      <span className="font-mono text-[10.5px] text-text-dim tracking-wider uppercase">
+                      <span className="font-mono text-[12px] text-text-dim tracking-wider uppercase">
                         BFRY_DB: #{activeCase.id.toUpperCase()}
                       </span>
                     </div>
 
-                    <div className="flex items-center space-x-1 font-mono text-[10px]">
+                    <div className="flex items-center space-x-1 font-mono text-[12px]">
                       <span className="w-1.5 h-1.5 rounded-full bg-cyan-primary animate-hex-pulse-flicker" />
                       <span className={saveStatus === "SAVING" ? "text-amber-alert" : "text-green-verified"}>
                         {saveStatus === "SAVING" ? "AUTO-SAVING..." : "SYNCED"}
@@ -410,29 +507,29 @@ export default function DossierPage() {
                     <h2 className="font-orbitron text-lg font-black text-text-primary uppercase tracking-widest cyan-glow truncate max-w-sm">
                       <BlurText text={activeCase.title} delay={0.05} />
                     </h2>
-                    <p className="font-share text-[11px] text-cyan-dim font-bold tracking-widest uppercase border-b border-border-hairline/25 pb-2.5">
+                    <p className="font-share text-[13px] text-cyan-dim font-bold tracking-widest uppercase border-b border-border-hairline/25 pb-2.5">
                       CREATED: {new Date(activeCase.createdAt).toLocaleDateString()} // ELAPSED: {getDaysElapsed(activeCase.createdAt)}
                     </p>
                   </div>
 
                   {/* Spec metrics bento cards */}
-                  <div className="grid grid-cols-3 gap-2 py-1 font-share text-[11px] shrink-0">
+                  <div className="grid grid-cols-3 gap-2 py-1 font-share text-[13px] shrink-0">
                     <div className="bg-bg-void/60 border border-border-hairline/15 p-2 rounded-sm flex flex-col">
-                      <span className="text-text-dim text-[10px] uppercase flex items-center mb-0.5">
+                      <span className="text-text-dim text-[12px] uppercase flex items-center mb-0.5">
                         <Clock className="w-3 h-3 mr-1 text-cyan-dim" />
                         DURATION
                       </span>
                       <span className="text-text-primary font-mono font-bold text-xs uppercase">{getDaysElapsed(activeCase.createdAt)}</span>
                     </div>
                     <div className="bg-bg-void/60 border border-border-hairline/15 p-2 rounded-sm flex flex-col">
-                      <span className="text-text-dim text-[10px] uppercase flex items-center mb-0.5">
+                      <span className="text-text-dim text-[12px] uppercase flex items-center mb-0.5">
                         <Database className="w-3 h-3 mr-1 text-cyan-dim" />
                         CLUES FOUND
                       </span>
                       <span className="text-text-primary font-mono font-bold text-xs uppercase">{activeCaseNodes.length} FIL</span>
                     </div>
                     <div className="bg-bg-void/60 border border-border-hairline/15 p-2 rounded-sm flex flex-col col-span-1">
-                      <span className="text-text-dim text-[10px] uppercase flex items-center mb-0.5">
+                      <span className="text-text-dim text-[12px] uppercase flex items-center mb-0.5">
                         <Compass className="w-3 h-3 mr-1 text-cyan-dim" />
                         CORRELATIONS
                       </span>
@@ -442,7 +539,7 @@ export default function DossierPage() {
 
                   {/* Sub-tabs strip using the bracketed IconTabs component */}
                   <div className="flex items-center justify-between border-t border-border-hairline/15 pt-2.5 shrink-0">
-                    <span className="text-[10.5px] font-bold text-cyan-dim tracking-widest uppercase">
+                    <span className="text-[12px] font-bold text-cyan-dim tracking-widest uppercase">
                       CASE SUB-REGISTRIES:
                     </span>
                     <IconTabs tabs={dossierTabs} activeTabId={activeTab} onChange={(id) => setActiveTab(id)} />
@@ -453,10 +550,10 @@ export default function DossierPage() {
                     {activeTab === "info" && (
                       <div className="space-y-2 flex-1 flex flex-col">
                         <div className="flex justify-between items-center">
-                          <span className="font-chakra text-[10.5px] font-extrabold text-cyan-text uppercase tracking-widest block">
+                          <span className="font-chakra text-[12px] font-extrabold text-cyan-text uppercase tracking-widest block">
                             INVESTIGATION NOTES & JOURNAL
                           </span>
-                          <span className="text-[10px] font-mono text-text-dim/60">MD JOURNAL SUPPORTED</span>
+                          <span className="text-[12px] font-mono text-text-dim/60">MD JOURNAL SUPPORTED</span>
                         </div>
                         <textarea
                           placeholder="Document your breakthrough discoveries, passwords, QR codes, cipher keys, or dynamic solving logs here..."
@@ -469,18 +566,18 @@ export default function DossierPage() {
 
                     {activeTab === "clues" && (
                       <div className="space-y-2 flex-1 flex flex-col overflow-y-auto scrollbar-thin">
-                        <span className="font-chakra text-[10.5px] font-extrabold text-cyan-text uppercase tracking-widest block">
+                        <span className="font-chakra text-[12px] font-extrabold text-cyan-text uppercase tracking-widest block">
                           CLUES DISCOVERED REGISTRY
                         </span>
                         {activeCaseNodes.length === 0 ? (
-                          <p className="text-[10.5px] text-text-dim italic">No clue nodes created yet. Deploy notes or photo blocks in the Detective Board.</p>
+                          <p className="text-[12px] text-text-dim italic">No clue nodes created yet. Deploy notes or photo blocks in the Detective Board.</p>
                         ) : (
                           <div className="space-y-1.5">
                             {activeCaseNodes.map((node) => (
-                              <div key={node.id} className="flex justify-between items-center text-[10.5px] bg-bg-void/80 p-2 border border-border-hairline/10 rounded-sm">
+                              <div key={node.id} className="flex justify-between items-center text-[12px] bg-bg-void/80 p-2 border border-border-hairline/10 rounded-sm">
                                 <div className="flex flex-col">
                                   <span className="font-mono text-text-primary font-bold">{node.title}</span>
-                                  <span className="text-[10px] text-text-dim font-share truncate max-w-[150px]">{node.content}</span>
+                                  <span className="text-[12px] text-text-dim font-share truncate max-w-[150px]">{node.content}</span>
                                 </div>
                                 <Badge variant="cyan" size="xs">{node.type}</Badge>
                               </div>
@@ -492,25 +589,25 @@ export default function DossierPage() {
 
                     {activeTab === "links" && (
                       <div className="space-y-2 flex-1 flex flex-col overflow-y-auto scrollbar-thin">
-                        <span className="font-chakra text-[10.5px] font-extrabold text-cyan-text uppercase tracking-widest block">
+                        <span className="font-chakra text-[12px] font-extrabold text-cyan-text uppercase tracking-widest block">
                           ASSOCIATIVE CORRELATION SCHEMES
                         </span>
                         {activeCaseConnections.length === 0 ? (
-                          <p className="text-[10.5px] text-text-dim italic">No linkages drafted yet. Link clues via right-click 'Connect to...' on the Board.</p>
+                          <p className="text-[12px] text-text-dim italic">No linkages drafted yet. Link clues via right-click 'Connect to...' on the Board.</p>
                         ) : (
                           <div className="space-y-1.5">
                             {activeCaseConnections.map((conn) => {
                               const fromNode = activeCaseNodes.find(n => n.id === conn.fromNodeId);
                               const toNode = activeCaseNodes.find(n => n.id === conn.toNodeId);
                               return (
-                                <div key={conn.id} className="text-[10.5px] bg-bg-void/80 p-2 border border-border-hairline/10 rounded-sm flex flex-col gap-1">
+                                <div key={conn.id} className="text-[12px] bg-bg-void/80 p-2 border border-border-hairline/10 rounded-sm flex flex-col gap-1">
                                   <div className="flex justify-between font-mono">
                                     <span className="text-cyan-dim truncate">{fromNode?.title || "CLUE A"}</span>
                                     <span className="text-text-dim/60">↔</span>
                                     <span className="text-cyan-dim truncate text-right">{toNode?.title || "CLUE B"}</span>
                                   </div>
                                   {conn.label && (
-                                    <div className="bg-cyan-primary/5 border border-cyan-primary/10 px-1 py-0.5 rounded-sm text-center text-[10px] font-sans font-bold text-cyan-text uppercase">
+                                    <div className="bg-cyan-primary/5 border border-cyan-primary/10 px-1 py-0.5 rounded-sm text-center text-[12px] font-sans font-bold text-cyan-text uppercase">
                                       LINK: {conn.label}
                                     </div>
                                   )}
@@ -525,12 +622,12 @@ export default function DossierPage() {
                 </div>
 
                 {/* Detail footer panel */}
-                <div className="border-t border-border-hairline/20 pt-4 mt-4 flex items-center justify-between text-[11px] font-share text-text-dim shrink-0">
+                <div className="border-t border-border-hairline/20 pt-4 mt-4 flex items-center justify-between text-[13px] font-share text-text-dim shrink-0">
                   <span className="flex items-center">
                     <CheckCircle className="w-3.5 h-3.5 mr-1.5 text-cyan-primary animate-hex-pulse-flicker" />
                     SECURE DECRYPTED METADATA STREAM
                   </span>
-                  <span className="font-mono text-[10.5px]">BELFRY_SYS v4.95</span>
+                  <span className="font-mono text-[12px]">BELFRY_SYS v4.95</span>
                 </div>
               </div>
 
@@ -553,8 +650,8 @@ export default function DossierPage() {
         <div className="fixed inset-0 bg-bg-void/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <GlassPanel className="p-4 max-w-sm w-full" clipSize="md" showCornerTicks={true}>
             <div className="flex justify-between items-center border-b border-border-hairline/25 pb-2 mb-3">
-              <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
-                BOOT NEW INVESTIGATION DOSSIER
+              <h3 className="font-orbitron text-[14px] font-black tracking-widest text-cyan-text flex items-center uppercase">
+                {editingCaseId ? "AMEND INVESTIGATION DOSSIER" : "BOOT NEW INVESTIGATION DOSSIER"}
               </h3>
               <button onClick={() => setShowCreateModal(false)} className="text-text-dim hover:text-text-primary">
                 <X className="w-4 h-4" />
@@ -563,7 +660,7 @@ export default function DossierPage() {
 
             <form onSubmit={handleCreateCaseSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">DOSSIER TITLE</label>
+                <label className="block text-[12px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">DOSSIER TITLE</label>
                 <input
                   type="text"
                   required
@@ -575,7 +672,7 @@ export default function DossierPage() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">INITIAL SYNOPSIS BRIEFING</label>
+                <label className="block text-[12px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">INITIAL SYNOPSIS BRIEFING</label>
                 <textarea
                   required
                   placeholder="Log the initial briefing of the investigation..."
@@ -586,7 +683,7 @@ export default function DossierPage() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">INVESTIGATIVE DISCIPLINE STATUS</label>
+                <label className="block text-[12px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">INVESTIGATIVE DISCIPLINE STATUS</label>
                 <select
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value as any)}
@@ -599,18 +696,43 @@ export default function DossierPage() {
                 </select>
               </div>
 
+              <div>
+                <label className="block text-[13px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">
+                  THREAT ASSESSMENT
+                </label>
+                <div className="grid grid-cols-4 gap-1">
+                  {THREAT_LEVELS.map((level) => {
+                    const active = newThreat === level;
+                    const tone = THREAT_TONE[level];
+                    return (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => setNewThreat(level)}
+                        onMouseEnter={() => playHoverEvidence()}
+                        className={`py-1.5 font-mono text-[12px] font-bold uppercase tracking-wider border transition-all ${
+                          active ? tone.activeClass : "border-border-hairline/25 text-text-dim hover:text-text-primary"
+                        }`}
+                      >
+                        {level}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="flex justify-end space-x-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-3 py-1.5 text-[11px] uppercase font-bold text-text-dim hover:text-text-primary transition-colors"
+                  className="px-3 py-1.5 text-[13px] uppercase font-bold text-text-dim hover:text-text-primary transition-colors"
                 >
                   CANCEL
                 </button>
                 <button
                   type="submit"
                   onMouseEnter={() => playHoverEvidence()}
-                  className="hud-target px-4 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[11px] font-black uppercase tracking-widest"
+                  className="hud-target px-4 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[13px] font-black uppercase tracking-widest"
                   style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
                 >
                   INITIALIZE INDEX
@@ -640,14 +762,14 @@ export default function DossierPage() {
               <button
                 type="button"
                 onClick={() => setDeleteConfirmId(null)}
-                className="px-3 py-1.5 text-[11px] uppercase font-bold text-text-dim hover:text-text-primary transition-colors"
+                className="px-3 py-1.5 text-[13px] uppercase font-bold text-text-dim hover:text-text-primary transition-colors"
               >
                 ABORT DELETION
               </button>
               <button
                 onClick={handleConfirmDelete}
                 onMouseEnter={() => playHoverEvidence()}
-                className="hud-target hud-target-threat px-4 py-1.5 border border-red-threat/50 text-red-threat hover:bg-red-threat hover:text-bg-void transition-colors text-[11px] font-black uppercase tracking-widest"
+                className="hud-target hud-target-threat px-4 py-1.5 border border-red-threat/50 text-red-threat hover:bg-red-threat hover:text-bg-void transition-colors text-[13px] font-black uppercase tracking-widest"
                 style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
               >
                 DELETE FOREVER
@@ -671,7 +793,7 @@ function CaseAuthor({ knightId }: { knightId?: KnightId }) {
 
   return (
     <span
-      className="flex items-center gap-1 font-share text-[10px] tracking-[0.12em] uppercase whitespace-nowrap"
+      className="flex items-center gap-1 font-share text-[12px] tracking-[0.12em] uppercase whitespace-nowrap"
       title={`Case opened by ${knight.label}`}
     >
       <img

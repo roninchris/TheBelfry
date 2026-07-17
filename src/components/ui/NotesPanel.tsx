@@ -49,7 +49,7 @@ export default function NotesPanel() {
       >
         {isOpen ? <X className="w-5 h-5" /> : <NotebookPen className="w-5 h-5" />}
         {!isOpen && notes.length > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-amber-text text-bg-void text-[9px] font-black flex items-center justify-center">
+          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-amber-text text-bg-void text-[11px] font-black flex items-center justify-center">
             {notes.length}
           </span>
         )}
@@ -71,7 +71,7 @@ export default function NotesPanel() {
 
             <div className="flex-1 overflow-y-auto scrollbar-thin space-y-2 pr-0.5">
               {notes.length === 0 && (
-                <p className="text-text-dim/40 text-center italic py-8 text-[11px]">
+                <p className="text-text-dim/40 text-center italic py-8 text-[13px]">
                   -- NO NOTES YET --
                 </p>
               )}
@@ -86,13 +86,13 @@ export default function NotesPanel() {
                     onChange={(e) => updateNote(note.id, e.target.value)}
                     placeholder="Morse: .... . .-.. .-.. ---"
                     rows={3}
-                    className="w-full bg-transparent resize-none outline-none text-[11.5px] font-share text-text-primary placeholder:text-text-dim/40"
+                    className="w-full bg-transparent resize-none outline-none text-[13px] font-share text-text-primary placeholder:text-text-dim/40"
                   />
                   <div className="flex items-center justify-end space-x-1.5 mt-1 opacity-70 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handleSendToBoard(note.id)}
                       disabled={!activeCaseId || !note.text.trim() || justPinned[note.id]}
-                      className={`flex items-center space-x-1 px-2 py-0.5 text-[10.5px] font-orbitron font-bold uppercase tracking-wider border transition-colors disabled:cursor-not-allowed ${
+                      className={`flex items-center space-x-1 px-2 py-0.5 text-[12px] font-orbitron font-bold uppercase tracking-wider border transition-colors disabled:cursor-not-allowed ${
                         justPinned[note.id]
                           ? "text-accent-primary border-accent-primary/60 bg-accent-primary/10 opacity-100 shadow-[0_0_10px_rgba(0,243,255,0.25)]"
                           : "text-cyan-text border-cyan-primary/30 hover:text-bg-void hover:bg-cyan-primary disabled:opacity-30"

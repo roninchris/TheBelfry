@@ -99,10 +99,10 @@ export default function RegistrationFrame({
         </div>
 
         {/* Tiny registration crosses/markers */}
-        <span className="absolute top-0.5 left-1/2 -translate-x-1/2 text-[10px] font-mono text-cyan-primary/35">
+        <span className="absolute top-0.5 left-1/2 -translate-x-1/2 text-[12px] font-mono text-cyan-primary/35">
           +
         </span>
-        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[10px] font-mono text-cyan-primary/35">
+        <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[12px] font-mono text-cyan-primary/35">
           +
         </span>
       </div>

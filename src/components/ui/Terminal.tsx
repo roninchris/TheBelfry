@@ -37,17 +37,17 @@ export default function Terminal({
 
   return (
     <GlassPanel
-      className={`p-3.5 flex flex-col h-full select-text bg-bg-void/90 text-[11.5px] font-share leading-relaxed ${className}`}
+      className={`p-3.5 flex flex-col h-full select-text bg-bg-void/90 text-[13px] font-share leading-relaxed ${className}`}
       clipSize="md"
       showCornerTicks={true}
     >
       {/* Terminal Titlebar header */}
-      <div className="flex justify-between items-center pb-2 mb-2 border-b border-border-hairline/15 text-text-dim uppercase tracking-widest text-[11px]">
+      <div className="flex justify-between items-center pb-2 mb-2 border-b border-border-hairline/15 text-text-dim uppercase tracking-widest text-[13px]">
         <div className="flex items-center space-x-2">
           <span className="w-1.5 h-1.5 rounded-full bg-cyan-primary animate-ping-cyan" />
           <span>FORENSIC LOGS // EVIDENCE CONSOLE</span>
         </div>
-        <span className="font-mono text-[10.5px]">SECURE COMM-LINK</span>
+        <span className="font-mono text-[12px]">SECURE COMM-LINK</span>
       </div>
 
       {/* Terminal Rows Area */}
@@ -58,7 +58,7 @@ export default function Terminal({
         {displayedLines.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-text-dim space-y-1.5">
             <span className="font-mono opacity-40 text-sm">-- NO SYSTEM DEPOSITIONS RECORDED --</span>
-            <span className="text-[11px]">AWAITING EVIDENCE INGESTION VIA TERMINAL INTAKE</span>
+            <span className="text-[13px]">AWAITING EVIDENCE INGESTION VIA TERMINAL INTAKE</span>
           </div>
         ) : (
           displayedLines.map((line) => {

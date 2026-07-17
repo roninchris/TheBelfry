@@ -52,7 +52,7 @@ export default function Card({
               </h3>
             )}
             {subtitle && (
-              <p className="font-share text-[11px] text-text-dim/80 tracking-wide uppercase">
+              <p className="font-share text-[13px] text-text-dim/80 tracking-wide uppercase">
                 {subtitle}
               </p>
             )}

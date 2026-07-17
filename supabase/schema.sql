@@ -47,16 +47,30 @@ $$;
 -- because the client generates them so the board can update optimistically.
 
 create table if not exists public.cases (
-  id         text primary key,
-  title      text not null,
-  synopsis   text not null default '',
-  status     text not null default 'ACTIVE'
+  id           text primary key,
+  title        text not null,
+  synopsis     text not null default '',
+  status       text not null default 'ACTIVE'
     check (status in ('ACTIVE', 'SOLVED', 'ARCHIVED', 'STALLED')),
-  created_at timestamptz not null default now(),
-  color_tag  text,
-  notes      text not null default '',
-  created_by text
+  created_at   timestamptz not null default now(),
+  color_tag    text,
+  notes        text not null default '',
+  created_by   text,
+  -- Nullable: cases filed before threat levels existed simply have none.
+  threat_level text
+    check (threat_level is null or threat_level in ('LOW', 'MODERATE', 'HIGH', 'CRITICAL'))
 );
+
+-- Migration for projects created before threat levels existed. `if not exists`
+-- makes this a no-op on a fresh database, where the column is already above.
+alter table public.cases add column if not exists threat_level text;
+
+do $$
+begin
+  alter table public.cases add constraint cases_threat_level_check
+    check (threat_level is null or threat_level in ('LOW', 'MODERATE', 'HIGH', 'CRITICAL'));
+exception when duplicate_object then null;
+end $$;
 
 create table if not exists public.evidence_nodes (
   id         text primary key,

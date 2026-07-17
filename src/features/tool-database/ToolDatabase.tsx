@@ -36,10 +36,13 @@ import HexCluster from "../../components/ui/HexCluster";
 import ShinyText from "../../components/react-bits/ShinyText";
 import BlurText from "../../components/react-bits/BlurText";
 import TreeGrowth from "../../components/react-bits/TreeGrowth";
-import { getAllTools, getTool, asResult, type ToolEntry } from "../../lib/tools/registry";
+import { getAllTools, asResult, type ToolEntry } from "../../lib/tools/registry";
+import { moduleForTool } from "../../lib/toolRouting";
+import { useAppStore } from "../../store/appStore";
 import {
   playPinClick,
   playHoverEvidence,
+  playReticleLock,
   playSuccessChime,
   playTypeKey
 } from "../../lib/soundEngine";
@@ -395,6 +398,50 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
   }
 };
 
+/**
+ * Route out of the catalogue into the module that actually operates the tool.
+ *
+ * Three of the seventy tools have no home (see moduleForTool). Rather than
+ * offering a button that goes nowhere, they say so — the tool is still real and
+ * documented, it just has no station yet.
+ */
+function ToolHandoff({ toolId, onOpen }: { toolId: string; onOpen: (id: string) => void }) {
+  const home = moduleForTool(toolId);
+
+  if (!home) {
+    return (
+      <div className="border-t border-border-hairline/25 pt-4">
+        <p className="font-mono text-[12px] text-text-dim uppercase tracking-wider leading-relaxed">
+          No dedicated station carries this instrument yet — it is available to the
+          Signal Chain as a pipeline operation.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t border-border-hairline/25 pt-4">
+      <button
+        type="button"
+        onClick={() => onOpen(toolId)}
+        onMouseEnter={() => playReticleLock()}
+        className="hud-target w-full py-2.5 px-3 flex items-center justify-center gap-2
+                   border border-accent-primary/50 text-accent-primary bg-accent-primary/[0.06]
+                   font-orbitron text-[13px] font-black uppercase tracking-[0.2em]
+                   hover:bg-accent-primary/15 hover:shadow-[0_0_16px_rgba(0,243,255,0.25)]
+                   transition-all duration-200 cursor-pointer"
+      >
+        <Zap className="w-4 h-4" />
+        <span>Open in {home.label}</span>
+        <ArrowRight className="w-4 h-4" />
+      </button>
+      <p className="mt-2 text-center font-mono text-[12px] text-text-dim/70 uppercase tracking-wider">
+        Loads this instrument with full parameter control
+      </p>
+    </div>
+  );
+}
+
 const CATEGORY_ICON: Record<ToolDoc["category"], React.ComponentType<any>> = {
   cipher: Shuffle,
   encoding: Binary,
@@ -470,12 +517,7 @@ export default function ToolDatabase() {
   const [selectedCategory, setSelectedCategory] = useState<"all" | "cipher" | "encoding" | "utility">("all");
   const [selectedToolId, setSelectedToolId] = useState<string>("caesar");
 
-  // Interactive Sandbox testing states
-  const [sandboxInput, setSandboxInput] = useState("SECTOR FORENSICS");
-  const [sandboxDirection, setSandboxDirection] = useState<"encode" | "decode">("encode");
-  const [sandboxShift, setSandboxShift] = useState(3);
-  const [sandboxKey, setSandboxKey] = useState("SECRET");
-  const [copied, setCopied] = useState(false);
+  const openToolInModule = useAppStore((s) => s.openToolInModule);
 
   const allToolDocs = useMemo(() => getAllToolDocs(), []);
 
@@ -496,48 +538,9 @@ export default function ToolDatabase() {
     return allToolDocs.find((t) => t.id === selectedToolId) ?? allToolDocs[0];
   }, [allToolDocs, selectedToolId]);
 
-  // Compute live sandbox output using the actual tool registry methods!
-  const sandboxOutput = useMemo(() => {
-    const registryTool = getTool(activeToolDoc.id);
-    if (!registryTool || !sandboxInput) return "";
-
-    try {
-      const opts: any = {};
-      if (activeToolDoc.id === "caesar") {
-        opts.shift = sandboxShift;
-      } else if (activeToolDoc.id === "vigenere" || activeToolDoc.id === "xor") {
-        opts.key = sandboxKey;
-      } else if (activeToolDoc.id === "affine") {
-        opts.a = 5;
-        opts.b = 8;
-      } else if (activeToolDoc.id === "railfence") {
-        opts.rails = 3;
-      }
-
-      const method = sandboxDirection === "encode" ? registryTool.encode : registryTool.decode;
-      const result = method(sandboxInput, opts);
-      return asResult(result).text;
-    } catch (err) {
-      return `[SANDBOX ERROR]: ${(err as Error).message || "Invalid parameters"}`;
-    }
-  }, [activeToolDoc, sandboxInput, sandboxDirection, sandboxShift, sandboxKey]);
-
   const selectNode = (id: string) => {
     playPinClick();
     setSelectedToolId(id);
-    // Reset sandbox input with example of chosen tool
-    const doc = allToolDocs.find((t) => t.id === id);
-    if (doc) {
-      setSandboxInput(doc.exampleInput);
-      setSandboxDirection("encode");
-    }
-  };
-
-  const copySandboxOutput = () => {
-    navigator.clipboard.writeText(sandboxOutput);
-    setCopied(true);
-    playPinClick();
-    setTimeout(() => setCopied(false), 2000);
   };
 
   // Icon component helper
@@ -559,7 +562,7 @@ export default function ToolDatabase() {
                   <ShinyText text="SECURE CRYPTOGRAPHIC CODEX" speed={3} />
                 </h1>
               </div>
-              <p className="text-[11px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
+              <p className="text-[13px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
                 Belfry Forensic Databank. A comprehensive reference tracking historical and standard cryptography ciphers, binary stream encoders, and transposition algorithms.
               </p>
             </div>
@@ -567,7 +570,7 @@ export default function ToolDatabase() {
               <Badge variant="cyan" size="xs">
                 DATA INTEGRITY LOCKED
               </Badge>
-              <span className="font-mono text-[10.5px] text-text-dim">
+              <span className="font-mono text-[12px] text-text-dim">
                 DB_VER: 4.8.1
               </span>
             </div>
@@ -610,7 +613,7 @@ export default function ToolDatabase() {
                   playPinClick();
                   setSelectedCategory("all");
                 }}
-                className={`px-3 py-1 text-[10.5px] font-mono font-bold uppercase tracking-widest transition-all ${
+                className={`px-3 py-1 text-[12px] font-mono font-bold uppercase tracking-widest transition-all ${
                   selectedCategory === "all"
                     ? "bg-cyan-primary/15 text-cyan-text font-bold shadow-[inset_0_0_8px_rgba(47,241,228,0.25)]"
                     : "text-text-dim hover:text-text-primary"
@@ -623,7 +626,7 @@ export default function ToolDatabase() {
                   playPinClick();
                   setSelectedCategory("cipher");
                 }}
-                className={`px-3 py-1 text-[10.5px] font-mono font-bold uppercase tracking-widest transition-all border-l border-border-hairline/15 ${
+                className={`px-3 py-1 text-[12px] font-mono font-bold uppercase tracking-widest transition-all border-l border-border-hairline/15 ${
                   selectedCategory === "cipher"
                     ? "bg-amber-alert/15 text-amber-alert font-bold shadow-[inset_0_0_8px_rgba(245,158,11,0.25)]"
                     : "text-text-dim hover:text-text-primary"
@@ -636,7 +639,7 @@ export default function ToolDatabase() {
                   playPinClick();
                   setSelectedCategory("encoding");
                 }}
-                className={`px-3 py-1 text-[10.5px] font-mono font-bold uppercase tracking-widest transition-all border-l border-border-hairline/15 ${
+                className={`px-3 py-1 text-[12px] font-mono font-bold uppercase tracking-widest transition-all border-l border-border-hairline/15 ${
                   selectedCategory === "encoding"
                     ? "bg-cyan-primary/15 text-cyan-text font-bold shadow-[inset_0_0_8px_rgba(47,241,228,0.25)]"
                     : "text-text-dim hover:text-text-primary"
@@ -649,7 +652,7 @@ export default function ToolDatabase() {
                   playPinClick();
                   setSelectedCategory("utility");
                 }}
-                className={`px-3 py-1 text-[11.5px] font-mono font-bold uppercase tracking-widest transition-all border-l border-border-hairline/15 ${
+                className={`px-3 py-1 text-[13px] font-mono font-bold uppercase tracking-widest transition-all border-l border-border-hairline/15 ${
                   selectedCategory === "utility"
                     ? "bg-cyan-primary/15 text-cyan-text font-bold shadow-[inset_0_0_8px_rgba(47,241,228,0.25)]"
                     : "text-text-dim hover:text-text-primary"
@@ -668,7 +671,7 @@ export default function ToolDatabase() {
               <Layers className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
               <span>ACTIVE DATABASE CORES</span>
             </h3>
-            <span className="font-mono text-[10.5px] text-text-dim uppercase">
+            <span className="font-mono text-[12px] text-text-dim uppercase">
               GRID INDEX: {filteredTools.length} NODES
             </span>
           </div>
@@ -679,7 +682,7 @@ export default function ToolDatabase() {
               <h4 className="font-orbitron text-xs font-black tracking-widest text-red-threat uppercase">
                 NO CORRELATING NODES
               </h4>
-              <p className="text-[11px] text-text-dim uppercase tracking-widest font-share max-w-xs mt-1.5 leading-relaxed">
+              <p className="text-[13px] text-text-dim uppercase tracking-widest font-share max-w-xs mt-1.5 leading-relaxed">
                 Your search query did not yield matches in the cryptographic databank. Refine terms or clear filters.
               </p>
               <button
@@ -688,7 +691,7 @@ export default function ToolDatabase() {
                   setSearchQuery("");
                   setSelectedCategory("all");
                 }}
-                className="mt-4 px-3 py-1 border border-cyan-primary/30 text-cyan-primary hover:border-cyan-primary text-[10.5px] font-mono uppercase"
+                className="mt-4 px-3 py-1 border border-cyan-primary/30 text-cyan-primary hover:border-cyan-primary text-[12px] font-mono uppercase"
               >
                 Reset Filter Core
               </button>
@@ -766,10 +769,10 @@ export default function ToolDatabase() {
 
                     {/* Node Metadata Label */}
                     <div className="text-center mt-2 px-1 w-full">
-                      <h4 className="font-orbitron text-[10.5px] font-black tracking-widest uppercase text-white break-words leading-tight">
+                      <h4 className="font-orbitron text-[12px] font-black tracking-widest uppercase text-white break-words leading-tight">
                         {tool.name}
                       </h4>
-                      <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider block mt-0.5 truncate">
+                      <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider block mt-0.5 truncate">
                         ID: {tool.id}
                       </span>
                     </div>
@@ -777,7 +780,7 @@ export default function ToolDatabase() {
                     {/* Bottom Category Tab Indicator */}
                     <div className="mt-2.5 flex justify-center">
                       <span 
-                        className={`text-[10px] font-mono tracking-widest px-1.5 py-0.5 border ${
+                        className={`text-[12px] font-mono tracking-widest px-1.5 py-0.5 border ${
                           isCipher 
                             ? "text-amber-alert border-amber-alert/20 bg-amber-alert/5" 
                             : "text-cyan-text border-cyan-primary/20 bg-cyan-primary/5"
@@ -795,7 +798,7 @@ export default function ToolDatabase() {
 
           {/* Prompt footer */}
           <div className="border-t border-border-hairline/10 pt-3 mt-4 text-center">
-            <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider">
+            <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider">
               [ Hover node to probe frequencies — Select to retrieve forensic blueprints ]
             </span>
           </div>
@@ -827,7 +830,7 @@ export default function ToolDatabase() {
                 <Badge variant={activeToolDoc.category === "cipher" ? "amber" : "cyan"} size="xs">
                   {activeToolDoc.category}
                 </Badge>
-                <span className="font-mono text-[10.5px] text-text-dim uppercase">
+                <span className="font-mono text-[12px] text-text-dim uppercase">
                   CLASSIFICATION: {activeToolDoc.securityClassification}
                 </span>
               </div>
@@ -853,22 +856,22 @@ export default function ToolDatabase() {
               <>
                 {/* Short Summary */}
                 <div className="p-3 bg-bg-void/50 border-l-2 border-cyan-primary border-y border-r border-border-hairline/10 w-full">
-                  <h4 className="font-orbitron text-[12px] font-black tracking-widest text-cyan-text uppercase mb-1.5 flex items-center">
+                  <h4 className="font-orbitron text-[14px] font-black tracking-widest text-cyan-text uppercase mb-1.5 flex items-center">
                     <Info className="w-3.5 h-3.5 text-cyan-primary mr-1.5" />
                     <span>Forensic Summary</span>
                   </h4>
-                  <p className="text-[12.5px] text-text-primary uppercase tracking-wide font-share leading-relaxed w-full">
+                  <p className="text-[14px] text-text-primary uppercase tracking-wide font-share leading-relaxed w-full">
                     <BlurText text={activeToolDoc.summary} animateBy="words" delay={0.02} />
                   </p>
                 </div>
 
                 {/* How it Works Description */}
                 <div className="space-y-1.5 w-full">
-                  <h4 className="font-orbitron text-[12px] font-black tracking-widest text-text-dim uppercase">
+                  <h4 className="font-orbitron text-[14px] font-black tracking-widest text-text-dim uppercase">
                     MECHANICAL ARCHITECTURE
                   </h4>
                   <div className="flex flex-col sm:flex-row gap-3 bg-bg-void/30 p-3 border border-border-hairline/15 w-full items-center">
-                    <p className="flex-1 text-[12.5px] font-share uppercase tracking-wide text-text-primary leading-relaxed">
+                    <p className="flex-1 text-[14px] font-share uppercase tracking-wide text-text-primary leading-relaxed">
                       {activeToolDoc.howItWorks}
                     </p>
                     {/* Visual Branching Cipher Diagram */}
@@ -880,10 +883,10 @@ export default function ToolDatabase() {
 
                 {/* Step-by-Step Blueprint Instructions */}
                 <div className="space-y-2">
-                  <h4 className="font-orbitron text-[12px] font-black tracking-widest text-text-dim uppercase">
+                  <h4 className="font-orbitron text-[14px] font-black tracking-widest text-text-dim uppercase">
                     DECRYPTION BLUEPRINT ALGORITHM
                   </h4>
-                  <ol className="space-y-1.5 pl-4 list-decimal text-[12.5px] uppercase font-share text-text-dim leading-relaxed">
+                  <ol className="space-y-1.5 pl-4 list-decimal text-[14px] uppercase font-share text-text-dim leading-relaxed">
                     {activeToolDoc.tutorialSteps.map((step, idx) => (
                       <li key={idx} className="hover:text-white transition-colors">
                         {step}
@@ -896,16 +899,16 @@ export default function ToolDatabase() {
               /* Carried by the platform, not yet written up. Says so plainly
                  rather than inventing an explanation that might be wrong. */
               <div className="p-4 bg-amber-alert/[0.04] border-l-2 border-amber-alert/70 border-y border-r border-border-hairline/10 w-full space-y-2">
-                <h4 className="font-orbitron text-[12px] font-black tracking-widest text-amber-alert uppercase flex items-center">
+                <h4 className="font-orbitron text-[14px] font-black tracking-widest text-amber-alert uppercase flex items-center">
                   <Info className="w-3.5 h-3.5 mr-1.5" />
                   <span>Field entry pending transcription</span>
                 </h4>
-                <p className="text-[12.5px] text-text-primary font-share uppercase tracking-wide leading-relaxed">
+                <p className="text-[14px] text-text-primary font-share uppercase tracking-wide leading-relaxed">
                   This instrument is installed and fully operational — the written analysis
                   has not been filed yet. Drive it directly from the calibration sandbox below,
                   or open it in the Codex for full parameter control.
                 </p>
-                <p className="font-mono text-[11px] text-text-dim tracking-wider">
+                <p className="font-mono text-[13px] text-text-dim tracking-wider">
                   REGISTRY_ID: <span className="text-cyan-text">{activeToolDoc.id}</span>
                   <span className="opacity-40"> // </span>
                   CLASS: <span className="text-cyan-text">{activeToolDoc.category.toUpperCase()}</span>
@@ -918,18 +921,18 @@ export default function ToolDatabase() {
             {activeToolDoc.exampleOutput && (
               <div className="grid grid-cols-2 gap-3 pt-1 w-full">
                 <div className="p-2.5 bg-bg-void/80 border border-border-hairline/20 overflow-hidden">
-                  <span className="text-[11px] font-mono text-cyan-primary uppercase tracking-widest block mb-1">
+                  <span className="text-[13px] font-mono text-cyan-primary uppercase tracking-widest block mb-1">
                     STATIC ENCODE TEST:
                   </span>
-                  <span className="font-mono text-[12.5px] font-bold text-white block break-all">
+                  <span className="font-mono text-[14px] font-bold text-white block break-all">
                     {activeToolDoc.exampleInput}
                   </span>
                 </div>
                 <div className="p-2.5 bg-bg-void/80 border border-border-hairline/20 overflow-hidden">
-                  <span className="text-[11px] font-mono text-amber-alert uppercase tracking-widest block mb-1">
+                  <span className="text-[13px] font-mono text-amber-alert uppercase tracking-widest block mb-1">
                     STATIC CASCADE OUTPUT:
                   </span>
-                  <span className="font-mono text-[12.5px] font-bold text-green-verified block break-all">
+                  <span className="font-mono text-[14px] font-bold text-green-verified block break-all">
                     {activeToolDoc.exampleOutput}
                   </span>
                 </div>
@@ -939,152 +942,26 @@ export default function ToolDatabase() {
             {/* Technical Forensic Vulnerability Info */}
             {activeToolDoc.forensicValue && (
               <div className="p-3 bg-red-threat/5 border border-red-threat/20 w-full">
-                <h4 className="font-orbitron text-[12px] font-black tracking-widest text-red-threat uppercase mb-1 flex items-center">
+                <h4 className="font-orbitron text-[14px] font-black tracking-widest text-red-threat uppercase mb-1 flex items-center">
                   <Terminal className="w-3.5 h-3.5 text-red-threat mr-1.5 animate-hex-pulse-flicker" />
                   <span>Forensic Intelligence Vulnerability Report</span>
                 </h4>
-                <p className="text-[12px] font-mono text-text-dim uppercase leading-relaxed w-full break-words">
+                <p className="text-[14px] font-mono text-text-dim uppercase leading-relaxed w-full break-words">
                   {activeToolDoc.forensicValue}
                 </p>
               </div>
             )}
 
-            {/* ================= INTERACTIVE WORKSPACE SANDBOX ================= */}
-            <div className="border-t border-border-hairline/25 pt-4 space-y-3.5 select-none">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-1.5">
-                  <Zap className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
-                  <h3 className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text uppercase">
-                    LIVE CALIBRATION SANDBOX
-                  </h3>
-                </div>
-                
-                {/* Encode / Decode direction toggle */}
-                <div className="flex bg-bg-void border border-border-hairline/25 rounded-none overflow-hidden shrink-0">
-                  <button
-                    onClick={() => {
-                      playPinClick();
-                      setSandboxDirection("encode");
-                    }}
-                    className={`px-2.5 py-0.5 text-[10px] font-mono font-black uppercase tracking-widest transition-all ${
-                      sandboxDirection === "encode"
-                        ? "bg-cyan-primary/15 text-cyan-text border-r border-cyan-primary/25 font-bold shadow-[inset_0_0_8px_rgba(47,241,228,0.25)]"
-                        : "text-text-dim hover:text-text-primary"
-                    }`}
-                  >
-                    Encode
-                  </button>
-                  <button
-                    onClick={() => {
-                      playPinClick();
-                      setSandboxDirection("decode");
-                    }}
-                    className={`px-2.5 py-0.5 text-[10px] font-mono font-black uppercase tracking-widest transition-all ${
-                      sandboxDirection === "decode"
-                        ? "bg-red-threat/15 text-red-threat border-l border-red-threat/25 font-bold shadow-[inset_0_0_8px_rgba(239,68,68,0.25)]"
-                        : "text-text-dim hover:text-text-primary"
-                    }`}
-                  >
-                    Decode
-                  </button>
-                </div>
-              </div>
-
-              {/* Dynamic parameters for sandbox */}
-              {(activeToolDoc.id === "caesar" || activeToolDoc.id === "vigenere" || activeToolDoc.id === "xor") && (
-                <div className="p-3 bg-bg-void/40 border border-border-hairline/15 grid grid-cols-12 gap-3 items-center">
-                  
-                  {/* Caesar parameters slider */}
-                  {activeToolDoc.id === "caesar" && (
-                    <div className="col-span-12 flex items-center space-x-3.5">
-                      <span className="text-[10px] font-mono text-cyan-primary uppercase font-bold shrink-0">
-                        Displacement Slider:
-                      </span>
-                      <input
-                        type="range"
-                        min="1"
-                        max="25"
-                        value={sandboxShift}
-                        onChange={(e) => {
-                          setSandboxShift(parseInt(e.target.value));
-                          playTypeKey();
-                        }}
-                        className="flex-1 accent-cyan-primary h-1 bg-bg-void"
-                      />
-                      <span className="font-mono text-xs text-cyan-text font-bold bg-bg-void px-2 py-0.5 border border-cyan-primary/30 min-w-[32px] text-center">
-                        {sandboxShift}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Vigenere or XOR key input */}
-                  {(activeToolDoc.id === "vigenere" || activeToolDoc.id === "xor") && (
-                    <div className="col-span-12 flex items-center space-x-3">
-                      <span className="text-[10px] font-mono text-cyan-primary uppercase font-bold shrink-0">
-                        Secret Password Key:
-                      </span>
-                      <input
-                        type="text"
-                        value={sandboxKey}
-                        onChange={(e) => {
-                          setSandboxKey(e.target.value.toUpperCase());
-                          playTypeKey();
-                        }}
-                        placeholder="KEYWORD..."
-                        className="flex-1 px-2.5 py-1 bg-bg-void border border-border-hairline/20 text-[11px] font-mono focus:outline-none focus:border-cyan-primary/50 text-white uppercase"
-                      />
-                    </div>
-                  )}
-
-                </div>
-              )}
-
-              {/* Sandbox Input Textarea */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider block">
-                  Interactive Plaintext/Ciphertext Input
-                </span>
-                <textarea
-                  value={sandboxInput}
-                  onChange={(e) => {
-                    setSandboxInput(e.target.value);
-                    playTypeKey();
-                  }}
-                  placeholder="Type trial parameters here..."
-                  className="w-full h-16 p-2 bg-bg-void border border-border-hairline/25 text-[11px] font-mono text-text-primary focus:outline-none focus:border-cyan-primary/50 resize-none select-text"
-                />
-              </div>
-
-              {/* Sandbox Live Result Output */}
-              <div className="space-y-1.5 relative">
-                <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider block">
-                  Processed Real-time Stream Output
-                </span>
-                <div className="relative">
-                  <textarea
-                    readOnly
-                    value={sandboxOutput}
-                    placeholder="Sandbox pipeline processed output..."
-                    className="w-full h-16 p-2 bg-bg-void/60 border border-border-hairline/15 text-[11px] font-mono text-green-verified focus:outline-none resize-none select-text"
-                  />
-                  <button
-                    onClick={copySandboxOutput}
-                    disabled={!sandboxOutput || sandboxOutput.startsWith("[SANDBOX ERROR]")}
-                    className="absolute bottom-2.5 right-2.5 p-1.5 bg-bg-void border border-border-hairline/25 hover:border-cyan-primary text-text-dim hover:text-cyan-text transition-colors disabled:opacity-50"
-                    title="Copy sandbox result"
-                  >
-                    {copied ? <Check className="w-3.5 h-3.5 text-green-verified" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-            </div>
+            {/* Hand-off to the module that actually operates this tool. The
+                catalogue is a reference surface: a second live editor here
+                duplicated the labs and cost every visitor the render. */}
+            <ToolHandoff toolId={activeToolDoc.id} onOpen={openToolInModule} />
 
           </div>
 
           {/* Dossier footer */}
           <div className="border-t border-border-hairline/10 pt-3 mt-4 text-right">
-            <span className="text-[10px] font-mono text-cyan-primary uppercase tracking-wider">
+            <span className="text-[12px] font-mono text-cyan-primary uppercase tracking-wider">
               [ CRYPTO_ Blueprints Verified // Belfry Calibration Lab Clear ]
             </span>
           </div>

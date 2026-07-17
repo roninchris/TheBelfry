@@ -148,19 +148,19 @@ export default function HexagonBackground() {
       </div>
 
       {/* Corner Telemetry / Hacking Chars */}
-      <div className="absolute top-8 left-8 font-mono text-[10px] text-cyan-primary/40 space-y-1">
+      <div className="absolute top-8 left-8 font-mono text-[12px] text-cyan-primary/40 space-y-1">
         <div className="animate-hex-pulse-flicker">{cornerText[0]}</div>
         <div className="text-cyan-dim/50 tracking-widest">SYS_CORE: ONLINE [0xFA3]</div>
       </div>
-      <div className="absolute top-8 right-8 font-mono text-[10px] text-cyan-primary/40 text-right space-y-1">
+      <div className="absolute top-8 right-8 font-mono text-[12px] text-cyan-primary/40 text-right space-y-1">
         <div className="animate-hex-pulse-flicker">{cornerText[1]}</div>
         <div className="text-cyan-dim/50 tracking-widest">UPLINK_STATUS: SECURE</div>
       </div>
-      <div className="absolute bottom-8 left-8 font-mono text-[10px] text-cyan-primary/40 space-y-1">
+      <div className="absolute bottom-8 left-8 font-mono text-[12px] text-cyan-primary/40 space-y-1">
         <div className="text-cyan-dim/50 tracking-widest">TRACE_ROUTE: MASKED</div>
         <div className="animate-hex-pulse-flicker">{cornerText[2]}</div>
       </div>
-      <div className="absolute bottom-8 right-8 font-mono text-[10px] text-cyan-primary/40 text-right space-y-1">
+      <div className="absolute bottom-8 right-8 font-mono text-[12px] text-cyan-primary/40 text-right space-y-1">
         <div className="text-cyan-dim/50 tracking-widest">OS_VER: BELFRY 2.8.4</div>
         <div className="animate-hex-pulse-flicker">{cornerText[3]}</div>
       </div>
