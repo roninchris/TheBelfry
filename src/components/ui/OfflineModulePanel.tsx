@@ -56,7 +56,7 @@ export default function OfflineModulePanel({ moduleName, description }: OfflineM
 
         {/* Diagnostics block */}
         <div className="bg-bg-void/80 border border-border-hairline/25 p-4 rounded-none font-share text-xs text-left text-text-dim space-y-2.5">
-          <div className="flex justify-between border-b border-border-hairline/15 pb-1 text-[11px]">
+          <div className="flex justify-between border-b border-border-hairline/15 pb-1 text-[13px]">
             <span>DIAGNOSTIC STATUS RECEPTOR</span>
             <span className="text-red-threat font-bold">GRID OFFLINE</span>
           </div>

@@ -123,7 +123,7 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
                 key={i}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-[11px] text-cyan-dim flex items-center"
+                className="text-[13px] text-cyan-dim flex items-center"
               >
                 <span className="text-cyan-primary mr-2 opacity-50">{">"}</span>
                 {log}
@@ -141,7 +141,7 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
               transition={{ duration: 0.3 }}
             />
           </div>
-          <div className="flex justify-between text-[10.5px] text-cyan-dim font-bold tracking-widest">
+          <div className="flex justify-between text-[12px] text-cyan-dim font-bold tracking-widest">
             <span>SYS_LOAD: {Math.round(progress)}%</span>
             <span>OS_v2.8.4</span>
           </div>
@@ -152,7 +152,7 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
           initial={{ opacity: 0 }}
           animate={shouldReduceMotion ? { opacity: 0.5 } : { opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="text-center text-[10.5px] text-text-dim uppercase tracking-[0.2em] pt-4"
+          className="text-center text-[12px] text-text-dim uppercase tracking-[0.2em] pt-4"
         >
           CLICK ANYWHERE TO SKIP INITIALIZATION
         </motion.div>

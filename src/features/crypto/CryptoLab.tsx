@@ -38,6 +38,7 @@ import {
 } from "recharts";
 import { getTool, getToolsByCategory, asText, asResult } from "../../lib/tools/registry";
 import type { ToolEntry } from "../../lib/tools/types";
+import { useAppStore } from "../../store/appStore";
 import { Search, Star, Clock, LayoutGrid } from "lucide-react";
 import {
   CIPHER_GROUPS,
@@ -129,6 +130,25 @@ export default function CryptoLab() {
   // Active library filter: everything, favorites, recents, or a taxonomy group.
   const [activeGroup, setActiveGroup] = useState<"all" | "favorites" | "recents" | CipherGroupId>("all");
   const { favorites, recents, toggleFavorite, pushRecent } = useCipherPrefs();
+
+  const consumePendingTool = useAppStore((s) => s.consumePendingTool);
+  const pendingToolId = useAppStore((s) => s.pendingToolId);
+
+  /**
+   * Pick up a cipher handed over from the Tool Database.
+   *
+   * The active group and search are reset alongside it: an incoming cipher that
+   * sits outside the current filter would be selected but invisible in the
+   * library list, which reads as the navigation having silently failed.
+   */
+  useEffect(() => {
+    if (!pendingToolId) return;
+    const requested = consumePendingTool();
+    if (!requested) return;
+    setSelectedCipher(requested);
+    setActiveGroup("all");
+    setCipherSearchQuery("");
+  }, [pendingToolId, consumePendingTool]);
 
   // Full ordered cipher set (ARG priority) — stable source of truth.
   const allCiphers = useMemo(() => sortCiphersByArgPriority(getToolsByCategory("cipher")), []);
@@ -356,14 +376,14 @@ export default function CryptoLab() {
         {isSelected && <div className="absolute inset-y-0 left-0 w-[3px] bg-cyan-primary shadow-[0_0_6px_#2ff1e4]" />}
 
         <div className="flex items-center space-x-2 min-w-0 z-10 relative">
-          <span className="font-mono text-[10px] text-text-dim group-hover:text-cyan-text transition-colors duration-200">
+          <span className="font-mono text-[12px] text-text-dim group-hover:text-cyan-text transition-colors duration-200">
             [{String(idx).padStart(2, "0")}]
           </span>
           <div className="min-w-0">
-            <p className="font-chakra text-[11px] font-bold uppercase tracking-wider leading-none truncate group-hover:text-cyan-text transition-colors duration-200">
+            <p className="font-chakra text-[13px] font-bold uppercase tracking-wider leading-none truncate group-hover:text-cyan-text transition-colors duration-200">
               {cipher.label}
             </p>
-            <p className="font-share text-[10px] text-text-dim/75 tracking-wide mt-1 truncate">
+            <p className="font-share text-[12px] text-text-dim/75 tracking-wide mt-1 truncate">
               {cipher.id.toUpperCase()} // SYS_RT_{String(idx).padStart(2, "0")}
             </p>
           </div>
@@ -464,7 +484,7 @@ export default function CryptoLab() {
               <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
               CRYPTOGRAPHIC CIPHERS
             </h3>
-            <p className="text-[10.5px] font-share text-text-dim tracking-wide uppercase mt-0.5">
+            <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
               Select decoding algorithm matrix
             </p>
           </div>
@@ -476,7 +496,7 @@ export default function CryptoLab() {
               value={cipherSearchQuery}
               onChange={(e) => setCipherSearchQuery(e.target.value)}
               placeholder="SEARCH CIPHER NAME..."
-              className="w-full bg-bg-void/50 border border-border-hairline/20 focus:border-cyan-primary/60 pl-8 pr-2.5 py-1.5 text-[11px] font-share tracking-wide uppercase text-text-primary placeholder:text-text-dim/40 outline-none transition-colors"
+              className="w-full bg-bg-void/50 border border-border-hairline/20 focus:border-cyan-primary/60 pl-8 pr-2.5 py-1.5 text-[13px] font-share tracking-wide uppercase text-text-primary placeholder:text-text-dim/40 outline-none transition-colors"
               style={{
                 clipPath: "polygon(6px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 6px) 100%, 0 100%, 0 4px)"
               }}
@@ -503,7 +523,7 @@ export default function CryptoLab() {
                     playPinClick();
                   }}
                   onMouseEnter={() => playHoverEvidence()}
-                  className={`hud-target flex items-center gap-1 px-1.5 py-1 text-[9.5px] font-share font-bold tracking-widest uppercase border transition-all duration-200 ${
+                  className={`hud-target flex items-center gap-1 px-1.5 py-1 text-[11px] font-share font-bold tracking-widest uppercase border transition-all duration-200 ${
                     isActive
                       ? "bg-cyan-primary/15 border-cyan-primary text-cyan-text shadow-[0_0_6px_rgba(47,241,228,0.2)]"
                       : "bg-bg-void/40 border-border-hairline/15 text-text-dim/70 hover:border-cyan-primary/40 hover:text-cyan-text"
@@ -524,14 +544,14 @@ export default function CryptoLab() {
                 {activeGroup === "favorites" ? (
                   <>
                     <Star className="w-5 h-5 text-amber-alert/40" />
-                    <p className="text-text-dim/50 text-center text-[10.5px] font-share uppercase tracking-wide px-4 leading-relaxed">
+                    <p className="text-text-dim/50 text-center text-[12px] font-share uppercase tracking-wide px-4 leading-relaxed">
                       No favorites yet — tap the ☆ on any cipher to pin it here
                     </p>
                   </>
                 ) : activeGroup === "recents" ? (
                   <>
                     <Clock className="w-5 h-5 text-cyan-primary/40" />
-                    <p className="text-text-dim/50 text-center text-[10.5px] font-share uppercase tracking-wide px-4 leading-relaxed">
+                    <p className="text-text-dim/50 text-center text-[12px] font-share uppercase tracking-wide px-4 leading-relaxed">
                       No recent engines — selected ciphers log here
                     </p>
                   </>
@@ -546,10 +566,10 @@ export default function CryptoLab() {
                   <div key={section.group.id} className="space-y-1.5">
                     <div className="flex items-center gap-2 pt-1.5 pb-1 sticky top-0 bg-bg-panel/95 backdrop-blur-sm z-20">
                       <span className="w-1 h-2.5 bg-cyan-primary/70 transform -skew-x-12 shadow-[0_0_4px_#2ff1e4]" />
-                      <span className="font-orbitron text-[9.5px] font-black tracking-[0.2em] text-cyan-primary/90 uppercase">
+                      <span className="font-orbitron text-[11px] font-black tracking-[0.2em] text-cyan-primary/90 uppercase">
                         {section.group.label}
                       </span>
-                      <span className="font-mono text-[9px] text-text-dim/50">{section.tools.length}</span>
+                      <span className="font-mono text-[11px] text-text-dim/50">{section.tools.length}</span>
                       <div className="flex-1 h-[1px] bg-gradient-to-r from-cyan-primary/20 to-transparent" />
                     </div>
                     {section.tools.map(renderCipherRow)}
@@ -579,7 +599,7 @@ export default function CryptoLab() {
                       return (
                         <span
                           key={letter}
-                          className={`absolute font-mono text-[10px] font-black transition-all duration-300 ${
+                          className={`absolute font-mono text-[12px] font-black transition-all duration-300 ${
                             isHighlighted ? "text-cyan-primary scale-125 drop-shadow-[0_0_4px_rgba(47,241,228,0.8)]" : "text-text-dim/30"
                           }`}
                           style={{
@@ -601,7 +621,7 @@ export default function CryptoLab() {
                           transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' 
                         }} 
                       />
-                      <div className="absolute inset-0 flex items-center justify-center font-orbitron text-[11px] font-black text-cyan-text">
+                      <div className="absolute inset-0 flex items-center justify-center font-orbitron text-[13px] font-black text-cyan-text">
                         {toolOptions.shift || 3}
                       </div>
                     </div>
@@ -612,14 +632,14 @@ export default function CryptoLab() {
 
             {selectedCipher === "vigenere" && (
               <div className="mb-4">
-                <p className="text-[10px] font-share text-text-dim leading-relaxed uppercase">
+                <p className="text-[12px] font-share text-text-dim leading-relaxed uppercase">
                   Longer keywords increase the secure polyalphabetic shift spacing.
                 </p>
               </div>
             )}
 
             {selectedCipher === "rot13" && (
-              <div className="text-[10.5px] font-share text-text-dim/80 leading-relaxed uppercase space-y-1 bg-bg-void/40 p-2">
+              <div className="text-[12px] font-share text-text-dim/80 leading-relaxed uppercase space-y-1 bg-bg-void/40 p-2">
                 <div className="flex justify-center my-5 relative">
                   <div className="w-32 h-32 rounded-full border border-border-hairline/25 relative flex items-center justify-center bg-bg-void/60 shadow-[inset_0_0_12px_rgba(0,0,0,0.8)] overflow-hidden">
                     <div className="absolute inset-1.5 rounded-full border border-dashed border-cyan-primary/10 animate-[spin_60s_linear_infinite]" />
@@ -634,7 +654,7 @@ export default function CryptoLab() {
                       return (
                         <span
                           key={letter}
-                          className={`absolute font-mono text-[10px] font-black transition-all duration-300 ${
+                          className={`absolute font-mono text-[12px] font-black transition-all duration-300 ${
                             isHighlighted ? "text-cyan-primary scale-125 drop-shadow-[0_0_4px_rgba(47,241,228,0.8)]" : "text-text-dim/30"
                           }`}
                           style={{
@@ -652,7 +672,7 @@ export default function CryptoLab() {
                         className="w-7 h-7 text-cyan-primary drop-shadow-[0_0_6px_rgba(47,241,228,0.4)]" 
                         style={{ transform: `rotate(${13 * (360/26)}deg)` }} 
                       />
-                      <div className="absolute inset-0 flex items-center justify-center font-orbitron text-[11px] font-black text-cyan-text">
+                      <div className="absolute inset-0 flex items-center justify-center font-orbitron text-[13px] font-black text-cyan-text">
                         13
                       </div>
                     </div>
@@ -666,7 +686,7 @@ export default function CryptoLab() {
             )}
  
             {selectedCipher === "atbash" && (
-              <div className="text-[10.5px] font-share text-text-dim/80 leading-relaxed uppercase space-y-1 bg-bg-void/40 p-2">
+              <div className="text-[12px] font-share text-text-dim/80 leading-relaxed uppercase space-y-1 bg-bg-void/40 p-2">
                 <span className="text-cyan-primary font-bold">REVERSED ALPHABET</span>
                 <p>
                   A is mapped to Z, B to Y, C to X. Fixed reciprocal cipher. No key or settings necessary.
@@ -698,7 +718,7 @@ export default function CryptoLab() {
             <DatabaseTag text="STREAM COMPLEXITY RATIOS" />
           </div>
 
-          <div className="flex-1 space-y-2.5 font-share text-[11px]">
+          <div className="flex-1 space-y-2.5 font-share text-[13px]">
             <div>
               <HeroStat
                 label="SHANNON ENTROPY"
@@ -707,7 +727,7 @@ export default function CryptoLab() {
                 disabledShine={true}
               />
               <AnimatedProgressBar value={(shannonEntropy / 8) * 100} variant={shannonEntropy > 4.5 ? "amber" : "cyan"} showValue={false} />
-              <span className="text-[10px] text-text-dim uppercase mt-0.5 block">
+              <span className="text-[12px] text-text-dim uppercase mt-0.5 block">
                 {shannonEntropy > 4.5 ? "HIGH-ENTROPY CIPHERTEXT SUSPECTED" : "LOW-ENTROPY PLAINTEXT PATTERN"}
               </span>
             </div>
@@ -720,7 +740,7 @@ export default function CryptoLab() {
                 disabledShine={true}
               />
               <AnimatedProgressBar value={Math.min(indexCoincidence * 1000, 100)} variant="cyan" showValue={false} />
-              <span className="text-[10px] text-text-dim uppercase mt-0.5 block">
+              <span className="text-[12px] text-text-dim uppercase mt-0.5 block">
                 ENGLISH STANDARD STANDARD RATIO: ~0.0667
               </span>
             </div>
@@ -740,7 +760,7 @@ export default function CryptoLab() {
               <div className="flex items-center space-x-2">
                 <DatabaseTag text="FORENSIC DATA INPUT BUFFER" />
               </div>
-              <span className="text-[10.5px] font-share text-text-dim uppercase">
+              <span className="text-[12px] font-share text-text-dim uppercase">
                 {inputText.length} CHARS
               </span>
             </div>
@@ -753,11 +773,11 @@ export default function CryptoLab() {
                 playTypeKey();
               }}
               placeholder="ENTER CIPHERTEXT OR PLAINTEXT FOR ALGORITHMIC TRANSFORMATION..."
-              className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 rounded-none p-3.5 font-mono text-[13px] md:text-sm leading-relaxed text-white outline-none focus:border-cyan-primary/50 resize-none scrollbar-thin overflow-y-auto placeholder:text-text-dim/40"
+              className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 rounded-none p-3.5 font-mono text-[14px] md:text-sm leading-relaxed text-white outline-none focus:border-cyan-primary/50 resize-none scrollbar-thin overflow-y-auto placeholder:text-text-dim/40"
             />
 
             {/* Quick Clear & Preload triggers */}
-            <div className="mt-2.5 flex justify-between text-[10.5px] font-share text-text-dim">
+            <div className="mt-2.5 flex justify-between text-[12px] font-share text-text-dim">
               <button
                 onClick={() => {
                   setInputText("");
@@ -818,20 +838,20 @@ export default function CryptoLab() {
                   }}
                   onMouseEnter={() => playHoverEvidence()}
                   disabled={!outputText}
-                  className="text-text-dim hover:text-cyan-primary flex items-center space-x-1 text-[10.5px] uppercase border border-border-hairline/15 px-2 py-0.5 bg-bg-void/40 transition-colors"
+                  className="text-text-dim hover:text-cyan-primary flex items-center space-x-1 text-[12px] uppercase border border-border-hairline/15 px-2 py-0.5 bg-bg-void/40 transition-colors"
                 >
                   {copied ? <CheckCircle className="w-3 h-3 text-green-verified" /> : <Copy className="w-3 h-3" />}
                   <span>{copied ? "COPIED" : "COPY OUTPUT"}</span>
                 </button>
               </div>
 
-              <div className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 p-3.5 font-mono text-[13px] md:text-sm leading-relaxed text-text-primary overflow-y-auto scrollbar-thin">
+              <div className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 p-3.5 font-mono text-[14px] md:text-sm leading-relaxed text-text-primary overflow-y-auto scrollbar-thin">
                 {outputText ? (
                   <div className="space-y-4 select-text">
                     <HeroStat
                       label={lastOp ? `${lastOp} PLAIN/CIPHER RESULT` : "TRANSFORMED RESULT"}
                       value={
-                        <div className="break-all whitespace-pre-wrap text-[13px] md:text-sm font-mono font-medium leading-relaxed text-cyan-text select-text">
+                        <div className="break-all whitespace-pre-wrap text-[14px] md:text-sm font-mono font-medium leading-relaxed text-cyan-text select-text">
                           <DecryptText text={outputText} trigger={outputText} duration={900} />
                         </div>
                       }
@@ -843,7 +863,7 @@ export default function CryptoLab() {
                         <HeroStat
                           label="XOR OUTPUT IN HEXADECIMAL"
                           value={
-                            <div className="break-all font-mono text-[11.5px] md:text-xs font-medium leading-normal text-amber-text select-text">
+                            <div className="break-all font-mono text-[13px] md:text-xs font-medium leading-normal text-amber-text select-text">
                               <DecryptText text={outputHex} trigger={outputHex} duration={900} />
                             </div>
                           }
@@ -880,7 +900,7 @@ export default function CryptoLab() {
               <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
               UNIGRAM FREQUENCY COMPASS
             </h3>
-            <p className="text-[10.5px] font-share text-text-dim tracking-wide uppercase mt-0.5">
+            <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
               Live text frequencies vs English baseline %
             </p>
           </div>
@@ -888,10 +908,10 @@ export default function CryptoLab() {
           <div className="flex-1 min-h-[160px] xl:min-h-none relative">
             {!inputText.trim() && (
               <div className="absolute inset-0 bg-bg-void/35 backdrop-blur-[1px] flex flex-col justify-center items-center z-10 space-y-1.5 pointer-events-none">
-                <span className="font-mono text-[10.5px] text-cyan-primary/50 tracking-wider font-bold uppercase animate-pulse">
+                <span className="font-mono text-[12px] text-cyan-primary/50 tracking-wider font-bold uppercase animate-pulse">
                   // GRAPHIC SPECTRUM IDLE //
                 </span>
-                <span className="font-share text-[10px] text-text-dim/60 uppercase">
+                <span className="font-share text-[12px] text-text-dim/60 uppercase">
                   Awaiting input buffer characters to map weights
                 </span>
               </div>
@@ -939,12 +959,12 @@ export default function CryptoLab() {
         {selectedCipher === "caesar" ? (
           <GlassPanel className="p-4 h-64 flex flex-col justify-between" clipSize="md" showCornerTicks={true}>
             <div className="border-b border-border-hairline/25 pb-1 mb-2 flex justify-between items-center">
-              <h3 className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text flex items-center">
+              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text flex items-center">
                 <span className="w-1 h-2 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_#2ff1e4]" />
                 CAESAR BRUTE FORCE PREVIEWER
               </h3>
               {inputText.trim() && (
-                <span className="text-[10px] font-mono text-green-verified animate-pulse">
+                <span className="text-[12px] font-mono text-green-verified animate-pulse">
                   SCANNING_ACTIVE
                 </span>
               )}
@@ -954,7 +974,7 @@ export default function CryptoLab() {
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Rolling candidates pipeline stream */}
                 <div className="bg-bg-void/60 border border-cyan-primary/20 p-1 mb-2">
-                  <div className="flex justify-between items-center text-[10px] font-mono text-cyan-dim uppercase px-1">
+                  <div className="flex justify-between items-center text-[12px] font-mono text-cyan-dim uppercase px-1">
                     <span>LIVE DECRYPTION PIPELINE</span>
                     <span className="animate-pulse">SCANNING...</span>
                   </div>
@@ -963,7 +983,7 @@ export default function CryptoLab() {
                       ? bruteCandidates.slice(0, 20).map(c => `[${c.label}]: ${c.output.slice(0, 40).replace(/\n/g, ' ')}`).join("  ||  ")
                       : "BRUTE-FORCE NOT AVAILABLE FOR THIS TOOL"} 
                     speed={25} 
-                    className="font-mono text-[10px] text-cyan-primary/80" 
+                    className="font-mono text-[12px] text-cyan-primary/80" 
                   />
                 </div>
 
@@ -981,7 +1001,7 @@ export default function CryptoLab() {
                         playHoverEvidence();
                         playReticleLock();
                       }}
-                      className={`w-full text-left p-1.5 border flex items-center justify-between text-[11px] font-mono transition-colors relative group ${
+                      className={`w-full text-left p-1.5 border flex items-center justify-between text-[13px] font-mono transition-colors relative group ${
                         JSON.stringify(c.options) === JSON.stringify(toolOptions)
                           ? "bg-cyan-primary/10 border-cyan-primary text-text-primary"
                           : "bg-bg-void/40 border-border-hairline/10 text-text-dim hover:border-cyan-primary/35 hover:text-text-primary"
@@ -990,11 +1010,11 @@ export default function CryptoLab() {
                     >
                       <div className="absolute inset-y-0 left-0 w-[1.5px] bg-transparent group-hover:bg-cyan-primary transition-colors duration-200" />
                       <span className="text-cyan-primary font-bold z-10 truncate max-w-[120px]">{c.label}:</span>
-                      <span className="truncate flex-1 ml-2 text-left lowercase z-10 text-[10.5px]">{c.output.slice(0, 50)}</span>
-                      <span className="text-[10px] font-share uppercase opacity-60 text-cyan-dim ml-1 z-10 group-hover:opacity-100 transition-opacity whitespace-nowrap">APPLY</span>
+                      <span className="truncate flex-1 ml-2 text-left lowercase z-10 text-[12px]">{c.output.slice(0, 50)}</span>
+                      <span className="text-[12px] font-share uppercase opacity-60 text-cyan-dim ml-1 z-10 group-hover:opacity-100 transition-opacity whitespace-nowrap">APPLY</span>
                     </button>
                   )) : (
-                    <div className="h-full flex items-center justify-center text-[11px] font-mono text-text-dim/40 uppercase tracking-widest border border-dashed border-border-hairline/10 bg-bg-void/10 p-4">
+                    <div className="h-full flex items-center justify-center text-[13px] font-mono text-text-dim/40 uppercase tracking-widest border border-dashed border-border-hairline/10 bg-bg-void/10 p-4">
                        Brute-force unavailable
                     </div>
                   )}
@@ -1004,10 +1024,10 @@ export default function CryptoLab() {
               <div className="flex-1 flex flex-col justify-center items-center p-3 border border-dashed border-border-hairline/15 bg-bg-void/20 space-y-2.5 my-1.5">
                 <Activity className="w-4 h-4 text-cyan-primary/30 animate-pulse" />
                 <div className="text-center space-y-1">
-                  <span className="text-[10.5px] font-mono text-cyan-primary/60 tracking-wider block font-bold">
+                  <span className="text-[12px] font-mono text-cyan-primary/60 tracking-wider block font-bold">
                     BRUTE_FORCE_STANDBY
                   </span>
-                  <p className="text-[10px] font-share text-text-dim leading-normal uppercase max-w-[200px]">
+                  <p className="text-[12px] font-share text-text-dim leading-normal uppercase max-w-[200px]">
                     Enter ciphertext in buffer to rotate indices dynamically
                   </p>
                 </div>
@@ -1015,13 +1035,13 @@ export default function CryptoLab() {
                   <DataStream 
                     text="SYS_STANDBY_MODE // KEY_ ROT_DECRYPT // ROT_01_STANDBY... ROT_02_STANDBY... ROT_03_STANDBY... ROT_04_STANDBY... ROT_05_STANDBY..." 
                     speed={15} 
-                    className="font-mono text-[10px] text-cyan-primary/25" 
+                    className="font-mono text-[12px] text-cyan-primary/25" 
                   />
                 </div>
               </div>
             )}
 
-            <div className="flex justify-between text-[10px] font-mono text-text-dim border-t border-border-hairline/15 pt-1.5 mt-2">
+            <div className="flex justify-between text-[12px] font-mono text-text-dim border-t border-border-hairline/15 pt-1.5 mt-2">
               <span>SCAN SHIFTS: 1 to 25</span>
               <span className="text-cyan-dim animate-hex-pulse-flicker font-bold">CLICK PREVIEW TO LOAD SHIFT</span>
             </div>
@@ -1029,13 +1049,13 @@ export default function CryptoLab() {
         ) : (
           <GlassPanel className="p-4 h-64 flex flex-col justify-between" clipSize="md" showCornerTicks={true}>
             <div className="border-b border-border-hairline/25 pb-1 mb-2">
-              <h3 className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text flex items-center">
+              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text flex items-center">
                 <span className="w-1 h-2 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_#2ff1e4]" />
                 FORENSIC CRYPTO REFERENCE
               </h3>
             </div>
 
-            <div className="flex-1 text-[10.5px] font-share text-text-dim leading-relaxed space-y-2 overflow-y-auto scrollbar-thin max-h-[140px]">
+            <div className="flex-1 text-[12px] font-share text-text-dim leading-relaxed space-y-2 overflow-y-auto scrollbar-thin max-h-[140px]">
               <div className="border-b border-border-hairline/10 pb-1.5">
                 <span className="text-cyan-primary font-bold uppercase block">Polyalphabetic Ciphers</span>
                 <span>Vigenère utilizes multiple shift alphabets dynamically using a keyword, flattening letter frequency curves and frustrating simple frequency attacks.</span>
@@ -1050,7 +1070,7 @@ export default function CryptoLab() {
               </div>
             </div>
 
-            <div className="flex justify-between text-[10px] font-mono text-text-dim border-t border-border-hairline/15 pt-1.5 mt-2">
+            <div className="flex justify-between text-[12px] font-mono text-text-dim border-t border-border-hairline/15 pt-1.5 mt-2">
               <span>BELFRY DATABASE // v2.8</span>
               <span className="text-green-verified font-bold">SECURE LOGIC LINKED</span>
             </div>
@@ -1070,12 +1090,12 @@ export default function CryptoLab() {
                   <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
                   <DatabaseTag text="FORENSIC TARGET STREAM" />
                 </div>
-                <span className="text-[10.5px] font-share text-text-dim uppercase">
+                <span className="text-[12px] font-share text-text-dim uppercase">
                   {inputText.length} CHARS
                 </span>
               </div>
 
-              <p className="text-[11px] font-share text-text-dim uppercase mb-3 leading-relaxed">
+              <p className="text-[13px] font-share text-text-dim uppercase mb-3 leading-relaxed">
                 PASTE ANY SCRAMBLED CODES, BINARY BLOCKS, OR ENCRYPTED MESSAGE SEGMENTS HERE. THE AUTOMATED HEURISTIC ENGINE WILL FINGERPRINT THE SIGNAL AND RANK THE PROBABLE ALGORITHMS.
               </p>
 
@@ -1086,10 +1106,10 @@ export default function CryptoLab() {
                   playTypeKey();
                 }}
                 placeholder="INPUT CODES FOR AUTOMATED PATTERN ANALYSIS..."
-                className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 p-4 font-mono text-[13px] leading-relaxed text-white outline-none focus:border-cyan-primary/50 resize-none scrollbar-thin overflow-y-auto placeholder:text-text-dim/30"
+                className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 p-4 font-mono text-[14px] leading-relaxed text-white outline-none focus:border-cyan-primary/50 resize-none scrollbar-thin overflow-y-auto placeholder:text-text-dim/30"
               />
 
-              <div className="mt-3 flex justify-between text-[10.5px] font-share text-text-dim">
+              <div className="mt-3 flex justify-between text-[12px] font-share text-text-dim">
                 <button
                   onClick={() => {
                     setInputText("");
@@ -1108,7 +1128,7 @@ export default function CryptoLab() {
               <div className="border-b border-border-hairline/25 pb-1.5 flex items-center">
                 <DatabaseTag text="SIGNAL METRIC SUMMARY" />
               </div>
-              <div className="grid grid-cols-2 gap-4 flex-1 pt-2 font-share text-[11px]">
+              <div className="grid grid-cols-2 gap-4 flex-1 pt-2 font-share text-[13px]">
                 <div>
                   <HeroStat
                     label="SHANNON ENTROPY"
@@ -1116,7 +1136,7 @@ export default function CryptoLab() {
                     valueClassName="!text-sm text-cyan-text"
                     disabledShine={true}
                   />
-                  <div className="text-[10px] text-text-dim uppercase mt-1">
+                  <div className="text-[12px] text-text-dim uppercase mt-1">
                     {shannonEntropy > 4.5 ? "HIGH ENTROPY SIGNAL" : "STRUCTURED CHARACTER FLUX"}
                   </div>
                 </div>
@@ -1127,7 +1147,7 @@ export default function CryptoLab() {
                     valueClassName="!text-sm text-cyan-text"
                     disabledShine={true}
                   />
-                  <div className="text-[10px] text-text-dim uppercase mt-1">
+                  <div className="text-[12px] text-text-dim uppercase mt-1">
                     ENGLISH REFERENCE IC: ~0.0667
                   </div>
                 </div>
@@ -1152,7 +1172,7 @@ export default function CryptoLab() {
                     <span className="font-mono text-xs text-cyan-primary/60 font-black uppercase tracking-widest block">
                       AWAITING INPUT TELEMETRY
                     </span>
-                    <p className="text-[11px] font-share text-text-dim/60 uppercase max-w-[280px] mt-1 leading-relaxed">
+                    <p className="text-[13px] font-share text-text-dim/60 uppercase max-w-[280px] mt-1 leading-relaxed">
                       Provide message string data in the target buffer to spin up the forensic heuristic array.
                     </p>
                   </div>
@@ -1194,7 +1214,7 @@ export default function CryptoLab() {
                           <div className="flex justify-between items-start mb-2">
                             <div>
                               <div className="flex items-center space-x-2">
-                                <span className="font-mono text-[11px] text-text-dim font-bold">
+                                <span className="font-mono text-[13px] text-text-dim font-bold">
                                   [{String(idx + 1).padStart(2, "0")}]
                                 </span>
                                 <h4 className="font-orbitron text-xs font-black tracking-wider uppercase text-white">
@@ -1206,7 +1226,7 @@ export default function CryptoLab() {
                                   </Badge>
                                 )}
                               </div>
-                              <p className="font-share text-[11.5px] text-text-primary mt-1">
+                              <p className="font-share text-[13px] text-text-primary mt-1">
                                 {candidate.preview || `Matches characteristic patterns of ${candidate.toolId}`}
                               </p>
                             </div>
@@ -1214,7 +1234,7 @@ export default function CryptoLab() {
                               <span className={`font-orbitron text-xs font-black ${textColor}`}>
                                 {confidencePercent}%
                               </span>
-                              <span className="text-[10px] font-share text-text-dim block uppercase">
+                              <span className="text-[12px] font-share text-text-dim block uppercase">
                                 MATCH CONFIDENCE
                               </span>
                             </div>
@@ -1224,7 +1244,7 @@ export default function CryptoLab() {
                             <ProgressBar value={confidencePercent} variant={barVariant as any} showValue={false} />
                           </div>
 
-                          <p className="font-mono text-[10.5px] text-text-dim mt-1.5 bg-bg-void/50 p-2 border border-border-hairline/5 leading-relaxed">
+                          <p className="font-mono text-[12px] text-text-dim mt-1.5 bg-bg-void/50 p-2 border border-border-hairline/5 leading-relaxed">
                             {candidate.details}
                           </p>
 
@@ -1239,7 +1259,7 @@ export default function CryptoLab() {
                                   playSuccessChime();
                                 }}
                                 onMouseEnter={() => playHoverEvidence()}
-                                className="px-3 py-1 bg-cyan-primary/10 hover:bg-cyan-primary text-cyan-text hover:text-bg-void border border-cyan-primary/30 hover:border-cyan-primary font-orbitron font-bold text-[10.5px] tracking-widest uppercase transition-all flex items-center space-x-1.5 cursor-pointer"
+                                className="px-3 py-1 bg-cyan-primary/10 hover:bg-cyan-primary text-cyan-text hover:text-bg-void border border-cyan-primary/30 hover:border-cyan-primary font-orbitron font-bold text-[12px] tracking-widest uppercase transition-all flex items-center space-x-1.5 cursor-pointer"
                                 style={{
                                   clipPath: "polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)"
                                 }}
@@ -1249,7 +1269,7 @@ export default function CryptoLab() {
                               </button>
                             ) : (
                               <span
-                                className="px-3 py-1 bg-bg-void/40 text-text-dim/50 border border-border-hairline/15 font-orbitron font-bold text-[10.5px] tracking-widest uppercase flex items-center space-x-1.5 cursor-not-allowed"
+                                className="px-3 py-1 bg-bg-void/40 text-text-dim/50 border border-border-hairline/15 font-orbitron font-bold text-[12px] tracking-widest uppercase flex items-center space-x-1.5 cursor-not-allowed"
                                 style={{
                                   clipPath: "polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)"
                                 }}
@@ -1278,12 +1298,12 @@ export default function CryptoLab() {
                   <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
                   <DatabaseTag text="FORENSIC TARGET STREAM" />
                 </div>
-                <span className="text-[10.5px] font-share text-text-dim uppercase">
+                <span className="text-[12px] font-share text-text-dim uppercase">
                   {inputText.length} CHARS
                 </span>
               </div>
 
-              <p className="text-[11px] font-share text-text-dim uppercase mb-3 leading-relaxed">
+              <p className="text-[13px] font-share text-text-dim uppercase mb-3 leading-relaxed">
                 PASTE ANY SCRAMBLED CODES, CIPHERTEXT SEGMENTS, OR RAW TEXT TO CALCULATE EXACT UNIGRAM FREQUENCY AND IDENTIFY DEVIATIONS FROM ENGLISH BASELINE VALUES.
               </p>
 
@@ -1294,10 +1314,10 @@ export default function CryptoLab() {
                   playTypeKey();
                 }}
                 placeholder="INPUT CODES FOR AUTOMATED FREQUENCY ANALYSIS..."
-                className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 p-4 font-mono text-[13px] leading-relaxed text-white outline-none focus:border-cyan-primary/50 resize-none scrollbar-thin overflow-y-auto placeholder:text-text-dim/30"
+                className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 p-4 font-mono text-[14px] leading-relaxed text-white outline-none focus:border-cyan-primary/50 resize-none scrollbar-thin overflow-y-auto placeholder:text-text-dim/30"
               />
 
-              <div className="mt-3 flex justify-between text-[10.5px] font-share text-text-dim">
+              <div className="mt-3 flex justify-between text-[12px] font-share text-text-dim">
                 <button
                   onClick={() => {
                     setInputText("");
@@ -1316,7 +1336,7 @@ export default function CryptoLab() {
               <div className="border-b border-border-hairline/25 pb-1.5 flex items-center">
                 <DatabaseTag text="SIGNAL METRIC SUMMARY" />
               </div>
-              <div className="grid grid-cols-2 gap-4 flex-1 pt-2 font-share text-[11px]">
+              <div className="grid grid-cols-2 gap-4 flex-1 pt-2 font-share text-[13px]">
                 <div>
                   <HeroStat
                     label="SHANNON ENTROPY"
@@ -1324,7 +1344,7 @@ export default function CryptoLab() {
                     valueClassName="!text-sm text-cyan-text"
                     disabledShine={true}
                   />
-                  <div className="text-[10px] text-text-dim uppercase mt-1">
+                  <div className="text-[12px] text-text-dim uppercase mt-1">
                     {shannonEntropy > 4.5 ? "HIGH ENTROPY SIGNAL" : "STRUCTURED CHARACTER FLUX"}
                   </div>
                 </div>
@@ -1335,7 +1355,7 @@ export default function CryptoLab() {
                     valueClassName="!text-sm text-cyan-text"
                     disabledShine={true}
                   />
-                  <div className="text-[10px] text-text-dim uppercase mt-1">
+                  <div className="text-[12px] text-text-dim uppercase mt-1">
                     ENGLISH REFERENCE IC: ~0.0667
                   </div>
                 </div>
@@ -1352,7 +1372,7 @@ export default function CryptoLab() {
                   <BarChart2 className="w-4 h-4 mr-2 text-cyan-primary animate-pulse" />
                   UNIGRAM FREQUENCY ANALYSIS
                 </h3>
-                <p className="text-[10.5px] font-share text-text-dim tracking-wide uppercase mt-0.5">
+                <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
                   Comparative distribution spectrum: Live text frequency vs english standard
                 </p>
               </div>
@@ -1360,10 +1380,10 @@ export default function CryptoLab() {
               <div className="flex-1 relative min-h-0">
                 {!inputText.trim() ? (
                   <div className="absolute inset-0 bg-bg-void/35 backdrop-blur-[1px] flex flex-col justify-center items-center z-10 space-y-1.5">
-                    <span className="font-mono text-[10.5px] text-cyan-primary/50 tracking-wider font-bold uppercase animate-pulse">
+                    <span className="font-mono text-[12px] text-cyan-primary/50 tracking-wider font-bold uppercase animate-pulse">
                       // ANALYSIS MATRIX STANDBY //
                     </span>
-                    <span className="font-share text-[10px] text-text-dim/60 uppercase">
+                    <span className="font-share text-[12px] text-text-dim/60 uppercase">
                       Provide message string data to populate frequency waves
                     </span>
                   </div>
@@ -1415,7 +1435,7 @@ export default function CryptoLab() {
                   <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text uppercase">
                     TABULAR ANALYSIS & DEVIATIONS
                   </h3>
-                  <p className="text-[10.5px] font-share text-text-dim tracking-wide uppercase mt-0.5">
+                  <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
                     Sort by any metric to inspect specific cipher characteristics
                   </p>
                 </div>
@@ -1429,15 +1449,15 @@ export default function CryptoLab() {
               {!inputText.trim() ? (
                 <div className="flex-1 flex flex-col justify-center items-center text-center space-y-3 border border-dashed border-border-hairline/10 bg-bg-void/10 p-6 min-h-[120px]">
                   <Activity className="w-6 h-6 text-cyan-primary/20 animate-pulse" />
-                  <span className="font-mono text-[10.5px] text-cyan-primary/60 font-black uppercase tracking-widest block">
+                  <span className="font-mono text-[12px] text-cyan-primary/60 font-black uppercase tracking-widest block">
                     AWAITING TARGET INPUT
                   </span>
                 </div>
               ) : (
                 <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin max-h-[220px]">
-                  <table className="w-full text-left text-[11px] font-mono border-collapse">
+                  <table className="w-full text-left text-[13px] font-mono border-collapse">
                     <thead>
-                      <tr className="border-b border-border-hairline/20 text-text-dim uppercase font-bold text-[10px] pb-1 select-none">
+                      <tr className="border-b border-border-hairline/20 text-text-dim uppercase font-bold text-[12px] pb-1 select-none">
                         <th className="pb-2 text-left cursor-pointer hover:text-cyan-primary transition-colors" onClick={() => handleFreqSort("letter")}>
                           LETTER {freqSortBy === "letter" && (freqSortAsc ? "▲" : "▼")}
                         </th>
@@ -1467,7 +1487,7 @@ export default function CryptoLab() {
 
                         return (
                           <tr key={row.letter} className="hover:bg-cyan-primary/[0.03] transition-colors">
-                            <td className="py-1.5 text-left font-black text-white text-[11.5px]">{row.letter}</td>
+                            <td className="py-1.5 text-left font-black text-white text-[13px]">{row.letter}</td>
                             <td className="py-1.5 text-right text-text-primary">{row.count}</td>
                             <td className="py-1.5 text-right text-cyan-primary">{row.Actual}%</td>
                             <td className="py-1.5 text-right text-text-dim">{row.Expected}%</td>

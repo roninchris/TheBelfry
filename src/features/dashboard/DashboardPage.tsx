@@ -184,7 +184,7 @@ export default function DashboardPage() {
             <DatabaseTag text="ACTIVE DOSSIERS" className="mb-1.5 self-start" />
             <div className="flex items-baseline space-x-1.5 mt-1">
               <span className="font-orbitron font-black text-sm text-cyan-text leading-none">{cases.filter(c => c.status === "ACTIVE").length}</span>
-              <span className="text-[11px] text-text-dim font-share">/ {cases.length} TOTAL</span>
+              <span className="text-[13px] text-text-dim font-share">/ {cases.length} TOTAL</span>
             </div>
           </div>
 
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             <DatabaseTag text="SECURED EVIDENCE" className="mb-1.5 self-start" />
             <div className="flex items-baseline space-x-1.5 mt-1">
               <span className="font-orbitron font-black text-sm text-cyan-text leading-none">{evidenceNodes.length}</span>
-              <span className="text-[11px] text-text-dim font-share">CLUES RECORDED</span>
+              <span className="text-[13px] text-text-dim font-share">CLUES RECORDED</span>
             </div>
           </div>
 
@@ -201,8 +201,8 @@ export default function DashboardPage() {
           <div className="bg-bg-void/40 border border-border-hairline/10 p-2 flex flex-col justify-center relative">
             <DatabaseTag text="SECURE UPLINK" className="mb-1.5 self-start" />
             <div className="flex items-baseline space-x-1.5 mt-1">
-              <span className="font-mono text-[11.5px] text-green-verified leading-none font-bold uppercase animate-pulse">● ONLINE</span>
-              <span className="font-mono text-[11px] text-cyan-dim/80">{formatUptime(uptimeSeconds)}</span>
+              <span className="font-mono text-[13px] text-green-verified leading-none font-bold uppercase animate-pulse">● ONLINE</span>
+              <span className="font-mono text-[13px] text-cyan-dim/80">{formatUptime(uptimeSeconds)}</span>
             </div>
           </div>
 
@@ -213,7 +213,7 @@ export default function DashboardPage() {
               <span className="font-orbitron font-black text-sm text-cyan-text leading-none">
                 {Math.round(((cases.filter(c => c.status === "SOLVED").length) / (cases.length || 1)) * 100)}%
               </span>
-              <span className="text-[11px] text-text-dim font-share">SOLVED RATIO</span>
+              <span className="text-[13px] text-text-dim font-share">SOLVED RATIO</span>
             </div>
           </div>
 
@@ -222,7 +222,7 @@ export default function DashboardPage() {
             <DatabaseTag text="ANALYZER BUFFER" className="mb-1.5 self-start" />
             <div className="flex items-baseline space-x-1.5 mt-1">
               <span className="font-orbitron font-black text-sm text-cyan-text leading-none">{textInput.length}</span>
-              <span className="text-[11px] text-text-dim font-share">CHARS LOADED</span>
+              <span className="text-[13px] text-text-dim font-share">CHARS LOADED</span>
             </div>
           </div>
 
@@ -230,7 +230,7 @@ export default function DashboardPage() {
           <div className="bg-bg-void/40 border border-border-hairline/10 p-2 flex flex-col justify-center relative">
             <DatabaseTag text="NETWORK SECTOR" className="mb-1.5 self-start" />
             <div className="flex items-baseline space-x-1.5 mt-1">
-              <span className="font-mono text-[11.5px] text-amber-alert font-bold uppercase leading-none truncate">SECTOR_NORTH_09</span>
+              <span className="font-mono text-[13px] text-amber-alert font-bold uppercase leading-none truncate">SECTOR_NORTH_09</span>
             </div>
           </div>
         </div>
@@ -247,8 +247,8 @@ export default function DashboardPage() {
               <ShinyText text="CASE DOSSIER LIST" speed={5} />
             </h3>
             {/* Uplink diagnostics */}
-            <div className="flex items-center space-x-1.5 font-mono text-[10.5px] text-cyan-primary/50">
-              <span className="animate-[pulse_3s_infinite] text-[10px] tracking-widest">[UPLINK_SECURE]</span>
+            <div className="flex items-center space-x-1.5 font-mono text-[12px] text-cyan-primary/50">
+              <span className="animate-[pulse_3s_infinite] text-[12px] tracking-widest">[UPLINK_SECURE]</span>
               <span className="w-1.5 h-1.5 bg-cyan-primary/40 rounded-full animate-[pulse_3s_infinite]" />
             </div>
           </div>
@@ -272,13 +272,13 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <Database className="w-6 h-6 text-cyan-dim/60 group-hover:text-cyan-primary transition-colors relative z-10" />
-                <span className="font-orbitron text-[11px] font-black tracking-widest text-text-dim uppercase relative z-10">
+                <span className="font-orbitron text-[13px] font-black tracking-widest text-text-dim uppercase relative z-10">
                   NO DOSSIERS ON FILE
                 </span>
-                <span className="font-share text-[10.5px] text-text-dim/60 tracking-wide uppercase relative z-10 leading-relaxed">
+                <span className="font-share text-[12px] text-text-dim/60 tracking-wide uppercase relative z-10 leading-relaxed">
                   Archive standing by — open Case Files to register the first record
                 </span>
-                <span className="font-share text-[10px] text-cyan-primary/70 tracking-[0.2em] uppercase mt-1 relative z-10 group-hover:text-cyan-primary transition-colors">
+                <span className="font-share text-[12px] text-cyan-primary/70 tracking-[0.2em] uppercase mt-1 relative z-10 group-hover:text-cyan-primary transition-colors">
                   › INITIALIZE ARCHIVE
                 </span>
               </button>
@@ -319,14 +319,14 @@ export default function DashboardPage() {
                         <p className="font-chakra text-xs font-bold uppercase tracking-wider truncate leading-none group-hover:text-cyan-text transition-colors duration-200">
                           {c.title}
                         </p>
-                        <p className="font-share text-[11px] text-text-dim tracking-wide truncate mt-1 max-w-[150px]">
+                        <p className="font-share text-[13px] text-text-dim tracking-wide truncate mt-1 max-w-[150px]">
                           {c.synopsis}
                         </p>
                       </div>
                     </div>
 
                     {/* Animated active status indicator instead of static badge */}
-                    <div className="flex items-center space-x-1.5 shrink-0 relative z-10 font-mono text-[11px]">
+                    <div className="flex items-center space-x-1.5 shrink-0 relative z-10 font-mono text-[13px]">
                       <span className={`tracking-widest uppercase font-bold ${isSelected ? "text-cyan-text" : "text-text-dim/80"}`}>{c.status}</span>
                       <span className="relative flex h-1.5 w-1.5">
                         <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotColor}`} />
@@ -354,10 +354,10 @@ export default function DashboardPage() {
 
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-orbitron text-[11.5px] font-black text-text-primary tracking-widest uppercase flex items-center min-w-0" title={activeCase.title} key={activeCase.id}>
+                  <h4 className="font-orbitron text-[13px] font-black text-text-primary tracking-widest uppercase flex items-center min-w-0" title={activeCase.title} key={activeCase.id}>
                     <span className="truncate">{activeCase.title}</span>
                   </h4>
-                  <p className="font-share text-[11px] text-text-dim/60 uppercase">
+                  <p className="font-share text-[13px] text-text-dim/60 uppercase">
                     SYS_INDEXED: {new Date(activeCase.createdAt).toLocaleDateString()}
                   </p>
                 </div>
@@ -367,10 +367,10 @@ export default function DashboardPage() {
               </div>
 
               {/* Grid specifications */}
-              <div className="grid grid-cols-2 gap-2 font-share text-[11px] border-y border-border-hairline/15 py-2">
+              <div className="grid grid-cols-2 gap-2 font-share text-[13px] border-y border-border-hairline/15 py-2">
                 <div className="space-y-0.5 col-span-2">
-                  <span className="text-text-dim block text-[11px]">BRIEFING INTEL SYNOPSIS:</span>
-                  <p className="text-text-primary font-sans italic text-[11.5px] leading-snug line-clamp-2">
+                  <span className="text-text-dim block text-[13px]">BRIEFING INTEL SYNOPSIS:</span>
+                  <p className="text-text-primary font-sans italic text-[13px] leading-snug line-clamp-2">
                     "{activeCase.synopsis}"
                   </p>
                 </div>
@@ -379,8 +379,8 @@ export default function DashboardPage() {
               {/* Dossier Notes Preview */}
               {activeCase.notes ? (
                 <div className="space-y-1">
-                  <span className="text-text-dim block text-[11px]">SAVED JOURNAL PREVIEW:</span>
-                  <p className="text-[11.5px] leading-relaxed text-cyan-text/80 font-mono italic pr-1 max-h-[60px] overflow-y-auto scrollbar-none line-clamp-2">
+                  <span className="text-text-dim block text-[13px]">SAVED JOURNAL PREVIEW:</span>
+                  <p className="text-[13px] leading-relaxed text-cyan-text/80 font-mono italic pr-1 max-h-[60px] overflow-y-auto scrollbar-none line-clamp-2">
                     "{activeCase.notes}"
                   </p>
                 </div>
@@ -475,12 +475,12 @@ export default function DashboardPage() {
                 }}
                 disabled={isScanning}
                 placeholder="PASTE CIPHERTEXT, RAW HEX ENCODING OR BINARY TELEMETRY STRINGS HERE FOR FORENSIC DECODING... OR DROP FILE DIRECTLY IN THIS STAGE CONTAINER"
-                className="w-full flex-1 bg-transparent text-cyan-dim placeholder:text-text-dim/40 font-mono text-[11.5px] leading-relaxed resize-none border-0 outline-none focus:ring-0 p-0 overflow-y-auto scrollbar-thin relative z-20"
+                className="w-full flex-1 bg-transparent text-cyan-dim placeholder:text-text-dim/40 font-mono text-[13px] leading-relaxed resize-none border-0 outline-none focus:ring-0 p-0 overflow-y-auto scrollbar-thin relative z-20"
               />
             </div>
 
             {/* Bottom info strip in text area */}
-            <div className="border-t border-border-hairline/15 pt-2 mt-2 flex justify-between items-center text-[11px] font-share text-text-dim">
+            <div className="border-t border-border-hairline/15 pt-2 mt-2 flex justify-between items-center text-[13px] font-share text-text-dim">
               <div className="flex items-center space-x-2">
                 <Upload className="w-3.5 h-3.5" />
                 <span>DRAG & DROP SENSOR CAPTURE INTERCEPT</span>
@@ -497,7 +497,7 @@ export default function DashboardPage() {
             >
               <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(255,157,46,0.06)_0,rgba(255,157,46,0.06)_8px,transparent_8px,transparent_16px)] pointer-events-none" />
               <ShieldAlert className="w-4 h-4 shrink-0 amber-glow animate-pulse relative z-10" />
-              <span className="font-share text-[11px] tracking-widest uppercase font-bold amber-glow relative z-10">{scanAlert}</span>
+              <span className="font-share text-[13px] tracking-widest uppercase font-bold amber-glow relative z-10">{scanAlert}</span>
               <span className="ml-auto flex items-end gap-0.5 h-3 relative z-10">
                 <span className="w-[1.5px] h-1.5 bg-amber-alert/70 animate-signal-bar-tick" style={{ animationDelay: "0s" }} />
                 <span className="w-[1.5px] h-2.5 bg-amber-alert/70 animate-signal-bar-tick" style={{ animationDelay: "0.12s" }} />
@@ -566,7 +566,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 font-share text-[11px] border-t border-cyan-primary/10 pt-2.5">
+              <div className="grid grid-cols-2 gap-4 font-share text-[13px] border-t border-cyan-primary/10 pt-2.5">
                 <div>
                   <span className="text-text-dim block uppercase">RECOVERY VECTOR:</span>
                   <span className="text-text-primary font-bold">{scannedEvidence.source}</span>
@@ -586,14 +586,14 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="mt-3.5 flex justify-end space-x-3.5 font-chakra text-[11px]">
+              <div className="mt-3.5 flex justify-end space-x-3.5 font-chakra text-[13px]">
                 <div className="flex items-center space-x-2">
                   {showPicker ? (
                     <>
                       <select 
                         value={targetCaseId || activeCaseId || (cases[0]?.id || "")} 
                         onChange={(e) => setTargetCaseId(e.target.value)}
-                        className="bg-bg-void border border-cyan-primary/30 text-cyan-text text-[11px] p-1 uppercase font-chakra tracking-wider"
+                        className="bg-bg-void border border-cyan-primary/30 text-cyan-text text-[13px] p-1 uppercase font-chakra tracking-wider"
                       >
                         {cases.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                       </select>
@@ -626,7 +626,7 @@ export default function DashboardPage() {
                       </button>
                       <button 
                         onClick={() => setShowPicker(false)}
-                        className="px-2 py-1.5 text-text-dim hover:text-text-primary transition-colors uppercase tracking-widest font-black text-[11px]"
+                        className="px-2 py-1.5 text-text-dim hover:text-text-primary transition-colors uppercase tracking-widest font-black text-[13px]"
                       >
                         CANCEL
                       </button>
@@ -681,7 +681,7 @@ export default function DashboardPage() {
                   <div className="absolute top-0 right-0 w-2 h-2 bg-cyan-primary/15" />
                   
                   <div className="flex justify-between items-start relative z-10">
-                    <span className="font-chakra text-[11px] font-extrabold tracking-wider text-text-primary uppercase flex items-center">
+                    <span className="font-chakra text-[13px] font-extrabold tracking-wider text-text-primary uppercase flex items-center">
                       <Hash className="w-3.5 h-3.5 mr-1 text-cyan-dim" />
                       <DecryptText text={result.name} trigger={scannedEvidence?.id} />
                     </span>
@@ -699,7 +699,7 @@ export default function DashboardPage() {
                     <ProgressBar value={result.confidence} variant={result.isMatch ? "green" : "cyan"} showValue={true} />
                   </div>
 
-                  <p className="text-[11.5px] leading-relaxed text-text-dim mt-1.5 font-share italic relative z-10">
+                  <p className="text-[13px] leading-relaxed text-text-dim mt-1.5 font-share italic relative z-10">
                     "<DecryptText text={result.details} trigger={scannedEvidence?.id} duration={1000} />"
                   </p>
                 </div>
@@ -708,37 +708,37 @@ export default function DashboardPage() {
               // Default background standby heuristic rows (made to feel alive at rest)
               <div className="space-y-3.5">
                 <div className="bg-bg-void/40 border border-border-hairline/10 p-2.5 opacity-50 space-y-1 animate-[pulse_4s_infinite_alternate]">
-                  <div className="flex justify-between text-[11px] font-chakra font-bold">
+                  <div className="flex justify-between text-[13px] font-chakra font-bold">
                     <span className="tracking-wide">BASE64 INDEXED</span>
                     <span className="text-text-dim font-mono animate-pulse">STANDBY</span>
                   </div>
                   <ProgressBar value={0} variant="cyan" showValue={false} />
-                  <span className="text-[11px] font-share text-text-dim block mt-1">Awaiting sensor data buffer stream...</span>
+                  <span className="text-[13px] font-share text-text-dim block mt-1">Awaiting sensor data buffer stream...</span>
                 </div>
                 <div className="bg-bg-void/40 border border-border-hairline/10 p-2.5 opacity-50 space-y-1 animate-[pulse_4s_infinite_alternate]" style={{ animationDelay: "1.2s" }}>
-                  <div className="flex justify-between text-[11px] font-chakra font-bold">
+                  <div className="flex justify-between text-[13px] font-chakra font-bold">
                     <span className="tracking-wide">ROT13 ALPHABETICAL</span>
                     <span className="text-text-dim font-mono animate-pulse">STANDBY</span>
                   </div>
                   <ProgressBar value={0} variant="cyan" showValue={false} />
-                  <span className="text-[11px] font-share text-text-dim block mt-1">Awaiting sensor data buffer stream...</span>
+                  <span className="text-[13px] font-share text-text-dim block mt-1">Awaiting sensor data buffer stream...</span>
                 </div>
                 <div className="bg-bg-void/40 border border-border-hairline/10 p-2.5 opacity-50 space-y-1 animate-[pulse_4s_infinite_alternate]" style={{ animationDelay: "2.4s" }}>
-                  <div className="flex justify-between text-[11px] font-chakra font-bold">
+                  <div className="flex justify-between text-[13px] font-chakra font-bold">
                     <span className="tracking-wide">VIGENÈRE CYCLICAL</span>
                     <span className="text-text-dim font-mono animate-pulse">STANDBY</span>
                   </div>
                   <ProgressBar value={0} variant="cyan" showValue={false} />
-                  <span className="text-[11px] font-share text-text-dim block mt-1">Awaiting sensor data buffer stream...</span>
+                  <span className="text-[13px] font-share text-text-dim block mt-1">Awaiting sensor data buffer stream...</span>
                 </div>
               </div>
             )}
           </div>
 
           {/* Observations Panel */}
-          <div className="border-t border-border-hairline/25 pt-3 mt-3 space-y-1.5 text-[11.5px] font-share text-text-dim">
-            <span className="text-[11px] font-bold text-cyan-dim block">FORENSIC OBSERVATION FEED</span>
-            <div className="bg-cyan-primary/[0.02] border border-cyan-primary/10 p-2 text-text-primary/90 text-[11.5px] leading-relaxed font-sans italic">
+          <div className="border-t border-border-hairline/25 pt-3 mt-3 space-y-1.5 text-[13px] font-share text-text-dim">
+            <span className="text-[13px] font-bold text-cyan-dim block">FORENSIC OBSERVATION FEED</span>
+            <div className="bg-cyan-primary/[0.02] border border-cyan-primary/10 p-2 text-text-primary/90 text-[13px] leading-relaxed font-sans italic">
               "System filters for recurring cryptographic markers in raw buffers. High-entropy streams default to base-ranking, which flags patterns matching standard Base64, ROT13, EXIF block headers, and Meyda voice vectors."
             </div>
           </div>
@@ -747,7 +747,7 @@ export default function DashboardPage() {
         {/* TACTICAL GADGET MATRIX */}
         <GlassPanel className="p-4 flex flex-col justify-between" clipSize="md" showCornerTicks={true}>
           <div className="border-b border-border-hairline/25 pb-1 mb-2">
-            <h3 className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text flex items-center">
+            <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text flex items-center">
               <span className="w-1 h-2 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_#2ff1e4]" />
               TACTICAL GADGET MATRIX
             </h3>

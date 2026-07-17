@@ -83,7 +83,10 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className={`${isMinimized ? 'w-24' : 'w-72'} transition-all duration-300 ease-in-out bg-bg-void/90 border-r border-border-hairline/20 flex flex-col h-full font-chakra text-xs tracking-wider uppercase select-none relative z-10`}>
+    // On a 1024px-wide screen a fixed 288px rail is 28% of the viewport, which
+    // is what makes the shorter/squarer desktop sizes feel so cramped. It steps
+    // down below xl and keeps its full width on roomier screens.
+    <aside className={`${isMinimized ? 'w-20 xl:w-24' : 'w-56 xl:w-72'} shrink-0 transition-all duration-300 ease-in-out bg-bg-void/90 border-r border-border-hairline/20 flex flex-col h-full font-chakra text-xs tracking-wider uppercase select-none relative z-10`}>
       {/* Minimize Toggle */}
       <button 
         onClick={() => { 
@@ -199,7 +202,7 @@ export default function Sidebar() {
       </div>
 
       {/* Footer / Identity HUD Badge */}
-      <div className={`p-3 bg-bg-void/90 border-t border-border-hairline/20 font-share text-[11.5px] text-text-dim ${isMinimized ? 'text-center' : ''}`}>
+      <div className={`p-3 bg-bg-void/90 border-t border-border-hairline/20 font-share text-[13px] text-text-dim ${isMinimized ? 'text-center' : ''}`}>
         {!isMinimized ? (
           <>
             <div className="flex justify-between items-center opacity-80 mb-1">

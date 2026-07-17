@@ -535,10 +535,10 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
       className="flex items-center justify-between p-2 border border-border-hairline/10 bg-bg-void/45 hover:border-cyan-primary/25 hover:bg-cyan-primary/[0.01] transition-all group select-none"
     >
       <div className="min-w-0 flex-1 pr-2">
-        <h4 className="font-mono text-[11px] font-bold text-text-primary group-hover:text-cyan-text transition-colors uppercase truncate">
+        <h4 className="font-mono text-[13px] font-bold text-text-primary group-hover:text-cyan-text transition-colors uppercase truncate">
           {tool.label}
         </h4>
-        <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider block mt-0.5">
+        <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider block mt-0.5">
           ID: {tool.id}
         </span>
       </div>
@@ -574,7 +574,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   FORENSIC DECRYPTION CORES
                 </h1>
               </div>
-              <p className="text-[11px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
+              <p className="text-[13px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
                 Dual-mode cryptographic decipher. Build manual chainable recipes to unravel multi-encoded intercepts, or deploy sweeping brute-force matrices to automate crack routines.
               </p>
             </div>
@@ -596,7 +596,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               playPinClick();
               setMode("manual");
             }}
-            className={`py-2.5 text-[11.5px] font-orbitron font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
+            className={`py-2.5 text-[13px] font-orbitron font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
               mode === "manual"
                 ? "bg-cyan-primary text-bg-void shadow-[0_0_15px_rgba(47,241,228,0.55)] font-black"
                 : "text-text-dim hover:text-white hover:bg-bg-void/40"
@@ -611,7 +611,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               playPinClick();
               setMode("brute");
             }}
-            className={`py-2.5 text-[11.5px] font-orbitron font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
+            className={`py-2.5 text-[13px] font-orbitron font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
               mode === "brute"
                 ? "bg-amber-alert text-bg-void shadow-[0_0_15px_rgba(245,158,11,0.55)] font-black"
                 : "text-text-dim hover:text-white hover:bg-bg-void/40"
@@ -655,7 +655,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 {pipelineSteps.length > 0 && (
                   <button
                     onClick={clearPipeline}
-                    className="px-2 py-1 border border-red-threat/25 hover:border-red-threat text-red-threat transition-all text-[10.5px] font-mono uppercase"
+                    className="px-2 py-1 border border-red-threat/25 hover:border-red-threat text-red-threat transition-all text-[12px] font-mono uppercase"
                   >
                     Clear Recipe
                   </button>
@@ -665,7 +665,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 <button
                   onClick={handleBake}
                   disabled={isBaking || pipelineSteps.length === 0}
-                  className="hud-target px-3 py-1 bg-cyan-primary hover:bg-white text-bg-void transition-all duration-150 text-[11px] font-black tracking-widest font-orbitron uppercase disabled:opacity-30 disabled:pointer-events-none flex items-center space-x-1"
+                  className="hud-target px-3 py-1 bg-cyan-primary hover:bg-white text-bg-void transition-all duration-150 text-[13px] font-black tracking-widest font-orbitron uppercase disabled:opacity-30 disabled:pointer-events-none flex items-center space-x-1"
                   style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
                 >
                   <RefreshCw className={`w-3 h-3 ${isBaking ? "animate-radar-sweep" : ""}`} />
@@ -681,7 +681,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 <h4 className="font-orbitron text-xs font-black tracking-widest text-cyan-text uppercase">
                   RECIPE CONTAINER DISCHARGED
                 </h4>
-                <p className="text-[11px] text-text-dim uppercase tracking-widest font-share max-w-sm mt-1.5 leading-relaxed">
+                <p className="text-[13px] text-text-dim uppercase tracking-widest font-share max-w-sm mt-1.5 leading-relaxed">
                   Your cascade is currently blank. Search and select operations in the right sidebar to construct an ordered chain.
                 </p>
               </div>
@@ -706,7 +706,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     const nodes: React.ReactNode[] = [];
                     const inState = inputText.trim() ? "done" : "idle";
                     nodes.push(
-                      <div key="in" className={`shrink-0 flex items-center justify-center w-8 h-8 border font-mono text-[9px] font-black tracking-wider transition-all duration-300 ${nodeCls(inState)}`} style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }} title="Input stream">IN</div>
+                      <div key="in" className={`shrink-0 flex items-center justify-center w-8 h-8 border font-mono text-[11px] font-black tracking-wider transition-all duration-300 ${nodeCls(inState)}`} style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }} title="Input stream">IN</div>
                     );
                     pipelineSteps.forEach((step, i) => {
                       const state =
@@ -716,7 +716,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       nodes.push(
                         <div
                           key={step.id}
-                          className={`shrink-0 flex flex-col items-center justify-center w-9 h-8 border font-mono text-[9px] font-black tracking-wider transition-all duration-300 ${nodeCls(state)}`}
+                          className={`shrink-0 flex flex-col items-center justify-center w-9 h-8 border font-mono text-[11px] font-black tracking-wider transition-all duration-300 ${nodeCls(state)}`}
                           style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }}
                           title={getTool(step.toolId)?.label || step.toolId}
                         >
@@ -727,12 +727,12 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     const outState = outputText ? (bakeSuccess ? "done" : "done") : "idle";
                     nodes.push(<div key="cout" className={conn(!!outputText)} />);
                     nodes.push(
-                      <div key="out" className={`shrink-0 flex items-center justify-center w-8 h-8 border font-mono text-[9px] font-black tracking-wider transition-all duration-300 ${nodeCls(outState, !bakeSuccess && !!outputText)}`} style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }} title="Output">OUT</div>
+                      <div key="out" className={`shrink-0 flex items-center justify-center w-8 h-8 border font-mono text-[11px] font-black tracking-wider transition-all duration-300 ${nodeCls(outState, !bakeSuccess && !!outputText)}`} style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }} title="Output">OUT</div>
                     );
                     return (
                       <>
                         {nodes}
-                        <span className="ml-auto pl-3 font-share text-[9.5px] tracking-widest uppercase text-text-dim/70 shrink-0">
+                        <span className="ml-auto pl-3 font-share text-[11px] tracking-widest uppercase text-text-dim/70 shrink-0">
                           {isBaking ? (
                             <span className="text-cyan-text animate-pulse">EXECUTING {activeStepIndex !== null ? `L${activeStepIndex + 1}` : "…"}</span>
                           ) : outputText ? (
@@ -754,11 +754,11 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="w-1.5 h-3 bg-cyan-primary inline-block transform -skew-x-12" />
-                          <h3 className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text uppercase">
+                          <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text uppercase">
                             INPUT STREAM VESSEL
                           </h3>
                         </div>
-                        <span className="font-mono text-[10px] text-text-dim">
+                        <span className="font-mono text-[12px] text-text-dim">
                           {inputText.length} BYTES
                         </span>
                       </div>
@@ -827,10 +827,10 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                                 <div className="cursor-grab active:cursor-grabbing p-1 hover:text-cyan-primary text-text-dim/60 transition-colors shrink-0">
                                   <GripVertical className="w-3.5 h-3.5" />
                                 </div>
-                                <span className="font-mono text-[10.5px] text-cyan-primary font-bold shrink-0 uppercase">
+                                <span className="font-mono text-[12px] text-cyan-primary font-bold shrink-0 uppercase">
                                   L-{index + 1}
                                 </span>
-                                <h4 className={`font-orbitron text-[11px] font-black tracking-widest uppercase truncate transition-colors ${isProcessing ? "text-cyan-text" : "text-white"}`}>
+                                <h4 className={`font-orbitron text-[13px] font-black tracking-widest uppercase truncate transition-colors ${isProcessing ? "text-cyan-text" : "text-white"}`}>
                                   {tool.label}
                                 </h4>
                               </div>
@@ -856,7 +856,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                                     playPinClick();
                                     setPipelineSteps(pipelineSteps.map(s => s.id === step.id ? { ...s, type: "decode" } : s));
                                   }}
-                                  className={`px-2 py-0.5 text-[10px] font-mono font-black uppercase tracking-widest transition-all ${
+                                  className={`px-2 py-0.5 text-[12px] font-mono font-black uppercase tracking-widest transition-all ${
                                     step.type === "decode"
                                       ? "bg-red-threat/15 text-red-threat border-r border-red-threat/25 font-bold shadow-[inset_0_0_8px_rgba(239,68,68,0.25)]"
                                       : "text-text-dim hover:text-text-primary"
@@ -869,7 +869,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                                     playPinClick();
                                     setPipelineSteps(pipelineSteps.map(s => s.id === step.id ? { ...s, type: "encode" } : s));
                                   }}
-                                  className={`px-2 py-0.5 text-[10px] font-mono font-black uppercase tracking-widest transition-all ${
+                                  className={`px-2 py-0.5 text-[12px] font-mono font-black uppercase tracking-widest transition-all ${
                                     step.type === "encode"
                                       ? "bg-cyan-primary/15 text-cyan-text border-l border-cyan-primary/25 font-bold shadow-[inset_0_0_8px_rgba(47,241,228,0.25)]"
                                       : "text-text-dim hover:text-text-primary"
@@ -893,7 +893,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                             {/* LAYER OUTPUT PREVIEW */}
                             <div className="mt-2.5 pt-2 border-t border-border-hairline/10">
                               <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest">
+                                <span className="text-[12px] font-mono text-text-dim uppercase tracking-widest">
                                   LAYER OUTPUT BUFFER
                                 </span>
                               </div>
@@ -906,11 +906,11 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                                     <DataStream
                                       text={intermediateResults[index]}
                                       active={isProcessing || (isBaking && activeStepIndex === null)}
-                                      className={`text-[10.5px] font-mono transition-colors duration-500 break-all select-text ${isProcessing ? "text-cyan-text" : "text-green-verified/70"}`}
+                                      className={`text-[12px] font-mono transition-colors duration-500 break-all select-text ${isProcessing ? "text-cyan-text" : "text-green-verified/70"}`}
                                     />
                                   </div>
                                 ) : (
-                                  <span className="text-[10px] font-mono text-text-dim/30 italic">Awaiting bake...</span>
+                                  <span className="text-[12px] font-mono text-text-dim/30 italic">Awaiting bake...</span>
                                 )}
                               </div>
                             </div>
@@ -935,12 +935,12 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
-                          <h3 className="font-orbitron text-[11px] font-black tracking-widest text-green-verified uppercase flex items-center">
+                          <h3 className="font-orbitron text-[13px] font-black tracking-widest text-green-verified uppercase flex items-center">
                             OUTPUT GATE VESSEL
                             {!bakeSuccess && <AlertCircle className="w-3.5 h-3.5 text-red-threat ml-2 animate-hex-pulse-flicker" />}
                           </h3>
                         </div>
-                        <div className="flex items-center space-x-1.5 text-[10px] font-mono text-text-dim">
+                        <div className="flex items-center space-x-1.5 text-[12px] font-mono text-text-dim">
                           <span>{executionStats.depth} OPS</span>
                           <span className="text-cyan-primary font-bold">{executionStats.latencyMs}ms</span>
                         </div>
@@ -980,7 +980,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                 {/* Dossier database reporting row */}
                 <div className="mt-4 pt-3 border-t border-border-hairline/15 flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
-                  <span className="text-[10.5px] text-text-dim font-share uppercase tracking-widest flex items-center">
+                  <span className="text-[12px] text-text-dim font-share uppercase tracking-widest flex items-center">
                     <Activity className="w-3.5 h-3.5 mr-1 text-cyan-primary animate-hex-pulse-flicker" />
                     FLOW MONITOR: {bakeSuccess ? "STATUS ALIGNED" : "CASCADE COMPILATION FAULT"}
                   </span>
@@ -988,7 +988,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   <button
                     onClick={handleExportToDossier}
                     disabled={pipelineSteps.length === 0 || !bakeSuccess}
-                    className="px-3 py-1.5 border border-cyan-primary/25 hover:border-cyan-primary text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all duration-150 text-[11px] uppercase font-black tracking-widest flex items-center space-x-1.5"
+                    className="px-3 py-1.5 border border-cyan-primary/25 hover:border-cyan-primary text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all duration-150 text-[13px] uppercase font-black tracking-widest flex items-center space-x-1.5"
                     style={{ clipPath: "polygon(0 0, 100% 0, 94% 100%, 0 100%)" }}
                   >
                     <Database className="w-3.5 h-3.5" />
@@ -1031,7 +1031,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       playPinClick();
                       setBruteSubMode("sweep");
                     }}
-                    className={`px-3 py-1 text-[10.5px] font-orbitron font-bold uppercase tracking-widest transition-all ${
+                    className={`px-3 py-1 text-[12px] font-orbitron font-bold uppercase tracking-widest transition-all ${
                       bruteSubMode === "sweep"
                         ? "bg-amber-alert/15 text-amber-text font-black shadow-[inset_0_0_8px_rgba(245,158,11,0.25)]"
                         : "text-text-dim hover:text-white"
@@ -1044,7 +1044,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       playPinClick();
                       setBruteSubMode("auto");
                     }}
-                    className={`px-3 py-1 text-[10.5px] font-orbitron font-bold uppercase tracking-widest transition-all ${
+                    className={`px-3 py-1 text-[12px] font-orbitron font-bold uppercase tracking-widest transition-all ${
                       bruteSubMode === "auto"
                         ? "bg-amber-alert/15 text-amber-text font-black shadow-[inset_0_0_8px_rgba(245,158,11,0.25)]"
                         : "text-text-dim hover:text-white"
@@ -1064,7 +1064,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12" />
-                        <h3 className="font-orbitron text-[11px] font-black tracking-widest text-amber-text uppercase">
+                        <h3 className="font-orbitron text-[13px] font-black tracking-widest text-amber-text uppercase">
                           GATE 1: STREAM SOURCE
                         </h3>
                       </div>
@@ -1083,7 +1083,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                               addLog("AUTO-IDENTIFY: NO SPECIFIC ENGINE MATCHED — TRY MANUAL SWEEP TARGETS", "warning", "D-HEURISTICS");
                             }
                           }}
-                          className="text-[10px] text-cyan-text hover:underline font-mono uppercase flex items-center space-x-1"
+                          className="text-[12px] text-cyan-text hover:underline font-mono uppercase flex items-center space-x-1"
                           title="Run forensic pattern/entropy analysis on the input to suggest a sweep target"
                         >
                           <SearchCode className="w-3 h-3" />
@@ -1095,7 +1095,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                             setBruteResults([]);
                             playPinClick();
                           }}
-                          className="text-[10px] text-red-threat hover:underline font-mono uppercase"
+                          className="text-[12px] text-red-threat hover:underline font-mono uppercase"
                         >
                           Clear
                         </button>
@@ -1124,10 +1124,10 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     <div className="mt-2.5 pt-2 border-t border-border-hairline/10">
                       {bruteSubMode === "sweep" ? (
                         <div className="flex flex-col space-y-1.5">
-                          <span className="text-[10px] font-mono text-text-dim uppercase font-bold">
+                          <span className="text-[12px] font-mono text-text-dim uppercase font-bold">
                             SELECT SWEEP BOUNDS TARGET:
                           </span>
-                          <div className="grid grid-cols-2 gap-1 font-mono text-[10px]">
+                          <div className="grid grid-cols-2 gap-1 font-mono text-[12px]">
                             {[
                               { id: "caesar", label: "CAESAR" },
                               { id: "railfence", label: "RAIL DEPTH" },
@@ -1158,7 +1158,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                         </div>
                       ) : (
                         <div className="py-2 text-center">
-                          <span className="text-[10px] font-mono text-amber-alert/70 uppercase font-black tracking-widest block">
+                          <span className="text-[12px] font-mono text-amber-alert/70 uppercase font-black tracking-widest block">
                             CRACK VECTOR: ALL MATRIX PLUGINS
                           </span>
                         </div>
@@ -1182,7 +1182,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12 animate-hex-pulse-flicker" />
-                        <h3 className="font-orbitron text-[11px] font-black tracking-widest text-amber-text uppercase">
+                        <h3 className="font-orbitron text-[13px] font-black tracking-widest text-amber-text uppercase">
                           GATE 2: MATRIX CORE
                         </h3>
                       </div>
@@ -1201,7 +1201,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                             <Cpu className="w-4 h-4 text-amber-alert animate-hex-pulse-flicker" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="font-orbitron text-[10px] font-black tracking-widest text-amber-text uppercase block truncate animate-hex-pulse-flicker">
+                            <span className="font-orbitron text-[12px] font-black tracking-widest text-amber-text uppercase block truncate animate-hex-pulse-flicker">
                               ANALYZING ENTROPY
                             </span>
                             <div className="w-full bg-bg-void border border-border-hairline/25 h-1.5 p-0.5 mt-1">
@@ -1214,7 +1214,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                         </div>
 
                         {/* Simulated Logs block */}
-                        <div className="mt-2 flex-1 min-h-[100px] bg-bg-void border border-border-hairline/15 p-2 rounded-none font-mono text-[10px] space-y-0.5 text-amber-text/80 overflow-y-auto hud-scrollbar select-text">
+                        <div className="mt-2 flex-1 min-h-[100px] bg-bg-void border border-border-hairline/15 p-2 rounded-none font-mono text-[12px] space-y-0.5 text-amber-text/80 overflow-y-auto hud-scrollbar select-text">
                           {scanLogs.map((logLine, idx) => (
                             <div key={idx} className="truncate select-text">
                               {logLine}
@@ -1227,7 +1227,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       </div>
                     ) : (
                       <div className="flex-1 flex flex-col justify-between">
-                        <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider block leading-relaxed mb-2">
+                        <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider block leading-relaxed mb-2">
                           {bruteSubMode === "sweep" 
                             ? `Sweeping ${sweepCipher.toUpperCase()} configurations to isolate plain english output vectors.` 
                             : `Testing raw intercepts against forensic plugins simultaneously.`}
@@ -1236,7 +1236,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                         <button
                           onClick={() => triggerBruteScan(inputText, bruteSubMode, sweepCipher)}
                           disabled={isScanning || !inputText}
-                          className="w-full py-2 bg-amber-alert hover:bg-white text-bg-void transition-all duration-150 text-[11px] font-black tracking-widest font-orbitron uppercase disabled:opacity-35 flex items-center justify-center space-x-1.5 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                          className="w-full py-2 bg-amber-alert hover:bg-white text-bg-void transition-all duration-150 text-[13px] font-black tracking-widest font-orbitron uppercase disabled:opacity-35 flex items-center justify-center space-x-1.5 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
                           style={{ clipPath: "polygon(0 0, 100% 0, 93% 100%, 0 100%)" }}
                         >
                           <SearchCode className="w-3.5 h-3.5" />
@@ -1244,7 +1244,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                         </button>
 
                         {/* Heuristic tip */}
-                        <div className="mt-2.5 p-1.5 border border-border-hairline/10 bg-bg-void/40 text-left font-share uppercase tracking-wider text-[10px] text-text-dim/80 leading-normal">
+                        <div className="mt-2.5 p-1.5 border border-border-hairline/10 bg-bg-void/40 text-left font-share uppercase tracking-wider text-[12px] text-text-dim/80 leading-normal">
                           <span className="font-mono text-amber-alert font-bold block mb-0.5">HEURISTICS SEALED</span>
                           Evaluates whitespace, vowels, and core vocabulary frequencies.
                         </div>
@@ -1268,7 +1268,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
-                        <h3 className="font-orbitron text-[11px] font-black tracking-widest text-green-verified uppercase">
+                        <h3 className="font-orbitron text-[13px] font-black tracking-widest text-green-verified uppercase">
                           GATE 3: TERMINAL MATCH
                         </h3>
                       </div>
@@ -1280,7 +1280,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     {isScanning ? (
                       <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-border-hairline/10 bg-bg-void/25">
                         <Cpu className="w-8 h-8 text-cyan-primary/20 animate-radar-sweep mb-1.5" />
-                        <span className="font-orbitron text-[10px] font-black tracking-widest text-text-dim uppercase">
+                        <span className="font-orbitron text-[12px] font-black tracking-widest text-text-dim uppercase">
                           AWAITING MATCH CORE
                         </span>
                       </div>
@@ -1288,10 +1288,10 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="flex-1 flex flex-col justify-between">
                         {/* Header details */}
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="font-mono text-[10.5px] text-green-verified font-bold uppercase truncate max-w-[150px]">
+                          <span className="font-mono text-[12px] text-green-verified font-bold uppercase truncate max-w-[150px]">
                             {topMatch.label}
                           </span>
-                          <span className="font-mono text-[10.5px] text-green-verified font-bold">
+                          <span className="font-mono text-[12px] text-green-verified font-bold">
                             {topMatch.score}% MATCH
                           </span>
                         </div>
@@ -1311,7 +1311,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                               playPinClick();
                               addLog(`COPIED RESULT VECTOR: ${topMatch.label.toUpperCase()}`, "success", "SYS");
                             }}
-                            className="py-1 border border-border-hairline/15 hover:border-cyan-primary text-text-dim hover:text-cyan-text text-[10px] font-mono uppercase truncate"
+                            className="py-1 border border-border-hairline/15 hover:border-cyan-primary text-text-dim hover:text-cyan-text text-[12px] font-mono uppercase truncate"
                           >
                             Copy
                           </button>
@@ -1321,13 +1321,13 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                               setInputText(topMatch.text);
                               addLog(`FED BRUTE MATCH INTO MASTER INPUT VESSEL`, "info", "SYS");
                             }}
-                            className="py-1 border border-border-hairline/15 hover:border-amber-alert text-text-dim hover:text-amber-text text-[10px] font-mono uppercase truncate"
+                            className="py-1 border border-border-hairline/15 hover:border-amber-alert text-text-dim hover:text-amber-text text-[12px] font-mono uppercase truncate"
                           >
                             Use Raw
                           </button>
                           <button
                             onClick={() => handleBruteExportToDossier(topMatch)}
-                            className="py-1 bg-cyan-primary/10 hover:bg-cyan-primary hover:text-bg-void border border-cyan-primary/25 text-cyan-text text-[10px] font-mono uppercase font-bold truncate"
+                            className="py-1 bg-cyan-primary/10 hover:bg-cyan-primary hover:text-bg-void border border-cyan-primary/25 text-cyan-text text-[12px] font-mono uppercase font-bold truncate"
                           >
                             Dossier
                           </button>
@@ -1336,17 +1336,17 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     ) : bruteResults.length > 0 ? (
                       <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-red-threat/20 bg-red-threat/[0.01]">
                         <ShieldAlert className="w-8 h-8 text-red-threat/20 mb-1 animate-hex-pulse-flicker" />
-                        <span className="font-orbitron text-[10px] font-black tracking-widest text-red-threat uppercase block">
+                        <span className="font-orbitron text-[12px] font-black tracking-widest text-red-threat uppercase block">
                           NO PLAUSIBLE TOP MATCH
                         </span>
-                        <span className="text-[10px] font-mono text-text-dim uppercase mt-1 leading-normal">
+                        <span className="text-[12px] font-mono text-text-dim uppercase mt-1 leading-normal">
                           All sweeps scoring &lt; 40%. Review low scores below.
                         </span>
                       </div>
                     ) : (
                       <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-border-hairline/10 bg-bg-void/25">
                         <Terminal className="w-8 h-8 text-text-dim/20 mb-1.5" />
-                        <span className="font-orbitron text-[10px] font-black tracking-widest text-text-dim uppercase">
+                        <span className="font-orbitron text-[12px] font-black tracking-widest text-text-dim uppercase">
                           VESSEL IDLE
                         </span>
                       </div>
@@ -1362,7 +1362,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   {bruteNotes.map((note, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start space-x-2 p-2 border border-amber-alert/25 bg-amber-alert/[0.04] text-[10.5px] font-mono text-amber-text/90"
+                      className="flex items-start space-x-2 p-2 border border-amber-alert/25 bg-amber-alert/[0.04] text-[12px] font-mono text-amber-text/90"
                     >
                       <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-alert" />
                       <span>{note}</span>
@@ -1373,7 +1373,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
               {/* Failed-decode transparency indicator */}
               {bruteFailedCount > 0 && (
-                <div className="mt-1.5 text-[10px] font-mono text-text-dim/60 uppercase tracking-wider">
+                <div className="mt-1.5 text-[12px] font-mono text-text-dim/60 uppercase tracking-wider">
                   {bruteFailedCount} candidate{bruteFailedCount === 1 ? "" : "s"} failed to decode and were skipped
                 </div>
               )}
@@ -1383,7 +1383,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 <div className="mt-2 pt-3.5 border-t border-border-hairline/15 flex flex-col min-h-0">
                   {/* Single coherent summary: evaluated vs. cleared the bar vs. skipped */}
                   <div className="flex items-center justify-between border-b border-border-hairline/10 pb-1.5 mb-2.5 gap-3">
-                    <span className="text-[10px] font-mono text-text-dim uppercase tracking-wider truncate">
+                    <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider truncate">
                       CANDIDATE REGISTRY — {alternativeMatches.length} EVALUATED
                       {bruteFailedCount > 0 && ` · ${bruteFailedCount} SKIPPED`}
                     </span>
@@ -1406,10 +1406,10 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                         >
                           <div className="flex items-center justify-between mb-1.5 gap-2">
                             <div className="flex items-center space-x-1.5 min-w-0">
-                              <span className="font-mono text-[10px] text-text-dim/60 shrink-0">#{rank}</span>
-                              <span className="font-mono text-[10.5px] text-amber-text font-black truncate">{result.label}</span>
+                              <span className="font-mono text-[12px] text-text-dim/60 shrink-0">#{rank}</span>
+                              <span className="font-mono text-[12px] text-amber-text font-black truncate">{result.label}</span>
                               {result.parameter && (
-                                <Badge variant="cyan" size="xs" className="px-1 py-0 font-mono text-[10px] shrink-0">
+                                <Badge variant="cyan" size="xs" className="px-1 py-0 font-mono text-[12px] shrink-0">
                                   {result.parameter}
                                 </Badge>
                               )}
@@ -1422,17 +1422,17 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                                   style={{ width: `${Math.max(2, Math.min(100, result.score))}%` }}
                                 />
                               </div>
-                              <span className={`font-mono text-[10px] ${plausible ? "text-green-verified" : "text-text-dim/60"}`}>
+                              <span className={`font-mono text-[12px] ${plausible ? "text-green-verified" : "text-text-dim/60"}`}>
                                 {result.score}%
                               </span>
                             </div>
                           </div>
 
-                          <div className="bg-bg-void/50 p-1.5 border border-border-hairline/5 font-mono text-[10.5px] text-text-dim/95 mb-2 truncate select-text">
+                          <div className="bg-bg-void/50 p-1.5 border border-border-hairline/5 font-mono text-[12px] text-text-dim/95 mb-2 truncate select-text">
                             {result.text}
                           </div>
 
-                          <div className="flex justify-end space-x-1.5 text-[10px] font-mono border-t border-border-hairline/5 pt-1.5">
+                          <div className="flex justify-end space-x-1.5 text-[12px] font-mono border-t border-border-hairline/5 pt-1.5">
                             <button
                               onClick={() => {
                                 navigator.clipboard.writeText(result.text);
@@ -1468,7 +1468,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                         playPinClick();
                       }}
                       onMouseEnter={() => playHoverEvidence()}
-                      className="hud-target mt-2 self-center px-3 py-1 border border-border-hairline/20 bg-bg-void/40 hover:border-amber-alert/50 hover:text-amber-text text-text-dim text-[10px] font-mono uppercase tracking-widest transition-all"
+                      className="hud-target mt-2 self-center px-3 py-1 border border-border-hairline/20 bg-bg-void/40 hover:border-amber-alert/50 hover:text-amber-text text-text-dim text-[12px] font-mono uppercase tracking-widest transition-all"
                     >
                       {showAllCandidates
                         ? `Collapse — showing all ${alternativeMatches.length}`
@@ -1496,7 +1496,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   <Plus className="w-4 h-4 mr-1.5 text-cyan-primary" />
                   TOOL REGISTRY INDEX
                 </h3>
-                <p className="text-[10.5px] text-text-dim uppercase tracking-wider font-share mt-0.5">
+                <p className="text-[12px] text-text-dim uppercase tracking-wider font-share mt-0.5">
                   Select and insert operations to extend pipeline parameters
                 </p>
               </div>
@@ -1514,7 +1514,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               </div>
 
               {/* Category Tabs */}
-              <div className="grid grid-cols-3 gap-1.5 mb-3.5 font-mono text-[10.5px] text-center">
+              <div className="grid grid-cols-3 gap-1.5 mb-3.5 font-mono text-[12px] text-center">
                 {["all", "cipher", "encoding"].map((cat) => (
                   <button
                     key={cat}
@@ -1536,7 +1536,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               {/* Scrollable list of operations */}
               <div className="flex-1 overflow-y-auto max-h-[350px] space-y-4 pr-1 hud-scrollbar">
                 {filteredTools.length === 0 ? (
-                  <div className="py-12 text-center text-[11px] text-text-dim uppercase font-mono">
+                  <div className="py-12 text-center text-[13px] text-text-dim uppercase font-mono">
                     No matching tools index.
                   </div>
                 ) : activeCategory === "all" ? (
@@ -1546,7 +1546,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="space-y-1.5 mb-2">
                         <div className="flex items-center space-x-2 border-b border-border-hairline/10 pb-1 mb-2">
                           <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12" />
-                          <span className="font-orbitron text-[10.5px] font-black tracking-widest text-amber-alert uppercase">
+                          <span className="font-orbitron text-[12px] font-black tracking-widest text-amber-alert uppercase">
                             CRYPTO-CIPHER RECIPES
                           </span>
                         </div>
@@ -1559,7 +1559,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="space-y-1.5">
                         <div className="flex items-center space-x-2 border-b border-border-hairline/10 pb-1 mb-2">
                           <span className="w-1.5 h-3 bg-cyan-primary inline-block transform -skew-x-12" />
-                          <span className="font-orbitron text-[10.5px] font-black tracking-widest text-cyan-text uppercase">
+                          <span className="font-orbitron text-[12px] font-black tracking-widest text-cyan-text uppercase">
                             DATA-ENCODING SCHEMES
                           </span>
                         </div>
@@ -1581,11 +1581,11 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
             {/* Heuristics Intelligence Core Panel */}
             <GlassPanel className="p-4" clipSize="sm">
               <div className="border-b border-border-hairline/20 pb-2 mb-3">
-                <h3 className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text uppercase">
+                <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text uppercase">
                   INTELLIGENCE COHESION HEURISTICS
                 </h3>
               </div>
-              <ul className="space-y-2 text-[10.5px] font-share uppercase tracking-wider text-text-dim leading-relaxed">
+              <ul className="space-y-2 text-[12px] font-share uppercase tracking-wider text-text-dim leading-relaxed">
                 <li className="flex items-start">
                   <span className="text-amber-alert mr-1.5">•</span>
                   <span><strong>Spaces Ratio</strong>: Standard readable streams correlate closely with 12%-18% space characters.</span>

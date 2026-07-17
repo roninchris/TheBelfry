@@ -198,17 +198,17 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
                   alt=""
                   className="w-12 h-12 mx-auto object-contain filter drop-shadow-[0_0_10px_rgba(47,241,228,0.5)]"
                 />
-                <h1 className="font-orbitron text-[13px] font-black tracking-[0.35em] text-cyan-primary uppercase">
+                <h1 className="font-orbitron text-[14px] font-black tracking-[0.35em] text-cyan-primary uppercase">
                   Credential Challenge
                 </h1>
-                <p className="font-share text-[10.5px] tracking-[0.18em] text-cyan-dim uppercase">
+                <p className="font-share text-[12px] tracking-[0.18em] text-cyan-dim uppercase">
                   Restricted tier // Oracle link required
                 </p>
               </header>
 
               <form onSubmit={submit} className="space-y-4">
                 <label className="block space-y-1.5">
-                  <span className="font-share text-[10px] tracking-[0.25em] text-cyan-dim uppercase">
+                  <span className="font-share text-[12px] tracking-[0.25em] text-cyan-dim uppercase">
                     Operative Callsign
                   </span>
                   <input
@@ -226,7 +226,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
                 </label>
 
                 <label className="block space-y-1.5">
-                  <span className="font-share text-[10px] tracking-[0.25em] text-cyan-dim uppercase">
+                  <span className="font-share text-[12px] tracking-[0.25em] text-cyan-dim uppercase">
                     Authorization Code
                   </span>
                   <input
@@ -249,7 +249,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
                       initial={reduce ? {} : { x: [-6, 6, -4, 4, 0] }}
                       animate={{ x: 0 }}
                       transition={{ duration: 0.4 }}
-                      className="font-share text-[10.5px] tracking-[0.16em] text-red-threat uppercase text-center"
+                      className="font-share text-[12px] tracking-[0.16em] text-red-threat uppercase text-center"
                       role="alert"
                     >
                       {denialReason}
@@ -261,7 +261,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
                   type="submit"
                   disabled={!canSubmit}
                   onMouseEnter={() => canSubmit && playReticleLock()}
-                  className="w-full py-2.5 font-orbitron text-[11px] font-black tracking-[0.3em] uppercase
+                  className="w-full py-2.5 font-orbitron text-[13px] font-black tracking-[0.3em] uppercase
                              border border-accent-primary/50 text-accent-primary bg-accent-primary/[0.06]
                              transition-all duration-200 cursor-pointer
                              hover:bg-accent-primary/15 hover:shadow-[0_0_16px_rgba(0,243,255,0.25)]
@@ -272,7 +272,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
                 </button>
               </form>
 
-              <p className="mt-6 pt-4 border-t border-border-hairline/40 text-center font-share text-[9.5px] tracking-[0.15em] text-cyan-dim/60 uppercase">
+              <p className="mt-6 pt-4 border-t border-border-hairline/40 text-center font-share text-[11px] tracking-[0.15em] text-cyan-dim/60 uppercase">
                 Dismiss to continue on the local cache
               </p>
             </>
@@ -309,11 +309,11 @@ function SessionPanel({
         style={{ filter: `drop-shadow(0 0 8px ${knight.accent}90)` }}
       />
       <div className="space-y-1">
-        <p className="font-share text-[10px] tracking-[0.3em] text-cyan-dim uppercase">Active operative</p>
+        <p className="font-share text-[12px] tracking-[0.3em] text-cyan-dim uppercase">Active operative</p>
         <h2 className="font-orbitron text-sm font-black tracking-[0.25em] text-accent-primary uppercase">
           {knight.label}
         </h2>
-        <p className="font-share text-[9.5px] tracking-[0.18em] text-cyan-dim/80 uppercase pt-1">
+        <p className="font-share text-[11px] tracking-[0.18em] text-cyan-dim/80 uppercase pt-1">
           Oracle link active // Board shared
         </p>
       </div>
@@ -321,14 +321,14 @@ function SessionPanel({
         type="button"
         onClick={onSignOut}
         onMouseEnter={() => playHoverBlip()}
-        className="mt-2 w-full py-2 font-orbitron text-[10.5px] font-black tracking-[0.28em] uppercase
+        className="mt-2 w-full py-2 font-orbitron text-[12px] font-black tracking-[0.28em] uppercase
                    border border-red-threat/40 text-red-threat/90 bg-red-threat/[0.05]
                    hover:bg-red-threat/15 hover:shadow-[0_0_14px_rgba(255,59,78,0.2)]
                    transition-all duration-200 cursor-pointer"
       >
         Terminate session
       </button>
-      <p className="font-share text-[9px] tracking-[0.15em] text-cyan-dim/60 uppercase">
+      <p className="font-share text-[11px] tracking-[0.15em] text-cyan-dim/60 uppercase">
         Reverts this browser to the local cache
       </p>
     </div>
@@ -350,7 +350,7 @@ function RestoringPanel({ reduce }: { reduce: boolean }) {
         transition={{ duration: 1.6, repeat: Infinity }}
         className="w-12 h-12 object-contain"
       />
-      <p className="font-share text-[10.5px] tracking-[0.25em] text-cyan-dim uppercase">
+      <p className="font-share text-[12px] tracking-[0.25em] text-cyan-dim uppercase">
         Interrogating oracle link
       </p>
     </div>
@@ -371,7 +371,7 @@ function VerifyingIndicator({ reduce }: { reduce: boolean }) {
           />
         ))}
       </div>
-      <span className="font-share text-[10.5px] tracking-[0.2em] text-accent-primary/90 uppercase">
+      <span className="font-share text-[12px] tracking-[0.2em] text-accent-primary/90 uppercase">
         Decrypting credentials
       </span>
     </div>
@@ -393,11 +393,11 @@ function GrantedPanel({ label, sigil, reduce }: { label: string; sigil: string |
         />
       )}
       <div className="space-y-1.5">
-        <p className="font-share text-[10px] tracking-[0.3em] text-cyan-dim uppercase">Identity Confirmed</p>
+        <p className="font-share text-[12px] tracking-[0.3em] text-cyan-dim uppercase">Identity Confirmed</p>
         <h2 className="font-orbitron text-base font-black tracking-[0.25em] text-accent-primary uppercase">
           <DecryptText text={label} duration={700} silent />
         </h2>
-        <p className="font-share text-[9.5px] tracking-[0.18em] text-cyan-dim/80 uppercase pt-1">
+        <p className="font-share text-[11px] tracking-[0.18em] text-cyan-dim/80 uppercase pt-1">
           Oracle link established // Board synchronizing
         </p>
       </div>

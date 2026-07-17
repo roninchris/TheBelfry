@@ -19,6 +19,7 @@ import {
 } from "../../lib/soundEngine";
 import GlassPanel from "../../components/ui/GlassPanel";
 import KnightSigil from "../../components/ui/KnightSigil";
+import FittedText from "../../components/ui/FittedText";
 import Badge from "../../components/ui/Badge";
 import ParticleReveal from "../../components/ui/ParticleReveal";
 import ShinyText from "../../components/react-bits/ShinyText";
@@ -47,14 +48,18 @@ import {
 } from "lucide-react";
 
 // Default card footprint per evidence type, used whenever a node has no explicit width/height
+// The header, footer and padding cost a card ~80px of vertical space, so a
+// 100px-tall note left roughly one line for the body. These defaults give a
+// fresh note about three readable lines before it needs resizing.
 const DEFAULT_NODE_SIZE: Record<EvidenceNode["type"], { width: number; height: number }> = {
   photo: { width: 240, height: 220 },
-  text: { width: 180, height: 100 },
-  link: { width: 180, height: 100 },
-  file: { width: 180, height: 100 }
+  text: { width: 210, height: 150 },
+  link: { width: 210, height: 120 },
+  file: { width: 210, height: 120 }
 };
-const MIN_NODE_WIDTH = 140;
-const MIN_NODE_HEIGHT = 80;
+const MIN_NODE_WIDTH = 150;
+// Below this the body area collapses to nothing and the card is all chrome.
+const MIN_NODE_HEIGHT = 110;
 const MAX_NODE_WIDTH = 480;
 const MAX_NODE_HEIGHT = 420;
 
@@ -687,7 +692,7 @@ export default function DetectiveBoardPage() {
                 <div className="text-cyan-primary text-3xl font-black tracking-[0.5em] ml-[0.5em] mb-4">
                   HOLOSPHERE
                 </div>
-                <div className="text-cyan-dim text-[11px] tracking-widest uppercase mb-8">
+                <div className="text-cyan-dim text-[13px] tracking-widest uppercase mb-8">
                   Constructing Workspace Projection
                 </div>
                 
@@ -730,11 +735,11 @@ export default function DetectiveBoardPage() {
 
           {!activeCase ? (
             <div className="p-3 text-center bg-red-threat/5 border border-red-threat/20 rounded-sm">
-              <p className="text-[11px] text-red-threat font-bold tracking-widest uppercase mb-2">No Active Case</p>
+              <p className="text-[13px] text-red-threat font-bold tracking-widest uppercase mb-2">No Active Case</p>
               <button
                 onClick={() => setShowNewCaseModal(true)}
                 onMouseEnter={() => playHoverEvidence()}
-                className="w-full flex items-center justify-center p-1.5 border border-red-threat/30 text-red-threat hover:bg-red-threat hover:text-bg-void transition-all text-[11px] font-black uppercase tracking-widest"
+                className="w-full flex items-center justify-center p-1.5 border border-red-threat/30 text-red-threat hover:bg-red-threat hover:text-bg-void transition-all text-[13px] font-black uppercase tracking-widest"
                 style={{ clipPath: "polygon(0 0, 100% 0, 95% 100%, 0 100%)" }}
               >
                 <FolderPlus className="w-3.5 h-3.5 mr-1" />
@@ -752,21 +757,21 @@ export default function DetectiveBoardPage() {
                 showCornerTicks={false}
               >
                 <div className="flex justify-between items-center">
-                  <Badge variant="cyan" className="text-[10px] tracking-wider uppercase">{activeCase.status}</Badge>
-                  <span className="font-mono text-[10px] text-text-dim">
+                  <Badge variant="cyan" className="text-[12px] tracking-wider uppercase">{activeCase.status}</Badge>
+                  <span className="font-mono text-[12px] text-text-dim">
                     {new Date(activeCase.createdAt).toLocaleDateString()}
                   </span>
                 </div>
                 <h3 className="font-orbitron text-sm font-black text-text-primary tracking-wide line-clamp-1 uppercase">{activeCase.title}</h3>
-                <p className="font-share text-[11px] leading-relaxed text-text-dim italic line-clamp-3">"{activeCase.synopsis}"</p>
+                <p className="font-share text-[13px] leading-relaxed text-text-dim italic line-clamp-3">"{activeCase.synopsis}"</p>
 
-                <div className="border-t border-border-hairline/10 pt-2 grid grid-cols-2 gap-2 text-center text-text-dim font-mono text-[10.5px]">
+                <div className="border-t border-border-hairline/10 pt-2 grid grid-cols-2 gap-2 text-center text-text-dim font-mono text-[12px]">
                   <div className="bg-bg-void/40 border border-border-hairline/10 p-1.5">
-                    <span className="block text-[10px] text-text-dim/60">CLUES</span>
+                    <span className="block text-[12px] text-text-dim/60">CLUES</span>
                     <span className="text-cyan-text font-black text-xs">{boardNodes.length}</span>
                   </div>
                   <div className="bg-bg-void/40 border border-border-hairline/10 p-1.5">
-                    <span className="block text-[10px] text-text-dim/60">LINKS</span>
+                    <span className="block text-[12px] text-text-dim/60">LINKS</span>
                     <span className="text-cyan-text font-black text-xs">{boardConnections.length}</span>
                   </div>
                 </div>
@@ -776,8 +781,8 @@ export default function DetectiveBoardPage() {
 
           {/* Quick Creator */}
           <div className="space-y-2">
-            <span className="text-[10.5px] font-share text-text-dim block uppercase tracking-widest">// QUICK ADD CLUE (TOUCH/DESKTOP)</span>
-            <div className="grid grid-cols-3 gap-1.5 font-chakra text-[10.5px] text-center">
+            <span className="text-[12px] font-share text-text-dim block uppercase tracking-widest">// QUICK ADD CLUE (TOUCH/DESKTOP)</span>
+            <div className="grid grid-cols-3 gap-1.5 font-chakra text-[12px] text-center">
               <button 
                 disabled={!activeCaseId}
                 onClick={() => handleAddClueAtCenter("text")}
@@ -806,7 +811,7 @@ export default function DetectiveBoardPage() {
           </div>
 
           {/* Guidelines info */}
-          <div className="text-[10.5px] leading-relaxed text-text-dim/75 font-share p-2 bg-cyan-primary/[0.02] border border-cyan-primary/10 rounded-sm">
+          <div className="text-[12px] leading-relaxed text-text-dim/75 font-share p-2 bg-cyan-primary/[0.02] border border-cyan-primary/10 rounded-sm">
             <strong className="text-cyan-text block mb-1">WORKSPACE HUD TUTORIAL:</strong>
             <ul className="list-disc pl-3.5 space-y-1">
               <li>Drag background to <span className="text-cyan-primary">Pan workspace</span></li>
@@ -821,13 +826,13 @@ export default function DetectiveBoardPage() {
         <div className="pt-4 mt-4 border-t border-border-hairline/20 space-y-2">
           {linkingFromId && (
             <div className="p-2 bg-cyan-primary/10 border border-cyan-primary/30 rounded-sm text-center animate-hex-pulse-flicker">
-              <span className="font-chakra text-[10.5px] text-cyan-text font-black tracking-widest block uppercase mb-1">
+              <span className="font-chakra text-[12px] text-cyan-text font-black tracking-widest block uppercase mb-1">
                 CORRELATION LINK ACTIVE
               </span>
-              <p className="text-[10px] text-text-primary uppercase">Click target card to connect</p>
+              <p className="text-[12px] text-text-primary uppercase">Click target card to connect</p>
               <button 
                 onClick={() => setLinkingFromId(null)}
-                className="mt-1.5 text-[10px] text-red-threat hover:underline uppercase block mx-auto font-bold"
+                className="mt-1.5 text-[12px] text-red-threat hover:underline uppercase block mx-auto font-bold"
               >
                 [CANCEL LINK]
               </button>
@@ -837,13 +842,13 @@ export default function DetectiveBoardPage() {
           <div className="flex gap-2">
             <button
               onClick={handleCenterView}
-              className="flex-1 flex items-center justify-center p-2 border border-cyan-primary/30 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all text-[11px] font-bold tracking-widest uppercase"
+              className="flex-1 flex items-center justify-center p-2 border border-cyan-primary/30 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all text-[13px] font-bold tracking-widest uppercase"
               style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
             >
               <Compass className="w-3.5 h-3.5 mr-1" />
               FOCUS BOARD
             </button>
-            <div className="flex items-center space-x-1 border border-border-hairline/25 px-2 text-[10.5px] font-mono text-text-dim">
+            <div className="flex items-center space-x-1 border border-border-hairline/25 px-2 text-[12px] font-mono text-text-dim">
               <span>ZOOM:</span>
               <span className="text-cyan-text font-bold">{Math.round(zoom * 100)}%</span>
             </div>
@@ -1028,7 +1033,7 @@ export default function DetectiveBoardPage() {
                       }`}
                     >
                       <div className="flex justify-center select-none">
-                        <div className="bg-bg-void border border-cyan-primary/30 px-1.5 py-0.5 rounded-sm text-[10px] font-mono tracking-widest text-cyan-text uppercase truncate max-w-full shadow-md text-center">
+                        <div className="bg-bg-void border border-cyan-primary/30 px-1.5 py-0.5 rounded-sm text-[12px] font-mono tracking-widest text-cyan-text uppercase truncate max-w-full shadow-md text-center">
                           {conn.label}
                         </div>
                       </div>
@@ -1134,11 +1139,18 @@ export default function DetectiveBoardPage() {
                               if (e.key === "Enter") { e.preventDefault(); commitRename(node.id); }
                               if (e.key === "Escape") { e.preventDefault(); setRenamingNodeId(null); }
                             }}
-                            className="nocanvasdrag font-orbitron text-[10px] font-black text-cyan-text tracking-widest uppercase bg-bg-void/60 border border-cyan-primary/40 outline-none px-1 py-0.5 w-[100px]"
+                            className="nocanvasdrag font-orbitron text-[12px] font-black text-cyan-text tracking-widest uppercase bg-bg-void/60 border border-cyan-primary/40 outline-none px-1 py-0.5 w-[100px]"
                           />
                         ) : (
-                          <span className="font-orbitron text-[10px] font-black text-cyan-text tracking-widest uppercase truncate max-w-[80px]" title={node.title}>
-                            <BlurText text={node.title} delay={0.02} duration={0.25} />
+                          // Plain text, not BlurText: its per-character inline-block
+                          // spans defeat text-overflow, so the title hard-clipped
+                          // mid-character ("NURSERY R|") instead of ellipsising.
+                          // flex-1/min-w-0 lets it use the width the buttons leave.
+                          <span
+                            className="font-orbitron text-[13px] font-black text-cyan-text tracking-wider uppercase truncate flex-1 min-w-0 mr-1.5"
+                            title={node.title}
+                          >
+                            {node.title}
                           </span>
                         )}
                         <div className="flex items-center space-x-1.5 nocanvasdrag pointer-events-auto">
@@ -1191,7 +1203,7 @@ export default function DetectiveBoardPage() {
                       </div>
 
                       {/* Node Body Content */}
-                      <div className="flex-1 overflow-hidden min-h-0 text-[11px] text-text-dim leading-snug select-none">
+                      <div className="flex-1 overflow-hidden min-h-0 text-[13px] text-text-dim leading-snug select-none">
                         {node.type === "photo" ? (
                           <div className="w-full h-full min-h-0 bg-bg-void/40 border border-border-hairline/10 rounded-sm relative overflow-hidden flex items-center justify-center">
                             {node.content ? (
@@ -1217,33 +1229,36 @@ export default function DetectiveBoardPage() {
                                 handleSaveTextEdit(node.id);
                               }
                             }}
-                            className="w-full h-full bg-bg-void text-text-primary border border-cyan-primary/30 p-1 font-mono text-[10.5px] focus:outline-none focus:border-cyan-primary resize-none nocanvasdrag overflow-y-auto scrollbar-none"
+                            className="w-full h-full bg-bg-void text-text-primary border border-cyan-primary/30 p-1 font-mono text-[12px] focus:outline-none focus:border-cyan-primary resize-none nocanvasdrag overflow-y-auto scrollbar-none"
                             autoFocus
                           />
                         ) : node.type === "link" ? (
                           <div className="space-y-1 select-none">
-                            <p className="line-clamp-1 italic text-text-primary text-[10.5px]">
+                            <p className="line-clamp-1 italic text-text-primary text-[12px]">
                               {node.content || "UNNAMED LINK"}
                             </p>
                             <a 
                               href={node.content?.startsWith("http") ? node.content : `https://${node.content}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-cyan-primary hover:underline text-[10px] font-mono flex items-center gap-0.5 overflow-hidden text-ellipsis whitespace-nowrap nocanvasdrag"
+                              className="text-cyan-primary hover:underline text-[12px] font-mono flex items-center gap-0.5 overflow-hidden text-ellipsis whitespace-nowrap nocanvasdrag"
                             >
                               <Link className="w-2.5 h-2.5" />
                               VISIT SITE
                             </a>
                           </div>
+                        ) : node.content ? (
+                          <FittedText
+                            text={node.content}
+                            className="font-share break-words text-[14px] leading-relaxed"
+                          />
                         ) : (
-                          <p className="line-clamp-3 font-share break-words text-[10.5px]">
-                            {node.content || <span className="text-text-dim/40 italic">Empty node body</span>}
-                          </p>
+                          <p className="font-share text-[14px] text-text-dim/40 italic">Empty node body</p>
                         )}
                       </div>
 
                       {/* Node Footer */}
-                      <div className="flex justify-between items-center text-[10px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1 mt-1 shrink-0 select-none">
+                      <div className="flex justify-between items-center text-[12px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1 mt-1 shrink-0 select-none">
                         <span>X: {Math.round(node.x)} Y: {Math.round(node.y)}</span>
                         <span>{node.type.toUpperCase()}</span>
                       </div>
@@ -1271,7 +1286,7 @@ export default function DetectiveBoardPage() {
             <h3 className="font-orbitron text-base font-black text-cyan-text tracking-widest uppercase mb-1">
               <SplitText text="THE BELFRY DETECTIVE BOARD" delay={0.03} />
             </h3>
-            <p className="text-[11.5px] font-share text-text-dim max-w-sm mb-4 leading-relaxed">
+            <p className="text-[13px] font-share text-text-dim max-w-sm mb-4 leading-relaxed">
               Durable multi tracking canvas is currently locked. To map conspiratorial data, select or establish an active case file.
             </p>
             <button
@@ -1288,7 +1303,7 @@ export default function DetectiveBoardPage() {
             <h4 className="font-orbitron text-xs font-black text-text-dim tracking-widest uppercase">
               EMPTY WORKSPACE CANVAS
             </h4>
-            <p className="text-[11px] font-share text-text-dim/60 max-w-xs mt-1 leading-normal">
+            <p className="text-[13px] font-share text-text-dim/60 max-w-xs mt-1 leading-normal">
               Right-click anywhere inside the grid to upload photo evidence, insert links, or drop quick-notes.
             </p>
           </div>
@@ -1334,7 +1349,7 @@ export default function DetectiveBoardPage() {
               <button 
                 onClick={handleCenterView}
                 onMouseEnter={() => playHoverEvidence()}
-                className="w-full text-left p-1.5 hover:bg-cyan-primary/10 text-text-primary hover:text-cyan-text transition-colors flex items-center font-mono text-[10.5px]"
+                className="w-full text-left p-1.5 hover:bg-cyan-primary/10 text-text-primary hover:text-cyan-text transition-colors flex items-center font-mono text-[12px]"
               >
                 <Compass className="w-3.5 h-3.5 mr-2 text-cyan-dim" />
                 CENTER CANVAS
@@ -1436,7 +1451,7 @@ export default function DetectiveBoardPage() {
 
               <form onSubmit={handleFormSubmit} className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">CARD TITLE / IDENTIFIER</label>
+                  <label className="block text-[12px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">CARD TITLE / IDENTIFIER</label>
                   <input
                     type="text"
                     required
@@ -1447,7 +1462,7 @@ export default function DetectiveBoardPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">
+                  <label className="block text-[12px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">
                     {formType === "link" ? "URL ADDRESS" : "CARD DESCRIPTION / RAW CONTENT"}
                   </label>
                   <textarea
@@ -1463,13 +1478,13 @@ export default function DetectiveBoardPage() {
                   <button
                     type="button"
                     onClick={() => setShowAddForm(false)}
-                    className="px-3 py-1.5 text-[11px] uppercase font-bold text-text-dim hover:text-text-primary transition-colors"
+                    className="px-3 py-1.5 text-[13px] uppercase font-bold text-text-dim hover:text-text-primary transition-colors"
                   >
                     CANCEL
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[11px] font-black uppercase tracking-widest"
+                    className="px-4 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[13px] font-black uppercase tracking-widest"
                     style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
                   >
                     DEPLOY NODE
@@ -1523,7 +1538,7 @@ export default function DetectiveBoardPage() {
                           </button>
                         </div>
                       )}
-                      <span className="font-mono text-[11px] text-text-dim">
+                      <span className="font-mono text-[13px] text-text-dim">
                         ID: {detailNode.id} // TYPE: {detailNode.type.toUpperCase()}
                       </span>
                     </div>
@@ -1554,7 +1569,7 @@ export default function DetectiveBoardPage() {
 
                   {detailNode.type === "text" && (
                     <div className="space-y-2">
-                      <label className="text-[11px] font-orbitron font-bold text-cyan-dim uppercase tracking-widest">Text Content</label>
+                      <label className="text-[13px] font-orbitron font-bold text-cyan-dim uppercase tracking-widest">Text Content</label>
                       <div className="bg-bg-void/40 border border-border-hairline/20 p-4 rounded-sm font-share text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
                         {detailNode.content}
                       </div>
@@ -1563,7 +1578,7 @@ export default function DetectiveBoardPage() {
 
                   {detailNode.type === "link" && (
                     <div className="space-y-2">
-                      <label className="text-[11px] font-orbitron font-bold text-cyan-dim uppercase tracking-widest">Source Link</label>
+                      <label className="text-[13px] font-orbitron font-bold text-cyan-dim uppercase tracking-widest">Source Link</label>
                       <a 
                         href={detailNode.content} 
                         target="_blank" 
@@ -1579,11 +1594,11 @@ export default function DetectiveBoardPage() {
                   {/* Evidence Notes (Persisted) */}
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <label className="text-[11px] font-orbitron font-bold text-cyan-dim uppercase tracking-widest flex items-center">
+                      <label className="text-[13px] font-orbitron font-bold text-cyan-dim uppercase tracking-widest flex items-center">
                         <FileText className="w-3.5 h-3.5 mr-1.5" />
                         ANALYST NOTES
                       </label>
-                      <span className="text-[10px] font-mono text-text-dim italic">PERSISTED TO LOCAL ARCHIVE</span>
+                      <span className="text-[12px] font-mono text-text-dim italic">PERSISTED TO LOCAL ARCHIVE</span>
                     </div>
                     <textarea
                       value={detailNode.notes}
@@ -1598,14 +1613,14 @@ export default function DetectiveBoardPage() {
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-1">
-                      <span className="text-[10px] font-mono text-text-dim uppercase tracking-tighter">COORDINATES</span>
-                      <div className="text-[11px] font-mono text-cyan-text/70 bg-bg-void/20 p-1 border border-border-hairline/10">
+                      <span className="text-[12px] font-mono text-text-dim uppercase tracking-tighter">COORDINATES</span>
+                      <div className="text-[13px] font-mono text-cyan-text/70 bg-bg-void/20 p-1 border border-border-hairline/10">
                         X: {Math.round(detailNode.x)} | Y: {Math.round(detailNode.y)}
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <span className="text-[10px] font-mono text-text-dim uppercase tracking-tighter">CARD SIZE</span>
-                      <div className="flex items-center space-x-1 text-[11px] font-mono text-cyan-text/70 bg-bg-void/20 p-1 border border-border-hairline/10">
+                      <span className="text-[12px] font-mono text-text-dim uppercase tracking-tighter">CARD SIZE</span>
+                      <div className="flex items-center space-x-1 text-[13px] font-mono text-cyan-text/70 bg-bg-void/20 p-1 border border-border-hairline/10">
                         <input
                           type="number"
                           min={MIN_NODE_WIDTH}
@@ -1626,8 +1641,8 @@ export default function DetectiveBoardPage() {
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <span className="text-[10px] font-mono text-text-dim uppercase tracking-tighter">TIMESTAMP</span>
-                      <div className="text-[11px] font-mono text-cyan-text/70 bg-bg-void/20 p-1 border border-border-hairline/10">
+                      <span className="text-[12px] font-mono text-text-dim uppercase tracking-tighter">TIMESTAMP</span>
+                      <div className="text-[13px] font-mono text-cyan-text/70 bg-bg-void/20 p-1 border border-border-hairline/10">
                         {new Date(detailNode.createdAt).toLocaleString()}
                       </div>
                     </div>
@@ -1667,7 +1682,7 @@ export default function DetectiveBoardPage() {
 
               <form onSubmit={handleSaveConnLabel} className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">CORRELATION LABEL / LINKING VECTOR</label>
+                  <label className="block text-[12px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">CORRELATION LABEL / LINKING VECTOR</label>
                   <input
                     type="text"
                     required
@@ -1682,13 +1697,13 @@ export default function DetectiveBoardPage() {
                   <button
                     type="button"
                     onClick={() => setLabelingConnId(null)}
-                    className="px-3 py-1.5 text-[11px] uppercase font-bold text-text-dim hover:text-text-primary transition-colors"
+                    className="px-3 py-1.5 text-[13px] uppercase font-bold text-text-dim hover:text-text-primary transition-colors"
                   >
                     CANCEL
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[11px] font-black uppercase tracking-widest"
+                    className="px-4 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[13px] font-black uppercase tracking-widest"
                     style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
                   >
                     APPLY LABEL
@@ -1714,7 +1729,7 @@ export default function DetectiveBoardPage() {
 
               <form onSubmit={handleCreateCase} className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">CASE IDENTIFIER TITLE</label>
+                  <label className="block text-[12px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">CASE IDENTIFIER TITLE</label>
                   <input
                     type="text"
                     required
@@ -1726,7 +1741,7 @@ export default function DetectiveBoardPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">SYNOPSIS INTEL BRIEFING</label>
+                  <label className="block text-[12px] font-mono text-text-dim/75 tracking-wider uppercase mb-1">SYNOPSIS INTEL BRIEFING</label>
                   <textarea
                     required
                     placeholder="Outline the core mysteries, sources, or links for this solving thread."
@@ -1740,13 +1755,13 @@ export default function DetectiveBoardPage() {
                   <button
                     type="button"
                     onClick={() => setShowNewCaseModal(false)}
-                    className="px-3 py-1.5 text-[11px] uppercase font-bold text-text-dim hover:text-text-primary transition-colors"
+                    className="px-3 py-1.5 text-[13px] uppercase font-bold text-text-dim hover:text-text-primary transition-colors"
                   >
                     CANCEL
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[11px] font-black uppercase tracking-widest"
+                    className="px-4 py-1.5 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-colors text-[13px] font-black uppercase tracking-widest"
                     style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
                   >
                     BOOT CASE FILE

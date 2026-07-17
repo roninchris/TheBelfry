@@ -65,12 +65,12 @@ export default function KnightBadge() {
 
       <span className="hidden xl:flex flex-col items-start leading-tight">
         <span
-          className="font-orbitron text-[10px] font-black tracking-[0.18em] uppercase transition-colors"
+          className="font-orbitron text-[12px] font-black tracking-[0.18em] uppercase transition-colors"
           style={{ color: accent }}
         >
           {label}
         </span>
-        <span className="font-share text-[8.5px] tracking-[0.14em] text-cyan-dim/70 uppercase">
+        <span className="font-share text-[11px] tracking-[0.14em] text-cyan-dim/70 uppercase">
           Oracle link
         </span>
       </span>

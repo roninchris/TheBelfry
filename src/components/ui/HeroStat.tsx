@@ -24,7 +24,7 @@ export default function HeroStat({
   return (
     <div className={`flex flex-col ${className}`} id="hero-stat-container">
       <span
-        className={`text-[10.5px] font-share font-black text-text-dim/70 tracking-widest uppercase block mb-1 ${labelClassName}`}
+        className={`text-[12px] font-share font-black text-text-dim/70 tracking-widest uppercase block mb-1 ${labelClassName}`}
         style={{ fontVariant: "all-small-caps" }}
       >
         {label}

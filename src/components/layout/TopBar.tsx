@@ -54,7 +54,7 @@ export default function TopBar() {
             <span className="w-1.5 h-3 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_8px_#2ff1e4]" />
             BATCOMPUTER
           </span>
-          <span className="font-share text-[11px] text-text-dim tracking-wider uppercase font-medium">
+          <span className="font-share text-[13px] text-text-dim tracking-wider uppercase font-medium">
             BELFRY SYSTEMS // FORENSIC PLATFORM
           </span>
         </div>
@@ -78,7 +78,7 @@ export default function TopBar() {
             <span className="w-0.5 h-2.5 bg-cyan-primary/80 animate-signal-bar-tick" style={{ animationDelay: '0.2s' }} />
             <span className="w-0.5 h-3.5 bg-cyan-primary/80 animate-signal-bar-tick" style={{ animationDelay: '0.4s' }} />
           </div>
-          <ShinyText text="ENCRYPTED" speed={4} className="text-[11px] font-bold text-cyan-primary tracking-widest font-mono" />
+          <ShinyText text="ENCRYPTED" speed={4} className="text-[13px] font-bold text-cyan-primary tracking-widest font-mono" />
         </div>
 
         {/* Tactical status details */}

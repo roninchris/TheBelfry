@@ -21,7 +21,7 @@ export default function BinaryRain({
       {[...Array(density)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute text-[10px] font-mono whitespace-pre-wrap leading-tight"
+          className="absolute text-[12px] font-mono whitespace-pre-wrap leading-tight"
           style={{
             color: color,
             left: `${(i / density) * 100}%`,

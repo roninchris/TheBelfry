@@ -78,7 +78,7 @@ export default function SettingsPage() {
           <span className="w-1.5 h-3.5 bg-cyan-primary mr-2.5 transform -skew-x-12 inline-block shadow-[0_0_8px_#2ff1e4]" />
           TELEMETRY & COMMAND SETTINGS
         </h2>
-        <p className="text-[11px] font-share text-text-dim tracking-wider uppercase mt-1">
+        <p className="text-[13px] font-share text-text-dim tracking-wider uppercase mt-1">
           Configure diagnostic audio frequencies, scanline matrices, and telemetry registries
         </p>
       </div>
@@ -94,7 +94,7 @@ export default function SettingsPage() {
                 <Volume2 className="w-4 h-4 mr-2 text-cyan-primary" />
                 Audio Synthesis Matrix
               </h3>
-              <p className="text-[10.5px] font-share text-text-dim tracking-wide uppercase mt-0.5">
+              <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
                 Manage Web Audio API procedural oscillator synthesis
               </p>
             </div>
@@ -112,7 +112,7 @@ export default function SettingsPage() {
                 style={{ clipPath: "polygon(0 0, 100% 0, 94% 100%, 0 100%)" }}
               >
                 <div className="flex justify-between items-center w-full mb-1">
-                  <span className="font-mono text-[10.5px] uppercase tracking-widest">MASTER MUTE</span>
+                  <span className="font-mono text-[12px] uppercase tracking-widest">MASTER MUTE</span>
                   {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-text-dim/60" />}
                 </div>
                 <Badge variant={isMuted ? "red" : "dim"} size="xs">
@@ -131,7 +131,7 @@ export default function SettingsPage() {
                 style={{ clipPath: "polygon(0 0, 100% 0, 94% 100%, 0 100%)" }}
               >
                 <div className="flex justify-between items-center w-full mb-1">
-                  <span className="font-mono text-[10.5px] uppercase tracking-widest">AMBIENT DRONE</span>
+                  <span className="font-mono text-[12px] uppercase tracking-widest">AMBIENT DRONE</span>
                   <Radio className={`w-3.5 h-3.5 ${ambientEnabled ? "animate-hex-pulse-flicker" : "text-text-dim/60"}`} />
                 </div>
                 <Badge variant={ambientEnabled ? "cyan" : "dim"} size="xs">
@@ -142,7 +142,7 @@ export default function SettingsPage() {
 
             {/* Master Volume Slider */}
             <div className="space-y-3.5 bg-bg-void/30 p-4 border border-border-hairline/10">
-              <div className="flex justify-between items-center text-[11px] font-share text-text-dim uppercase">
+              <div className="flex justify-between items-center text-[13px] font-share text-text-dim uppercase">
                 <span className="flex items-center">
                   <SlidersHorizontal className="w-3.5 h-3.5 mr-2 text-cyan-dim" />
                   SYNTH MASTER VOLUME LEVEL:
@@ -165,7 +165,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="flex justify-between text-[10px] text-text-dim font-mono">
+              <div className="flex justify-between text-[12px] text-text-dim font-mono">
                 <span>0% MIN (SILENT)</span>
                 <span>50% BALANCED</span>
                 <span>100% MAXIMUM</span>
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                 onClick={handleTestSound}
                 onMouseEnter={() => !isMuted && !testSoundActive && playHoverBlip()}
                 disabled={isMuted || testSoundActive}
-                className="hud-target px-4 py-2 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void disabled:border-border-hairline/20 disabled:text-text-dim/40 disabled:hover:bg-transparent transition-all text-[11px] font-black uppercase tracking-widest flex items-center"
+                className="hud-target px-4 py-2 border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void disabled:border-border-hairline/20 disabled:text-text-dim/40 disabled:hover:bg-transparent transition-all text-[13px] font-black uppercase tracking-widest flex items-center"
                 style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
               >
                 <Activity className={`w-3.5 h-3.5 mr-1.5 ${testSoundActive ? "animate-hex-pulse-flicker" : ""}`} />
@@ -198,26 +198,26 @@ export default function SettingsPage() {
                 <ShieldAlert className="w-4 h-4 mr-2 text-cyan-primary" />
                 SYSTEM OPERATIONS
               </h3>
-              <p className="text-[10.5px] font-share text-text-dim tracking-wide uppercase mt-0.5">
+              <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
                 Reboot local diagnostics and telemetry logs
               </p>
             </div>
 
             {/* Description note */}
-            <p className="text-[11px] font-share leading-relaxed text-text-dim uppercase">
+            <p className="text-[13px] font-share leading-relaxed text-text-dim uppercase">
               BELFRY terminal diagnostics log every clue pin, wire connection, cryptographic decode, and decryption flow. Clean up local storage caches by issuing a matrix wipe below.
             </p>
 
             {/* Clear Console Logs Action */}
             <div className="bg-bg-void/40 border border-border-hairline/10 p-4 rounded-sm space-y-3">
               <div className="flex justify-between items-center border-b border-border-hairline/15 pb-1.5">
-                <span className="font-mono text-[10.5px] text-text-dim uppercase">LOCAL SYSTEM STORAGE</span>
+                <span className="font-mono text-[12px] text-text-dim uppercase">LOCAL SYSTEM STORAGE</span>
                 <Badge variant={resetConfirm ? "amber" : "dim"} size="xs">
                   {resetConfirm ? "CONFIRM" : "STANDBY"}
                 </Badge>
               </div>
 
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-[13px]">
                 <span className="font-share text-text-dim uppercase">DIAGNOSTIC LOG SIZE:</span>
                 <span className="font-mono text-cyan-text font-bold">SECURE SECTORS ACTIVE</span>
               </div>
@@ -225,7 +225,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleResetLogs}
                 onMouseEnter={() => playHoverBlip()}
-                className={`hud-target ${resetConfirm ? "hud-target-amber" : "hud-target-threat"} w-full font-orbitron font-black text-[11px] uppercase tracking-widest py-2 px-3 border transition-colors flex items-center justify-center space-x-1.5 ${
+                className={`hud-target ${resetConfirm ? "hud-target-amber" : "hud-target-threat"} w-full font-orbitron font-black text-[13px] uppercase tracking-widest py-2 px-3 border transition-colors flex items-center justify-center space-x-1.5 ${
                   resetConfirm
                     ? "bg-amber-alert/15 border-amber-alert/40 text-amber-alert hover:bg-amber-alert hover:text-bg-void"
                     : "bg-red-threat/10 border-red-threat/30 text-red-threat hover:bg-red-threat hover:text-bg-void"
@@ -239,7 +239,7 @@ export default function SettingsPage() {
               {resetConfirm && (
                 <button
                   onClick={() => setResetConfirm(false)}
-                  className="w-full text-center text-[10px] font-mono text-text-dim hover:text-text-primary uppercase tracking-widest block underline transition-colors"
+                  className="w-full text-center text-[12px] font-mono text-text-dim hover:text-text-primary uppercase tracking-widest block underline transition-colors"
                 >
                   CANCEL OPERATION
                 </button>
@@ -247,7 +247,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Systems Heuristics Footprint */}
-            <div className="text-[10px] font-mono text-text-dim/60 space-y-1 bg-bg-void/25 p-2 border border-border-hairline/5">
+            <div className="text-[12px] font-mono text-text-dim/60 space-y-1 bg-bg-void/25 p-2 border border-border-hairline/5">
               <p>SYSTEM CORE: STABLE</p>
               <p>MEMORY POINTER: 0x2A4F8B3C</p>
               <p>VERSION: BELFRY-OS v4.9.5</p>
