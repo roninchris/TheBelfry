@@ -465,7 +465,7 @@ ${currentData.threatSummary}`;
             <span className="font-orbitron text-sm font-black tracking-[0.2em] text-cyan-primary uppercase">
               RELEASE TO ANALYZE
             </span>
-            <span className="font-share text-[11.5px] text-text-dim uppercase tracking-widest">
+            <span className="font-share text-[13px] text-text-dim uppercase tracking-widest">
               Drop file anywhere on screen
             </span>
           </div>
@@ -485,7 +485,7 @@ ${currentData.threatSummary}`;
                   FILE SECTOR INTEGRITY LAB
                 </h1>
               </div>
-              <p className="text-[11px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
+              <p className="text-[13px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
                 Belfry Hexadecimal Diagnostics Engine. Parses file binary streams to isolate hidden extensions, cross-checks magic byte signatures, and extracts character strings.
               </p>
             </div>
@@ -525,7 +525,7 @@ ${currentData.threatSummary}`;
             {activeFile && (
               <button
                 onClick={clearFileBuffer}
-                className="text-[10.5px] hover:text-red-threat text-text-dim uppercase transition-colors flex items-center"
+                className="text-[12px] hover:text-red-threat text-text-dim uppercase transition-colors flex items-center"
               >
                 <Trash2 className="w-3 h-3 mr-1" />
                 Flush Buffer
@@ -555,10 +555,10 @@ ${currentData.threatSummary}`;
               <span className="font-orbitron text-xs font-black tracking-widest text-cyan-text group-hover:text-white transition-colors">
                 DROP ANY FILE VESSEL HERE
               </span>
-              <span className="text-[11px] text-text-dim uppercase tracking-widest font-share mt-1">
+              <span className="text-[13px] text-text-dim uppercase tracking-widest font-share mt-1">
                 OR CLICK TO DISCOVER LOCAL SYSTEM BINARIES
               </span>
-              <span className="text-[10.5px] text-cyan-primary/50 mt-4 font-mono">
+              <span className="text-[12px] text-cyan-primary/50 mt-4 font-mono">
                 COMPATIBLE: .EXE, .LOG, .TXT, .PNG, .JPG, .ZIP, ETC. (MAX 10MB)
               </span>
             </div>
@@ -578,13 +578,13 @@ ${currentData.threatSummary}`;
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] font-mono text-cyan-primary uppercase tracking-widest block mb-0.5">
+                  <span className="text-[12px] font-mono text-cyan-primary uppercase tracking-widest block mb-0.5">
                     RECOVERED VESSEL
                   </span>
                   <h4 className="font-mono text-xs font-bold text-text-primary truncate uppercase">
                     {currentData.name}
                   </h4>
-                  <p className="font-share text-[10.5px] text-text-dim uppercase tracking-wider mt-0.5">
+                  <p className="font-share text-[12px] text-text-dim uppercase tracking-wider mt-0.5">
                     CLAIMED: {currentData.extension} ({currentData.fileSize})
                   </p>
                 </div>
@@ -595,32 +595,32 @@ ${currentData.threatSummary}`;
                 
                 {/* Claims and Reality check */}
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="border border-border-hairline/10 bg-bg-void/30 p-2 text-[11px] font-mono">
-                    <span className="text-text-dim block text-[10px] uppercase">Declared Envelope:</span>
+                  <div className="border border-border-hairline/10 bg-bg-void/30 p-2 text-[13px] font-mono">
+                    <span className="text-text-dim block text-[12px] uppercase">Declared Envelope:</span>
                     <span className="text-text-primary font-bold uppercase">{currentData.extension}</span>
-                    <span className="text-text-dim block text-[10px] truncate mt-1">{currentData.claimedType}</span>
+                    <span className="text-text-dim block text-[12px] truncate mt-1">{currentData.claimedType}</span>
                   </div>
 
-                  <div className={`border p-2 text-[11px] font-mono ${
+                  <div className={`border p-2 text-[13px] font-mono ${
                     currentData.isMismatch 
                       ? "bg-red-threat/10 border-red-threat/30" 
                       : "bg-green-verified/10 border-green-verified/30"
                   }`}>
-                    <span className="text-text-dim block text-[10px] uppercase">Detected Structure:</span>
+                    <span className="text-text-dim block text-[12px] uppercase">Detected Structure:</span>
                     <span className={`font-bold uppercase ${
                       currentData.isMismatch ? "text-red-threat" : "text-green-verified"
                     }`}>
                       {currentData.detectedType.split(" ")[0]}
                     </span>
-                    <span className="text-text-dim block text-[10px] truncate mt-1">{currentData.detectedType}</span>
+                    <span className="text-text-dim block text-[12px] truncate mt-1">{currentData.detectedType}</span>
                   </div>
                 </div>
 
                 {/* Technical specifics */}
-                <div className="bg-bg-void/40 border border-border-hairline/10 p-2.5 font-mono text-[11px] space-y-1">
+                <div className="bg-bg-void/40 border border-border-hairline/10 p-2.5 font-mono text-[13px] space-y-1">
                   <div className="flex justify-between">
                     <span className="text-text-dim">FIRST magic bytes:</span>
-                    <span className="text-cyan-primary tracking-widest text-[10.5px] truncate max-w-[190px]">{currentData.magicBytes}</span>
+                    <span className="text-cyan-primary tracking-widest text-[12px] truncate max-w-[190px]">{currentData.magicBytes}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-text-dim">BYTE ENTROPY SCALE:</span>
@@ -695,7 +695,7 @@ ${currentData.threatSummary}`;
                   <span className="font-orbitron text-xs font-bold text-text-dim uppercase tracking-wider">
                     FILE BUFFER MOUNTED - AWAITING INSPECTION
                   </span>
-                  <p className="text-[11px] text-text-dim uppercase tracking-widest font-share max-w-xs mt-1 leading-relaxed">
+                  <p className="text-[13px] text-text-dim uppercase tracking-widest font-share max-w-xs mt-1 leading-relaxed">
                     Press "LAUNCH HEURISTIC FILE INSPECTOR" in the left panel to verify byte signatures and decrypt hexadecimal sectors.
                   </p>
                 </div>
@@ -704,14 +704,14 @@ ${currentData.threatSummary}`;
                 <div className="flex-1 flex flex-col justify-between font-share">
                   
                   {/* Header headers for offsets */}
-                  <div className="bg-bg-void border-b border-border-hairline/20 p-2 font-share text-[10.5px] text-cyan-text/75 grid grid-cols-12 gap-1 tracking-widest select-none">
+                  <div className="bg-bg-void border-b border-border-hairline/20 p-2 font-share text-[12px] text-cyan-text/75 grid grid-cols-12 gap-1 tracking-widest select-none">
                     <div className="col-span-2">OFFSET</div>
                     <div className="col-span-7 text-center">00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F</div>
                     <div className="col-span-3 text-right">ASCII_DECODE</div>
                   </div>
 
                   {/* Actual rows using strict font-share alignment */}
-                  <div className="flex-1 overflow-y-auto max-h-[220px] font-share text-[11px] text-text-dim bg-bg-void/70 border border-border-hairline/10 p-2 divide-y divide-border-hairline/5 space-y-1 select-text scrollbar-thin relative overflow-hidden">
+                  <div className="flex-1 overflow-y-auto max-h-[220px] font-share text-[13px] text-text-dim bg-bg-void/70 border border-border-hairline/10 p-2 divide-y divide-border-hairline/5 space-y-1 select-text scrollbar-thin relative overflow-hidden">
                     {scanComplete && (
                       <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent via-cyan-primary/20 to-cyan-primary/50 border-b border-cyan-primary animate-scanline-sweep pointer-events-none z-10 mix-blend-screen" />
                     )}
@@ -740,7 +740,7 @@ ${currentData.threatSummary}`;
 
                   {/* Warning anomaly box if signature mismatch */}
                   {scanComplete && (
-                    <div className={`power-sweep mt-3 p-3 border font-mono text-[11px] flex items-start space-x-2 relative overflow-hidden ${
+                    <div className={`power-sweep mt-3 p-3 border font-mono text-[13px] flex items-start space-x-2 relative overflow-hidden ${
                       currentData.isMismatch
                         ? "bg-red-threat/10 border-red-threat/30 text-red-threat"
                         : "bg-bg-void/40 border-border-hairline/10 text-text-dim"
@@ -771,23 +771,23 @@ ${currentData.threatSummary}`;
                   <div>
                     <div className="border-b border-border-hairline/15 pb-1.5 mb-2.5 flex items-center">
                       <Search className="w-3.5 h-3.5 text-cyan-primary mr-1.5" />
-                      <h4 className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text uppercase">
+                      <h4 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text uppercase">
                         EXTRACTABLE ASCII CHARACTER STRINGS (LENGTH &gt;= 4)
                       </h4>
                     </div>
 
                     {!scanComplete ? (
                       isScanning ? (
-                        <div className="py-5 font-mono text-[10.5px] text-cyan-primary">
+                        <div className="py-5 font-mono text-[12px] text-cyan-primary">
                           <DataStream text="STREAMING DETECTED STRINGS IN MEMORY BUFFER: 0x0A4F... KEYLOG_SYS_HOOK... SYSTEM_RECOVERY_DECRYPT... TROJAN_VESSEL_DETECTED... MEMORY_FLUSH_COMPLETE... INTERCEPT_SUCCESS" speed={12} active={true} />
                         </div>
                       ) : (
-                        <div className="py-6 text-center text-[11px] text-text-dim uppercase font-mono">
+                        <div className="py-6 text-center text-[13px] text-text-dim uppercase font-mono">
                           Strings index matrix locked...
                         </div>
                       )
                     ) : (
-                      <div className="overflow-y-auto max-h-[110px] space-y-1.5 pr-1 scrollbar-thin font-mono text-[10.5px]">
+                      <div className="overflow-y-auto max-h-[110px] space-y-1.5 pr-1 scrollbar-thin font-mono text-[12px]">
                         {currentData.detectedStrings.map((str: any, index: number) => (
                           <div 
                             key={index} 
@@ -820,7 +820,7 @@ ${currentData.threatSummary}`;
                     <div className="border-b border-border-hairline/15 pb-1.5 mb-2.5 flex items-center justify-between">
                       <div className="flex items-center">
                         <Binary className="w-3.5 h-3.5 text-amber-alert mr-1.5" />
-                        <h4 className="font-orbitron text-[11px] font-black tracking-widest text-amber-alert uppercase">
+                        <h4 className="font-orbitron text-[13px] font-black tracking-widest text-amber-alert uppercase">
                           EMBEDDED FILE CARVING
                         </h4>
                       </div>
@@ -830,15 +830,15 @@ ${currentData.threatSummary}`;
                     </div>
 
                     {!scanComplete ? (
-                      <div className="py-6 text-center text-[11px] text-text-dim uppercase font-mono">
+                      <div className="py-6 text-center text-[13px] text-text-dim uppercase font-mono">
                         {isScanning ? "Carving byte stream..." : "Awaiting scanner trigger..."}
                       </div>
                     ) : carvedFiles.length === 0 ? (
-                      <div className="py-6 text-center text-[11px] text-text-dim uppercase font-mono italic">
+                      <div className="py-6 text-center text-[13px] text-text-dim uppercase font-mono italic">
                         No embedded files carved
                       </div>
                     ) : (
-                      <div className="overflow-y-auto max-h-[110px] space-y-1.5 pr-1 scrollbar-thin font-mono text-[10.5px]">
+                      <div className="overflow-y-auto max-h-[110px] space-y-1.5 pr-1 scrollbar-thin font-mono text-[12px]">
                         {carvedFiles.map((file, idx) => (
                           <div 
                             key={idx} 
@@ -850,7 +850,7 @@ ${currentData.threatSummary}`;
                                 <span className="text-text-dim/60">0x{file.offset.toString(16).toUpperCase()}</span>
                               </div>
                               {file.length && (
-                                <div className="text-[10px] text-text-dim/40">{(file.length / 1024).toFixed(1)} KB</div>
+                                <div className="text-[12px] text-text-dim/40">{(file.length / 1024).toFixed(1)} KB</div>
                               )}
                             </div>
                             
@@ -893,24 +893,24 @@ ${currentData.threatSummary}`;
                   )}
                   <div className="border-b border-border-hairline/15 pb-1.5 mb-2.5 flex items-center">
                     <Database className="w-3.5 h-3.5 text-cyan-primary mr-1.5" />
-                    <h4 className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text uppercase">
+                    <h4 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text uppercase">
                       RECORD INTEGRATION
                     </h4>
                   </div>
 
                   {!scanComplete ? (
-                    <div className="text-center py-6 font-mono text-[10.5px] text-text-dim uppercase">
+                    <div className="text-center py-6 font-mono text-[12px] text-text-dim uppercase">
                       {isScanning ? "Aligning sector maps..." : "Awaiting sector alignment..."}
                     </div>
                   ) : (
                     <div className="space-y-3 flex-1 flex flex-col justify-between">
-                      <p className="text-[11px] text-text-dim uppercase tracking-wider leading-relaxed">
+                      <p className="text-[13px] text-text-dim uppercase tracking-wider leading-relaxed">
                         Commit the hex offsets, ASCII strings map, signature validation data, and file metadata into the active crime dossier database nodes.
                       </p>
 
                       <button
                         onClick={handleAddToDossier}
-                        className="w-full py-1.5 border border-cyan-primary/30 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all duration-200 text-[11px] uppercase tracking-widest font-black flex items-center justify-center space-x-1.5"
+                        className="w-full py-1.5 border border-cyan-primary/30 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all duration-200 text-[13px] uppercase tracking-widest font-black flex items-center justify-center space-x-1.5"
                         style={{ clipPath: "polygon(0 0, 100% 0, 94% 100%, 0 100%)" }}
                       >
                         <Plus className="w-3 h-3" />

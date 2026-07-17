@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Case, EvidenceConnection, EvidenceNode } from "../../store/appStore";
+import { THREAT_LEVELS, type Case, type EvidenceConnection, type EvidenceNode } from "../../store/appStore";
 import { isKnightId } from "../identity";
 import type { BoardSnapshot, BoardStorage } from "./types";
 
@@ -47,6 +47,7 @@ export class SupabaseBoardStorage implements BoardStorage {
         created_at: value.createdAt,
         color_tag: value.colorTag ?? null,
         notes: value.notes,
+        threat_level: value.threatLevel ?? null,
       })
     );
   }
@@ -122,6 +123,7 @@ function toCase(row: any): Case {
     colorTag: row.color_tag ?? undefined,
     notes: row.notes ?? "",
     createdBy: asKnight(row.created_by),
+    threatLevel: THREAT_LEVELS.includes(row.threat_level) ? row.threat_level : undefined,
   };
 }
 

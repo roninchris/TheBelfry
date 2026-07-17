@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Copy,
   CheckCircle,
@@ -19,6 +19,7 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 import GlassPanel from "../../components/ui/GlassPanel";
 import Badge from "../../components/ui/Badge";
+import { useAppStore } from "../../store/appStore";
 import ShinyText from "../../components/react-bits/ShinyText";
 import FactoryThroughputBar from "../../components/ui/FactoryThroughputBar";
 import { playSuccessChime, playFailBuzz, playTypeKey, playHoverEvidence, playPinClick } from "../../lib/soundEngine";
@@ -127,7 +128,7 @@ function LogicOscilloscope({ isActive }: { isActive: boolean }) {
   return (
     <div className="h-10 w-full bg-bg-void/75 border border-border-hairline/10 rounded-sm overflow-hidden relative flex items-center px-2">
       <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
-      <div className="absolute top-1 left-2 font-mono text-[10px] text-cyan-dim/40 tracking-widest uppercase">
+      <div className="absolute top-1 left-2 font-mono text-[12px] text-cyan-dim/40 tracking-widest uppercase">
         SIGNAL WAVEFORM
       </div>
       <svg className="w-full h-8 opacity-80" viewBox="0 0 200 40" preserveAspectRatio="none">
@@ -163,7 +164,7 @@ function LogicOscilloscope({ isActive }: { isActive: boolean }) {
           transition={{ duration: 3.2, repeat: Infinity, ease: "linear" }}
         />
       </svg>
-      <div className="absolute bottom-1 right-2 font-mono text-[10px] text-cyan-primary/50 flex items-center space-x-1">
+      <div className="absolute bottom-1 right-2 font-mono text-[12px] text-cyan-primary/50 flex items-center space-x-1">
         <span className={`w-1 h-1 rounded-full ${isActive ? "bg-cyan-primary animate-pulse" : "bg-text-dim/20"}`} />
         <span>{isActive ? "SAMPLED" : "STANDBY"}</span>
       </div>
@@ -175,6 +176,39 @@ export default function EncodingLab() {
   const [inputText, setInputText] = useState<string>("");
   const [isDecodeMode, setIsDecodeMode] = useState<boolean>(true);
   const [isPipelineDecode, setIsPipelineDecode] = useState<boolean>(true);
+
+  const pendingToolId = useAppStore((s) => s.pendingToolId);
+  const consumePendingTool = useAppStore((s) => s.consumePendingTool);
+
+  /**
+   * Pick up an encoding handed over from the Tool Database.
+   *
+   * The Deck shows every encoding at once rather than one selection, so
+   * "opening" a tool here means bringing its row into view and marking it —
+   * otherwise arriving from the catalogue would look identical to arriving
+   * from the sidebar.
+   */
+  const [highlightedRow, setHighlightedRow] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pendingToolId) return;
+    const requested = consumePendingTool();
+    if (!requested) return;
+    setHighlightedRow(requested);
+
+    // The row is rendered by this same commit, so wait a frame before scrolling.
+    const raf = requestAnimationFrame(() => {
+      document
+        .getElementById(`breakout-container-${requested}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    // The mark is a "you arrived here" cue, not persistent state.
+    const timer = window.setTimeout(() => setHighlightedRow(null), 2600);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+    };
+  }, [pendingToolId, consumePendingTool]);
   
   // Custom states for copy status
   const [copiedRow, setCopiedRow] = useState<string | null>(null);
@@ -335,11 +369,11 @@ export default function EncodingLab() {
                 <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
                 ENCODING BUFFER INPUT
               </h3>
-              <p className="text-[10.5px] font-share text-text-dim uppercase tracking-wider mt-0.5">
+              <p className="text-[12px] font-share text-text-dim uppercase tracking-wider mt-0.5">
                 Paste plaintext or unformatted byte sequences
               </p>
             </div>
-            <span className="font-mono text-[10.5px] text-cyan-dim bg-cyan-primary/5 px-2 py-0.5 border border-cyan-primary/10">
+            <span className="font-mono text-[12px] text-cyan-dim bg-cyan-primary/5 px-2 py-0.5 border border-cyan-primary/10">
               {inputText.length} BYTES
             </span>
           </div>
@@ -351,10 +385,10 @@ export default function EncodingLab() {
               playTypeKey();
             }}
             placeholder="ENTER RAW CHARACTERS OR TELEMETRY LOGS TO CONVERT..."
-            className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 rounded-none p-3 font-mono text-[11.5px] leading-relaxed text-text-primary outline-none focus:border-cyan-primary/50 resize-none scrollbar-thin overflow-y-auto min-h-[80px]"
+            className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 rounded-none p-3 font-mono text-[13px] leading-relaxed text-text-primary outline-none focus:border-cyan-primary/50 resize-none scrollbar-thin overflow-y-auto min-h-[80px]"
           />
 
-          <div className="mt-2 flex justify-between text-[10.5px] font-share text-text-dim">
+          <div className="mt-2 flex justify-between text-[12px] font-share text-text-dim">
             <button
               onClick={() => {
                 setInputText("");
@@ -365,7 +399,7 @@ export default function EncodingLab() {
             >
               CLEAR
             </button>
-            <span className="text-[10px] uppercase text-cyan-primary/50 self-center">
+            <span className="text-[12px] uppercase text-cyan-primary/50 self-center">
               CENTRAL BUS: CH_01
             </span>
           </div>
@@ -375,15 +409,15 @@ export default function EncodingLab() {
         <GlassPanel className="p-4 flex-1 flex flex-col" clipSize="md" showCornerTicks={true}>
           <div className="border-b border-border-hairline/25 pb-1 mb-3.5 flex justify-between items-end">
             <div>
-              <h3 className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text flex items-center uppercase">
+              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text flex items-center uppercase">
                 <span className="w-1.5 h-3 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_#2ff1e4]" />
                 LOGIC ANALYZER // BYTE-BIT MONITOR
               </h3>
-              <span className="text-[10px] font-share text-text-dim block uppercase mt-0.5">
+              <span className="text-[12px] font-share text-text-dim block uppercase mt-0.5">
                 Live 8-bit bus mapping of the primary input buffer index range
               </span>
             </div>
-            <span className="font-mono text-[10px] text-green-verified bg-green-verified/5 px-1.5 py-0.5 border border-green-verified/15 animate-pulse">
+            <span className="font-mono text-[12px] text-green-verified bg-green-verified/5 px-1.5 py-0.5 border border-green-verified/15 animate-pulse">
               BUS MASTER
             </span>
           </div>
@@ -394,7 +428,7 @@ export default function EncodingLab() {
             
             <div className="w-full space-y-2">
               {/* Header row */}
-              <div className="grid grid-cols-12 gap-1 text-[10px] font-mono text-text-dim border-b border-border-hairline/10 pb-1 font-bold uppercase tracking-wider">
+              <div className="grid grid-cols-12 gap-1 text-[12px] font-mono text-text-dim border-b border-border-hairline/10 pb-1 font-bold uppercase tracking-wider">
                 <div className="col-span-2">CHANNEL</div>
                 <div className="col-span-1 text-center">CHR</div>
                 <div className="col-span-6 text-center">8-BIT LOGIC REGISTER</div>
@@ -410,14 +444,14 @@ export default function EncodingLab() {
                     className="grid grid-cols-12 gap-1 items-center hover:bg-cyan-primary/5 px-0.5 py-1 transition-colors duration-150 border-b border-border-hairline/5"
                   >
                     {/* Channel */}
-                    <div className="col-span-2 font-mono text-[10.5px] text-cyan-dim/80 flex items-center space-x-1">
+                    <div className="col-span-2 font-mono text-[12px] text-cyan-dim/80 flex items-center space-x-1">
                       <span className={`w-1 h-1 rounded-full ${row.charCode ? "bg-cyan-primary shadow-[0_0_4px_#2ff1e4]" : "bg-text-dim/10"}`} />
                       <span>BUS.0{row.index + 1}</span>
                     </div>
 
                     {/* Character tag */}
                     <div className="col-span-1 text-center">
-                      <span className={`font-mono text-[10.5px] font-black px-1 py-0.2 ${row.charCode ? "text-cyan-text bg-cyan-primary/10" : "text-text-dim/30 bg-bg-void"}`}>
+                      <span className={`font-mono text-[12px] font-black px-1 py-0.2 ${row.charCode ? "text-cyan-text bg-cyan-primary/10" : "text-text-dim/30 bg-bg-void"}`}>
                         {row.charCode === 32 ? "SPC" : row.charCode === 0 ? "Ø" : row.char}
                       </span>
                     </div>
@@ -438,7 +472,7 @@ export default function EncodingLab() {
                             title={`Byte ${row.index + 1}, Bit ${8 - bitIdx}: ${bit}`}
                           >
                             {/* Hover bit detail tooltip overlay */}
-                            <span className="hidden group-hover:block absolute bottom-5 left-1/2 -translate-x-1/2 bg-bg-void border border-cyan-primary px-1.5 py-0.5 text-[10px] text-cyan-primary font-mono whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                            <span className="hidden group-hover:block absolute bottom-5 left-1/2 -translate-x-1/2 bg-bg-void border border-cyan-primary px-1.5 py-0.5 text-[12px] text-cyan-primary font-mono whitespace-nowrap z-50 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
                               REG{8 - bitIdx} = {bit}
                             </span>
                           </div>
@@ -447,12 +481,12 @@ export default function EncodingLab() {
                     </div>
 
                     {/* Hex indicator */}
-                    <div className="col-span-1.5 text-right font-mono text-[10.5px] text-cyan-dim font-bold">
+                    <div className="col-span-1.5 text-right font-mono text-[12px] text-cyan-dim font-bold">
                       {row.hexCode !== "--" ? `0x${row.hexCode}` : "--"}
                     </div>
 
                     {/* Dec indicator */}
-                    <div className="col-span-1.5 text-right font-mono text-[10.5px] text-text-dim">
+                    <div className="col-span-1.5 text-right font-mono text-[12px] text-text-dim">
                       {row.decCode}
                     </div>
                   </div>
@@ -464,7 +498,7 @@ export default function EncodingLab() {
             <LogicOscilloscope isActive={inputText.length > 0} />
           </div>
 
-          <div className="flex justify-between text-[10px] font-mono text-text-dim border-t border-border-hairline/15 pt-1.5 mt-2">
+          <div className="flex justify-between text-[12px] font-mono text-text-dim border-t border-border-hairline/15 pt-1.5 mt-2">
             <span>BYTES: 01 to 08 REGISTER CHANNELS</span>
             <span className="text-cyan-primary font-bold animate-hex-pulse-flicker">LIVE BUS SPECTROGRAM</span>
           </div>
@@ -482,13 +516,13 @@ export default function EncodingLab() {
                 <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
                 BREAKOUT ROUTING CHANNELS
               </h3>
-              <p className="text-[10.5px] font-share text-text-dim tracking-wide uppercase mt-0.5">
+              <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
                 {isDecodeMode ? "Decoding single multiplexed stream to parallel plaintext formats" : "Demultiplexing core input into simultaneous hardware translation lines"}
               </p>
             </div>
 
             {/* Mode switch segmented control */}
-            <div className="flex bg-bg-void/80 border border-border-hairline/15 p-0.5 font-mono text-[10.5px] shrink-0">
+            <div className="flex bg-bg-void/80 border border-border-hairline/15 p-0.5 font-mono text-[12px] shrink-0">
               <button
                 onClick={() => {
                   setIsDecodeMode(false);
@@ -634,17 +668,21 @@ export default function EncodingLab() {
 
                   {/* Translator Node Port */}
                   <div
-                    className="hud-target flex-1 bg-bg-void/50 border border-border-hairline/15 p-2.5 space-y-1.5 relative hover:border-cyan-dim/30 hover:bg-bg-void/65 transition-all duration-300"
+                    className={`hud-target flex-1 bg-bg-void/50 border p-2.5 space-y-1.5 relative hover:border-cyan-dim/30 hover:bg-bg-void/65 transition-all duration-300 ${
+                      highlightedRow === row.key
+                        ? "border-accent-primary/70 bg-accent-primary/[0.06] shadow-[0_0_16px_rgba(0,243,255,0.2)]"
+                        : "border-border-hairline/15"
+                    }`}
                     style={{ clipPath: "polygon(0 0, 100% 0, 99% 100%, 0 100%)", ["--reticle-size" as any]: "7px" }}
                   >
                     {/* Header label */}
-                    <div className="flex justify-between items-center text-[11px]">
+                    <div className="flex justify-between items-center text-[13px]">
                       <div className="flex flex-col">
                         <span className="font-chakra font-extrabold text-cyan-dim uppercase tracking-wider flex items-center">
                           <span className={`w-1 h-2.5 mr-1.5 inline-block ${row.value ? "bg-cyan-primary shadow-[0_0_4px_#2ff1e4]" : "bg-cyan-dim/20"}`} />
                           {row.label}
                         </span>
-                        <span className="text-[10px] text-text-dim/60 font-share uppercase tracking-wide mt-0.2">
+                        <span className="text-[12px] text-text-dim/60 font-share uppercase tracking-wide mt-0.2">
                           {row.description}
                         </span>
                       </div>
@@ -656,7 +694,7 @@ export default function EncodingLab() {
                     {/* Read-only stream row */}
                     <div className="flex flex-col space-y-1">
                       <div className="flex items-center space-x-2">
-                        <div className="flex-1 bg-bg-void/80 border border-border-hairline/10 p-2 font-mono text-[11px] text-text-primary h-8 flex items-center overflow-x-auto overflow-y-hidden scrollbar-none whitespace-nowrap leading-none select-all select-text">
+                        <div className="flex-1 bg-bg-void/80 border border-border-hairline/10 p-2 font-mono text-[13px] text-text-primary h-8 flex items-center overflow-x-auto overflow-y-hidden scrollbar-none whitespace-nowrap leading-none select-all select-text">
                           {row.value ? (
                             <ShinyText text={row.value} speed={3} className="tracking-wide" />
                           ) : (
@@ -719,18 +757,18 @@ export default function EncodingLab() {
               <div>
                 <div className="flex items-center space-x-1.5 text-text-dim/60">
                   <Layers className="w-3 h-3 text-cyan-primary/45" />
-                  <span className="font-mono text-[10px] tracking-widest uppercase">AUXILIARY PROCESSOR</span>
+                  <span className="font-mono text-[12px] tracking-widest uppercase">AUXILIARY PROCESSOR</span>
                 </div>
-                <h3 className="font-orbitron text-[11.5px] font-black tracking-widest text-text-primary flex items-center mt-1">
+                <h3 className="font-orbitron text-[13px] font-black tracking-widest text-text-primary flex items-center mt-1">
                   CASCADE PIPELINE CODER
                 </h3>
-                <p className="text-[10px] font-share text-text-dim/80 tracking-wide uppercase mt-0.5">
+                <p className="text-[12px] font-share text-text-dim/80 tracking-wide uppercase mt-0.5">
                   Chained step-by-step stream processor
                 </p>
               </div>
 
               {/* Pipeline Encode/Decode Toggle */}
-              <div className="flex bg-bg-void/80 border border-border-hairline/15 p-0.5 font-mono text-[10px] shrink-0">
+              <div className="flex bg-bg-void/80 border border-border-hairline/15 p-0.5 font-mono text-[12px] shrink-0">
                 <button
                   onClick={() => {
                     setIsPipelineDecode(false);
@@ -752,17 +790,17 @@ export default function EncodingLab() {
               </div>
             </div>
 
-            <div className="space-y-3 font-share text-[10.5px]">
+            <div className="space-y-3 font-share text-[12px]">
               {/* Active layers steps */}
               <div className="space-y-1.5">
-                <span className="text-text-dim/70 uppercase text-[10px] block">
+                <span className="text-text-dim/70 uppercase text-[12px] block">
                   {isPipelineDecode ? "ACTIVE DECODE SEQUENCE:" : "ACTIVE ENCODE SEQUENCE:"}
                 </span>
                 <div className="bg-bg-void/45 border border-border-hairline/10 p-2 flex items-center flex-wrap gap-1.5">
                   {pipelineLayers.map((layer, idx) => (
                     <React.Fragment key={idx}>
                       {idx > 0 && <ArrowRight className="w-2.5 h-2.5 text-cyan-primary/30" />}
-                      <div className="bg-bg-void border border-cyan-primary/20 text-cyan-dim px-1.5 py-0.5 font-mono text-[10px]">
+                      <div className="bg-bg-void border border-cyan-primary/20 text-cyan-dim px-1.5 py-0.5 font-mono text-[12px]">
                         {layer.toUpperCase()}
                       </div>
                     </React.Fragment>
@@ -772,11 +810,11 @@ export default function EncodingLab() {
 
               {/* Chain stage selectors — user-configured, no canned presets */}
               <div className="space-y-1.5 pt-1">
-                <span className="text-text-dim/70 uppercase text-[10px] block">CONFIGURE CHAIN STAGES:</span>
+                <span className="text-text-dim/70 uppercase text-[12px] block">CONFIGURE CHAIN STAGES:</span>
                 <div className="grid grid-cols-2 gap-1.5">
                   {[0, 1].map((stageIdx) => (
                     <label key={stageIdx} className="flex flex-col gap-0.5">
-                      <span className="text-text-dim/50 text-[9px] uppercase tracking-widest">STAGE {stageIdx + 1}</span>
+                      <span className="text-text-dim/50 text-[11px] uppercase tracking-widest">STAGE {stageIdx + 1}</span>
                       <select
                         value={pipelineLayers[stageIdx] || ""}
                         onChange={(e) => {
@@ -787,7 +825,7 @@ export default function EncodingLab() {
                           setPipelineLayers(next.filter(Boolean));
                           playPinClick();
                         }}
-                        className="p-1 bg-bg-void/60 border border-border-hairline/15 text-cyan-text font-mono text-[10px] uppercase outline-none focus:border-cyan-primary/50 cursor-pointer"
+                        className="p-1 bg-bg-void/60 border border-border-hairline/15 text-cyan-text font-mono text-[12px] uppercase outline-none focus:border-cyan-primary/50 cursor-pointer"
                       >
                         <option value="">— NONE —</option>
                         {Object.keys(pipelineLayerIds).map((label) => (
@@ -801,11 +839,11 @@ export default function EncodingLab() {
 
               {/* Pipeline Output */}
               <div className="space-y-1 pt-1.5">
-                <div className="flex justify-between items-center text-[10px] text-text-dim/70">
+                <div className="flex justify-between items-center text-[12px] text-text-dim/70">
                   <span>{isPipelineDecode ? "CASCADE DECODING OUTPUT:" : "CASCADE ENCODING OUTPUT:"}</span>
                   <span className="text-cyan-dim/80 font-mono">{pipelineOutput.length} CHARS</span>
                 </div>
-                <div className="bg-bg-void/80 border border-border-hairline/15 p-2 font-mono text-[10.5px] text-cyan-text break-all max-h-[75px] overflow-y-auto scrollbar-thin select-all leading-normal">
+                <div className="bg-bg-void/80 border border-border-hairline/15 p-2 font-mono text-[12px] text-cyan-text break-all max-h-[75px] overflow-y-auto scrollbar-thin select-all leading-normal">
                   {pipelineOutput ? (
                     <ShinyText text={pipelineOutput} speed={2} className="tracking-widest" />
                   ) : (
@@ -817,7 +855,7 @@ export default function EncodingLab() {
             </div>
           </div>
 
-          <div className="flex justify-between text-[10px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1.5 mt-2">
+          <div className="flex justify-between text-[12px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1.5 mt-2">
             <span>SEQUENCE PIPELINE ENGINE</span>
             <span className="text-cyan-dim/40 font-bold">STABLE</span>
           </div>
@@ -830,18 +868,18 @@ export default function EncodingLab() {
               <div>
                 <div className="flex items-center space-x-1.5 text-text-dim/60">
                   <Cpu className="w-3 h-3 text-cyan-primary/45" />
-                  <span className="font-mono text-[10px] tracking-widest uppercase">PRECISION NUMERICS</span>
+                  <span className="font-mono text-[12px] tracking-widest uppercase">PRECISION NUMERICS</span>
                 </div>
-                <h3 className="font-orbitron text-[11.5px] font-black tracking-widest text-text-primary flex items-center mt-1">
+                <h3 className="font-orbitron text-[13px] font-black tracking-widest text-text-primary flex items-center mt-1">
                   BIGINT CODER
                 </h3>
-                <p className="text-[10px] font-share text-text-dim/80 tracking-wide uppercase mt-0.5">
+                <p className="text-[12px] font-share text-text-dim/80 tracking-wide uppercase mt-0.5">
                   Arbitrary-precision integer mapping
                 </p>
               </div>
 
               {/* BigInt Mode Switcher */}
-              <div className="flex bg-bg-void/80 border border-border-hairline/15 p-0.5 font-mono text-[10px] shrink-0">
+              <div className="flex bg-bg-void/80 border border-border-hairline/15 p-0.5 font-mono text-[12px] shrink-0">
                 <button
                   onClick={() => {
                     setBigIntMode("toBigInt");
@@ -865,9 +903,9 @@ export default function EncodingLab() {
               </div>
             </div>
 
-            <div className="space-y-3 font-share text-[10.5px]">
+            <div className="space-y-3 font-share text-[12px]">
               <div className="space-y-1">
-                <span className="text-text-dim/70 uppercase text-[10px] block">
+                <span className="text-text-dim/70 uppercase text-[12px] block">
                   {bigIntMode === "toBigInt" ? "INPUT PLAIN TEXT:" : "INPUT BIGINT DECIMAL VALUE:"}
                 </span>
                 <textarea
@@ -877,16 +915,16 @@ export default function EncodingLab() {
                     playTypeKey();
                   }}
                   placeholder={bigIntMode === "toBigInt" ? "ENTER PLAINTEXT TO REPRESENT..." : "ENTER DECIMAL DIGITS OR LARGE INTEGER..."}
-                  className="w-full bg-bg-void/60 border border-border-hairline/10 p-2 font-mono text-[10.5px] text-text-primary h-12 resize-none outline-none focus:border-cyan-primary/30"
+                  className="w-full bg-bg-void/60 border border-border-hairline/10 p-2 font-mono text-[12px] text-text-primary h-12 resize-none outline-none focus:border-cyan-primary/30"
                 />
               </div>
 
               <div className="space-y-1">
-                <div className="flex justify-between items-center text-[10px] text-text-dim/70">
+                <div className="flex justify-between items-center text-[12px] text-text-dim/70">
                   <span>TRANSFORMED REPRESENTATION:</span>
                   <span className="text-cyan-dim/80 font-mono">{bigIntOutput.length} CHARS</span>
                 </div>
-                <div className="bg-bg-void/80 border border-border-hairline/15 p-2 font-mono text-[10.5px] text-cyan-text break-all h-14 overflow-y-auto scrollbar-thin select-all leading-normal">
+                <div className="bg-bg-void/80 border border-border-hairline/15 p-2 font-mono text-[12px] text-cyan-text break-all h-14 overflow-y-auto scrollbar-thin select-all leading-normal">
                   {bigIntOutput ? (
                     <ShinyText text={bigIntOutput} speed={2} className="tracking-widest" />
                   ) : (
@@ -904,7 +942,7 @@ export default function EncodingLab() {
                     playSuccessChime();
                     setTimeout(() => setBigIntCopied(false), 2000);
                   }}
-                  className="flex-1 p-1 border border-border-hairline/10 bg-bg-void/25 text-center text-text-dim hover:text-cyan-primary hover:border-cyan-primary/30 hover:bg-cyan-primary/5 uppercase text-[10px] leading-tight transition-all cursor-pointer flex items-center justify-center space-x-1 disabled:opacity-35 disabled:cursor-not-allowed"
+                  className="flex-1 p-1 border border-border-hairline/10 bg-bg-void/25 text-center text-text-dim hover:text-cyan-primary hover:border-cyan-primary/30 hover:bg-cyan-primary/5 uppercase text-[12px] leading-tight transition-all cursor-pointer flex items-center justify-center space-x-1 disabled:opacity-35 disabled:cursor-not-allowed"
                 >
                   {bigIntCopied ? <CheckCircle className="w-3 h-3 text-green-verified" /> : <Copy className="w-3 h-3" />}
                   <span>{bigIntCopied ? "COPIED" : "COPY OUTPUT"}</span>
@@ -921,7 +959,7 @@ export default function EncodingLab() {
                     }
                     playPinClick();
                   }}
-                  className="p-1 border border-border-hairline/10 bg-bg-void/25 text-center text-text-dim hover:text-amber-alert hover:border-amber-alert/30 hover:bg-amber-alert/5 uppercase text-[10px] leading-tight transition-all cursor-pointer flex items-center justify-center space-x-1 disabled:opacity-35 disabled:cursor-not-allowed"
+                  className="p-1 border border-border-hairline/10 bg-bg-void/25 text-center text-text-dim hover:text-amber-alert hover:border-amber-alert/30 hover:bg-amber-alert/5 uppercase text-[12px] leading-tight transition-all cursor-pointer flex items-center justify-center space-x-1 disabled:opacity-35 disabled:cursor-not-allowed"
                   title="Load into Primary Encoding Buffer"
                 >
                   <RefreshCw className="w-3 h-3" />
@@ -931,7 +969,7 @@ export default function EncodingLab() {
             </div>
           </div>
 
-          <div className="flex justify-between text-[10px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1.5 mt-2">
+          <div className="flex justify-between text-[12px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1.5 mt-2">
             <span>INTEGER MAPPING SUBSYSTEM</span>
             <span className="text-cyan-dim/40 uppercase font-bold">STABLE</span>
           </div>
@@ -944,21 +982,21 @@ export default function EncodingLab() {
               <div className="flex flex-col">
                 <div className="flex items-center space-x-1.5 text-text-dim/60">
                   <Search className="w-3 h-3 text-cyan-primary/30" />
-                  <span className="font-mono text-[10px] tracking-widest uppercase">DICTIONARY LOOKUP</span>
+                  <span className="font-mono text-[12px] tracking-widest uppercase">DICTIONARY LOOKUP</span>
                 </div>
-                <h3 className="font-orbitron text-[10.5px] font-black tracking-widest text-text-primary mt-0.5">
+                <h3 className="font-orbitron text-[12px] font-black tracking-widest text-text-primary mt-0.5">
                   ENCODING REFERENCER
                 </h3>
               </div>
-              <span className="text-[10px] font-mono text-text-dim bg-bg-void/50 px-1 border border-border-hairline/10 uppercase">
+              <span className="text-[12px] font-mono text-text-dim bg-bg-void/50 px-1 border border-border-hairline/10 uppercase">
                 ASCII INDEX
               </span>
             </div>
 
             <div className="flex-1 overflow-y-auto scrollbar-thin pr-1 max-h-[90px]">
-              <table className="w-full text-left font-mono text-[10px] text-text-dim/80">
+              <table className="w-full text-left font-mono text-[12px] text-text-dim/80">
                 <thead>
-                  <tr className="border-b border-border-hairline/10 pb-1 text-cyan-dim/80 font-bold uppercase text-[10px]">
+                  <tr className="border-b border-border-hairline/10 pb-1 text-cyan-dim/80 font-bold uppercase text-[12px]">
                     <th className="py-0.5">CHAR</th>
                     <th className="py-0.5">DEC</th>
                     <th className="py-0.5">HEX</th>
@@ -990,7 +1028,7 @@ export default function EncodingLab() {
             </div>
           </div>
 
-          <div className="flex justify-between text-[10px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1.5">
+          <div className="flex justify-between text-[12px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1.5">
             <span>ISO/IEC 8859-1 CODES</span>
             <span className="text-cyan-dim/40 uppercase font-bold">READY</span>
           </div>

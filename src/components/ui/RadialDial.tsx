@@ -181,13 +181,13 @@ export default function RadialDial({
                 transition={{ duration: 0.2 }}
                 className="flex flex-col items-center justify-center"
               >
-                <span className="font-orbitron text-[10px] font-black text-cyan-primary tracking-widest uppercase">
+                <span className="font-orbitron text-[12px] font-black text-cyan-primary tracking-widest uppercase">
                   ACTIVE
                 </span>
-                <span className="font-chakra text-[11px] font-extrabold text-text-primary tracking-wider uppercase truncate max-w-[85px] leading-tight my-0.5">
+                <span className="font-chakra text-[13px] font-extrabold text-text-primary tracking-wider uppercase truncate max-w-[85px] leading-tight my-0.5">
                   {activeItem.label}
                 </span>
-                <span className="font-share text-[10px] text-cyan-dim/80 uppercase tracking-widest leading-none">
+                <span className="font-share text-[12px] text-cyan-dim/80 uppercase tracking-widest leading-none">
                   MODE READY
                 </span>
               </motion.div>
@@ -265,10 +265,10 @@ export default function RadialDial({
               exit={{ opacity: 0, y: -5 }}
               transition={{ duration: 0.15 }}
             >
-              <h4 className="font-chakra text-[11px] font-black text-cyan-primary uppercase tracking-widest">
+              <h4 className="font-chakra text-[13px] font-black text-cyan-primary uppercase tracking-widest">
                 {activeItem.label}
               </h4>
-              <p className="font-share text-[10.5px] text-text-dim leading-snug uppercase mt-0.5 max-h-[30px] overflow-hidden">
+              <p className="font-share text-[12px] text-text-dim leading-snug uppercase mt-0.5 max-h-[30px] overflow-hidden">
                 {activeItem.description}
               </p>
             </motion.div>

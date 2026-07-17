@@ -1496,7 +1496,7 @@ ${currentSample.analysisSummary}`;
             <span className="font-orbitron text-sm font-black tracking-[0.2em] text-cyan-primary uppercase">
               RELEASE TO ANALYZE
             </span>
-            <span className="font-share text-[11.5px] text-text-dim uppercase tracking-widest">
+            <span className="font-share text-[13px] text-text-dim uppercase tracking-widest">
               Drop audio file anywhere on screen
             </span>
           </div>
@@ -1513,7 +1513,7 @@ ${currentSample.analysisSummary}`;
                 AUDIO SPECTRAL FORENSICS
               </h1>
             </div>
-            <p className="text-[11px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
+            <p className="text-[13px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
               Belfry Acoustic Analysis Lab. Isolates audio frequencies, deciphers Morse radio intercepts, maps DTMF dial codes, and reconstructs reversed vocal echoes.
             </p>
           </div>
@@ -1542,7 +1542,7 @@ ${currentSample.analysisSummary}`;
                   playPinClick();
                   setActiveTab(tab);
                 }}
-                className={`px-3 py-1 font-mono text-[10.5px] uppercase border transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none ${
+                className={`px-3 py-1 font-mono text-[12px] uppercase border transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none ${
                   activeTab === tab
                     ? "bg-cyan-primary border-cyan-primary text-bg-void font-bold shadow-[0_0_6px_#2ff1e4]"
                     : "bg-bg-void/40 border-border-hairline/25 text-text-dim hover:text-text-primary hover:border-cyan-primary/30"
@@ -1560,8 +1560,8 @@ ${currentSample.analysisSummary}`;
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-primary/20 to-transparent w-full h-[10%] animate-scanline-vertical opacity-30 mix-blend-screen pointer-events-none" />
           
           {activeTab === "midi" ? (
-            <div className="w-full h-[220px] flex flex-col font-mono text-[11px] text-cyan-dim overflow-y-auto scrollbar-thin select-text space-y-1 pr-1">
-              <div className="border-b border-cyan-primary/20 pb-1 flex justify-between items-center text-[10.5px] font-bold tracking-widest text-text-primary uppercase mb-1.5 shrink-0">
+            <div className="w-full h-[220px] flex flex-col font-mono text-[13px] text-cyan-dim overflow-y-auto scrollbar-thin select-text space-y-1 pr-1">
+              <div className="border-b border-cyan-primary/20 pb-1 flex justify-between items-center text-[12px] font-bold tracking-widest text-text-primary uppercase mb-1.5 shrink-0">
                 <span>MIDI BINARY STREAM PARSER // CHUNK TYPE MThd & MTrk</span>
                 <span className="text-cyan-primary animate-pulse">STATUS: ACTIVE</span>
               </div>
@@ -1571,21 +1571,21 @@ ${currentSample.analysisSummary}`;
                   {/* File Metadata Headers */}
                   <div className="grid grid-cols-3 gap-2 bg-cyan-primary/5 p-1.5 border border-cyan-primary/15 mb-2 rounded-sm text-text-primary shrink-0">
                     <div>
-                      <span className="text-text-dim text-[10px] uppercase block">MIDI FORMAT:</span>
+                      <span className="text-text-dim text-[12px] uppercase block">MIDI FORMAT:</span>
                       <span className="text-cyan-text font-bold">Format {parsedMidi.header.format}</span>
                     </div>
                     <div>
-                      <span className="text-text-dim text-[10px] uppercase block">TRACKS COUNT:</span>
+                      <span className="text-text-dim text-[12px] uppercase block">TRACKS COUNT:</span>
                       <span className="text-cyan-text font-bold">{parsedMidi.header.numTracks} Track(s)</span>
                     </div>
                     <div>
-                      <span className="text-text-dim text-[10px] uppercase block">TIMING DIVISION:</span>
+                      <span className="text-text-dim text-[12px] uppercase block">TIMING DIVISION:</span>
                       <span className="text-cyan-text font-bold">{parsedMidi.header.division} ticks/quarter</span>
                     </div>
                   </div>
 
                   {parsedMidi.warnings.length > 0 && (
-                    <div className="bg-red-threat/10 border border-red-threat/25 p-1.5 text-red-threat text-[10.5px] mb-2 rounded-sm shrink-0">
+                    <div className="bg-red-threat/10 border border-red-threat/25 p-1.5 text-red-threat text-[12px] mb-2 rounded-sm shrink-0">
                       <span className="font-bold">PARSER WARNINGS:</span>
                       <ul className="list-disc pl-4 space-y-0.5">
                         {parsedMidi.warnings.map((w: string, idx: number) => (
@@ -1597,9 +1597,9 @@ ${currentSample.analysisSummary}`;
 
                   {/* Render parsed events scrollbox */}
                   <div className="flex-1 overflow-y-auto space-y-1 pr-1 max-h-[140px]">
-                    <table className="w-full text-left text-[10.5px]">
+                    <table className="w-full text-left text-[12px]">
                       <thead>
-                        <tr className="border-b border-border-hairline/15 text-text-dim uppercase font-bold text-[10px]">
+                        <tr className="border-b border-border-hairline/15 text-text-dim uppercase font-bold text-[12px]">
                           <th className="pb-1">ABS TIME</th>
                           <th className="pb-1">TRACK</th>
                           <th className="pb-1">EVENT TYPE</th>
@@ -1637,7 +1637,7 @@ ${currentSample.analysisSummary}`;
                         })}
                         {parsedMidi.events.length > 150 && (
                           <tr>
-                            <td colSpan={5} className="py-1 text-center text-text-dim italic text-[10px]">
+                            <td colSpan={5} className="py-1 text-center text-text-dim italic text-[12px]">
                               -- showing first 150 events of {parsedMidi.events.length} total events --
                             </td>
                           </tr>
@@ -1648,7 +1648,7 @@ ${currentSample.analysisSummary}`;
                 </>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center space-y-3 py-8 text-center h-[140px]">
-                  <span className="text-text-dim uppercase text-[10.5px] tracking-widest">Awaiting MIDI telemetry stream decoder — upload a .mid file to begin...</span>
+                  <span className="text-text-dim uppercase text-[12px] tracking-widest">Awaiting MIDI telemetry stream decoder — upload a .mid file to begin...</span>
                 </div>
               )}
             </div>
@@ -1675,7 +1675,7 @@ ${currentSample.analysisSummary}`;
 
           {/* If scanning, overlay scanning label */}
           {isScanning && (
-            <div className="absolute bottom-4 right-4 flex items-center space-x-2 font-share text-[11px] text-cyan-primary tracking-widest bg-bg-void/90 px-2.5 py-1 border border-cyan-primary/30 shadow-[0_0_10px_rgba(47,241,228,0.2)]">
+            <div className="absolute bottom-4 right-4 flex items-center space-x-2 font-share text-[13px] text-cyan-primary tracking-widest bg-bg-void/90 px-2.5 py-1 border border-cyan-primary/30 shadow-[0_0_10px_rgba(47,241,228,0.2)]">
               <span className="w-2 h-2 rounded-full bg-cyan-primary animate-ping-cyan" />
               <span className="font-bold">{scanningMessage}</span>
             </div>
@@ -1688,14 +1688,14 @@ ${currentSample.analysisSummary}`;
           <div className="absolute bottom-4 right-4 w-3 h-3 border-b border-r border-cyan-primary/20" />
         </div>
 
-        <div className="mt-2.5 flex justify-between font-mono text-[10px] text-text-dim uppercase tracking-widest">
+        <div className="mt-2.5 flex justify-between font-mono text-[12px] text-text-dim uppercase tracking-widest">
           <span>COHERENT ACOUSTIC FREQUENCY FEED</span>
           <span>FILTER PROFILE: HIGH-PASS CHEBYSHEV ENVELOPE</span>
         </div>
 
         {/* Timeline Scrub Bar (Scrubbing enabled only if currentSample exists) */}
         <div className="mt-4 space-y-1">
-          <div className="flex justify-between font-mono text-[10.5px] text-text-dim">
+          <div className="flex justify-between font-mono text-[12px] text-text-dim">
             <span>{currentSample ? `${currentTime.toFixed(1)}s` : "0.0s"}</span>
             <span>{currentSample ? `${currentSample.duration.toFixed(1)}s` : "0.0s"}</span>
           </div>
@@ -1762,7 +1762,7 @@ ${currentSample.analysisSummary}`;
                 setIsReversed(!isReversed);
                 addLog(`REVERSED ACOUSTIC MODULATION: ${!isReversed ? "ENABLED" : "DISABLED"}`, "info", "SYS");
               }}
-              className={`px-3 py-2 border font-mono text-[10.5px] font-black transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none ${
+              className={`px-3 py-2 border font-mono text-[12px] font-black transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none ${
                 isReversed
                   ? "bg-amber-alert/25 border-amber-alert text-white"
                   : "border-border-hairline/25 text-text-dim hover:text-text-primary hover:bg-bg-void/40"
@@ -1777,7 +1777,7 @@ ${currentSample.analysisSummary}`;
             <button
               disabled={!currentSample || isScanning}
               onClick={triggerSpectralScan}
-              className="hud-target w-full py-2 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-[11px] font-black tracking-widest font-orbitron uppercase disabled:opacity-35 disabled:pointer-events-none flex items-center justify-center space-x-2"
+              className="hud-target w-full py-2 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-[13px] font-black tracking-widest font-orbitron uppercase disabled:opacity-35 disabled:pointer-events-none flex items-center justify-center space-x-2"
               style={{ clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)" }}
             >
               <Radio className={`w-3.5 h-3.5 text-bg-void ${isScanning ? 'animate-radar-sweep' : 'animate-hex-pulse-flicker'}`} />
@@ -1786,7 +1786,7 @@ ${currentSample.analysisSummary}`;
           </div>
 
           {/* Speed Adjust */}
-          <div className="flex items-center space-x-1 font-mono text-[10.5px]">
+          <div className="flex items-center space-x-1 font-mono text-[12px]">
             <span className="text-text-dim mr-1">NOISE REDUCTION:</span>
             <button
               disabled={!currentSample}
@@ -1834,7 +1834,7 @@ ${currentSample.analysisSummary}`;
           
           {/* Centroid Metric */}
           <div className="flex flex-col space-y-1">
-            <div className="flex justify-between font-mono text-[10.5px] tracking-wider">
+            <div className="flex justify-between font-mono text-[12px] tracking-wider">
               <span className="text-text-dim">SPECTRAL CENTROID</span>
               <span className="text-cyan-text font-black">{scanComplete && currentSample ? currentSample.spectralCentroid : "0 Hz"}</span>
             </div>
@@ -1852,7 +1852,7 @@ ${currentSample.analysisSummary}`;
 
           {/* RMS Metric */}
           <div className="flex flex-col space-y-1">
-            <div className="flex justify-between font-mono text-[10.5px] tracking-wider">
+            <div className="flex justify-between font-mono text-[12px] tracking-wider">
               <span className="text-text-dim">RMS ENVELOPE ENERGY</span>
               <span className="text-cyan-text font-black">{scanComplete && currentSample ? currentSample.rmsEnergy : "-∞ dB"}</span>
             </div>
@@ -1870,7 +1870,7 @@ ${currentSample.analysisSummary}`;
 
           {/* Zero Crossing Metric */}
           <div className="flex flex-col space-y-1">
-            <div className="flex justify-between font-mono text-[10.5px] tracking-wider">
+            <div className="flex justify-between font-mono text-[12px] tracking-wider">
               <span className="text-text-dim">ZERO CROSSING DENSITY</span>
               <span className="text-cyan-text font-black">{scanComplete && currentSample ? currentSample.zeroCrossing : "0 cps"}</span>
             </div>
@@ -1888,7 +1888,7 @@ ${currentSample.analysisSummary}`;
 
           {/* Coherence Confidence Metric */}
           <div className="flex flex-col space-y-1">
-            <div className="flex justify-between font-mono text-[10.5px] tracking-wider">
+            <div className="flex justify-between font-mono text-[12px] tracking-wider">
               <span className="text-text-dim">COHERENCE CONFIDENCE</span>
               <span className="text-green-verified font-black">{scanComplete && currentSample ? "99.8%" : "0.0%"}</span>
             </div>
@@ -1913,7 +1913,7 @@ ${currentSample.analysisSummary}`;
                 <Compass className="w-3.5 h-3.5 mr-2 text-cyan-primary animate-hex-pulse-flicker" />
                 SIGNAL ARCHIVE & INPUT PORT
               </h3>
-              <p className="text-[10.5px] text-text-dim uppercase tracking-wider font-share">
+              <p className="text-[12px] text-text-dim uppercase tracking-wider font-share">
                 Upload local raw audio or MIDI to execute forensic spectral sweeps
               </p>
             </div>
@@ -1949,10 +1949,10 @@ ${currentSample.analysisSummary}`;
                 <div className="w-10 h-10 rounded-full border border-cyan-primary/25 flex items-center justify-center mb-2 bg-bg-void group-hover:scale-105 group-hover:border-cyan-primary/55 transition-all duration-300">
                   <Upload className="w-4 h-4 text-cyan-primary/70 group-hover:text-cyan-primary" />
                 </div>
-                <span className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text text-center">
+                <span className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text text-center">
                   UPLOAD AUDIO STREAM
                 </span>
-                <span className="text-[10px] text-text-dim uppercase text-center mt-0.5">
+                <span className="text-[12px] text-text-dim uppercase text-center mt-0.5">
                   DRAG & DROP OR CLICK TO BROWSE
                 </span>
               </div>
@@ -1961,7 +1961,7 @@ ${currentSample.analysisSummary}`;
 
             {/* Current Active Info Bar */}
             {currentSample && (
-              <div className="mt-3 bg-bg-void/40 border border-border-hairline/10 p-2 font-mono text-[10.5px] flex justify-between items-center">
+              <div className="mt-3 bg-bg-void/40 border border-border-hairline/10 p-2 font-mono text-[12px] flex justify-between items-center">
                 <div className="flex space-x-4">
                   <div>
                     <span className="text-text-dim mr-1">SOURCE:</span>
@@ -1997,7 +1997,7 @@ ${currentSample.analysisSummary}`;
             <div className="border-b border-border-hairline/15 pb-1.5 mb-3 flex justify-between items-center">
               <div className="flex items-center">
                 <Award className="w-3.5 h-3.5 text-cyan-primary mr-1.5" />
-                <h4 className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text uppercase">
+                <h4 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text uppercase">
                   EXTRACTED FREQUENCY HARMONIC SIGNAL
                 </h4>
               </div>
@@ -2009,11 +2009,11 @@ ${currentSample.analysisSummary}`;
             </div>
 
             {!currentSample ? (
-              <div className="py-12 text-center text-[11px] text-text-dim uppercase font-mono">
+              <div className="py-12 text-center text-[13px] text-text-dim uppercase font-mono">
                 No active carrier wave loaded...
               </div>
             ) : !scanComplete ? (
-              <div className="py-12 text-center text-[11px] text-text-dim uppercase font-mono">
+              <div className="py-12 text-center text-[13px] text-text-dim uppercase font-mono">
                 {isScanning ? "Aligning carrier phases..." : "Demodulator feed offline. Run scan sweep."}
               </div>
             ) : (
@@ -2026,12 +2026,12 @@ ${currentSample.analysisSummary}`;
                     <DecryptText text={currentSample.revealedSecret} duration={1000} />
                     {lsbPayload && (
                       <div className="mt-2 pt-2 border-t border-border-hairline/10">
-                        <span className="text-[10px] text-text-dim uppercase block mb-1">LSB Decoded Stream:</span>
-                        <span className="text-[11px] text-green-verified break-all">{lsbPayload}</span>
+                        <span className="text-[12px] text-text-dim uppercase block mb-1">LSB Decoded Stream:</span>
+                        <span className="text-[13px] text-green-verified break-all">{lsbPayload}</span>
                       </div>
                     )}
                     {currentSample.name.toLowerCase().endsWith(".wav") ? null : activeFile && (
-                      <div className="mt-2 text-[10px] text-amber-alert/60 italic uppercase">
+                      <div className="mt-2 text-[12px] text-amber-alert/60 italic uppercase">
                         * LSB analysis bypassed (non-WAV/lossy format detected)
                       </div>
                     )}
@@ -2041,7 +2041,7 @@ ${currentSample.analysisSummary}`;
                 <div className="flex justify-end pt-2">
                   <button
                     onClick={pushFindingsToDossier}
-                    className="px-4 py-2 border border-cyan-primary/30 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all duration-200 text-[11px] uppercase tracking-widest font-black flex items-center space-x-1.5"
+                    className="px-4 py-2 border border-cyan-primary/30 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all duration-200 text-[13px] uppercase tracking-widest font-black flex items-center space-x-1.5"
                     style={{ clipPath: "polygon(0 0, 100% 0, 94% 100%, 0 100%)" }}
                   >
                     <Plus className="w-3.5 h-3.5" />

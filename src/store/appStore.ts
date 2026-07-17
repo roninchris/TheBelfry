@@ -9,6 +9,7 @@ import { getAudioContext } from "../lib/soundEngine";
 import type { KnightId } from "../lib/identity";
 import { migrateLegacyGuestBoard, storageFor, type BoardStorage } from "../lib/storage";
 import { onSessionLost, resolveSessionIdentity } from "../lib/session";
+import { moduleForTool } from "../lib/toolRouting";
 
 export interface ForensicLog {
   id: string;
@@ -17,6 +18,11 @@ export interface ForensicLog {
   sender: string;
   text: string;
 }
+
+/** How dangerous the case is judged to be. Orthogonal to `status`. */
+export type ThreatLevel = "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
+
+export const THREAT_LEVELS: ThreatLevel[] = ["LOW", "MODERATE", "HIGH", "CRITICAL"];
 
 export interface Case {
   id: string;
@@ -27,6 +33,7 @@ export interface Case {
   colorTag?: string;         // optional accent color per case
   notes: string;             // freeform markdown/journal notes for the case
   createdBy?: KnightId;      // absent = opened by a guest on their local board
+  threatLevel?: ThreatLevel; // absent on cases filed before this existed
 }
 
 export interface EvidenceNode {
@@ -120,6 +127,19 @@ interface AppState {
   reloadBoard: () => Promise<void>;
 
   currentModule: string;
+
+  /**
+   * A tool the catalogue asked another module to open, pending pickup.
+   *
+   * Read-once: the target module consumes it on arrival and clears it, so
+   * navigating back later does not silently re-select an old tool.
+   */
+  pendingToolId: string | null;
+  /** Switches to the tool's home module and asks it to select the tool. */
+  openToolInModule: (toolId: string) => void;
+  /** Takes the pending tool id, clearing it. Returns null if there is none. */
+  consumePendingTool: () => string | null;
+
   logs: ForensicLog[];
   cases: Case[];
   activeCaseId: string | null;
@@ -142,6 +162,11 @@ interface AppState {
   addCase: (caseData: Omit<Case, "id" | "createdAt" | "notes">) => void;
   updateCaseNotes: (caseId: string, notes: string) => void;
   updateCaseStatus: (caseId: string, status: Case["status"]) => void;
+  /** Edits a case's identifying fields. Author and creation time are fixed. */
+  updateCaseDetails: (
+    caseId: string,
+    updates: Partial<Pick<Case, "title" | "synopsis" | "threatLevel">>
+  ) => void;
   deleteCase: (caseId: string) => void;
   
   // Evidence Board actions
@@ -291,6 +316,21 @@ export const useAppStore = create<AppState>()(
       setModule: (module) => {
         set({ currentModule: module });
         playMaterialize();
+      },
+
+      pendingToolId: null,
+
+      openToolInModule: (toolId) => {
+        const home = moduleForTool(toolId);
+        if (!home) return;
+        set({ pendingToolId: toolId, currentModule: home.module });
+        playMaterialize();
+      },
+
+      consumePendingTool: () => {
+        const pending = get().pendingToolId;
+        if (pending) set({ pendingToolId: null });
+        return pending;
       },
       
       addLog: (text, type = "info", sender = "SYS") => {
@@ -459,6 +499,15 @@ export const useAppStore = create<AppState>()(
         }));
         const updated = get().cases.find((c) => c.id === caseId);
         if (updated) syncWrite(get().boardStorage.putCase(updated), "CASE NOTES", get().addLog);
+      },
+
+      updateCaseDetails: (caseId, updates) => {
+        set((state) => ({
+          cases: state.cases.map((c) => (c.id === caseId ? { ...c, ...updates } : c))
+        }));
+        const updated = get().cases.find((c) => c.id === caseId);
+        if (updated) syncWrite(get().boardStorage.putCase(updated), "CASE DETAILS", get().addLog);
+        get().addLog(`CASE DOSSIER AMENDED: ${updated?.title ?? caseId}`, "info", "SYS");
       },
 
       updateCaseStatus: (caseId, status) => {

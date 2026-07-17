@@ -23,7 +23,7 @@ export default function Badge({
   };
 
   const sizeStyles = {
-    xs: "text-[11px] px-2 py-0.5 font-share tracking-wider uppercase",
+    xs: "text-[13px] px-2 py-0.5 font-share tracking-wider uppercase",
     sm: "text-xs px-2.5 py-1 font-chakra tracking-wider uppercase font-semibold",
     md: "text-sm px-3.5 py-1.5 font-chakra tracking-widest uppercase font-bold",
   };

@@ -39,7 +39,7 @@ export default function ImageScanner({
       </div>
 
       {/* Cyberpunk grid glitch indicator corner overlay */}
-      <div className="absolute bottom-4 right-4 flex items-center space-x-2 font-share text-[11px] text-cyan-primary tracking-widest bg-bg-void/90 px-2 py-1 border border-cyan-primary/30">
+      <div className="absolute bottom-4 right-4 flex items-center space-x-2 font-share text-[13px] text-cyan-primary tracking-widest bg-bg-void/90 px-2 py-1 border border-cyan-primary/30">
         <span className="w-2 h-2 rounded-full bg-cyan-primary animate-ping-cyan" />
         <span className="animate-hex-pulse-flicker font-bold">{scanLabel}</span>
       </div>

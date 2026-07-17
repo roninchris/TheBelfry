@@ -47,7 +47,7 @@ export default function Checkbox({ label, className = "", checked, onChange, dis
       </div>
       
       {label && (
-        <span className={`text-[11px] uppercase font-share font-bold tracking-widest transition-colors duration-200
+        <span className={`text-[13px] uppercase font-share font-bold tracking-widest transition-colors duration-200
           ${checked ? "text-cyan-text" : "text-text-dim group-hover:text-text-primary"}`}>
           {label}
         </span>
