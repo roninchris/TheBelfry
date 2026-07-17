@@ -1272,7 +1272,7 @@ export default function ImageForensicsLab() {
             <div className="space-y-1">
               <h4 className="font-orbitron text-[12px] font-black text-red-threat uppercase tracking-widest">BELFRY ADVISORY</h4>
               <p className="font-share text-[12px] text-text-dim leading-relaxed uppercase tracking-tighter">
-                Steghide's JPEG/AES-256/CBC path has been verified against a real steghide-embedded file. Other cover formats (BMP/WAV), cipher modes, and OutGuess extraction are adapted from the public algorithms but not yet verified against reference binaries — treat those results as best-effort. Analysis should be performed in an isolated sandbox; hidden payloads may contain malicious content.
+                Treat results from unverified paths (BMP/WAV, other cipher modes, OutGuess) as best-effort. Analysis should be performed in an isolated sandbox; hidden payloads may contain malicious content.
               </p>
             </div>
           </div>
