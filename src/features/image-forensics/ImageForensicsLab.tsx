@@ -607,7 +607,7 @@ export default function ImageForensicsLab() {
   ];
 
   return (
-    <div className="min-h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra select-none text-text-primary animate-fade-in" id="image-forensics-root">
+    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra select-none text-text-primary animate-fade-in" id="image-forensics-root">
 
       {/* ================= LEFT/CENTER COLUMN: LIGHT TABLE VISUALIZER ================= */}
       <div className="col-span-12 lg:col-span-7 flex flex-col space-y-4 min-h-0">
