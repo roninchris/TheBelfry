@@ -12,6 +12,26 @@ import type { BoardRealtimeHandlers, BoardSnapshot, BoardStorage } from "./types
  */
 const DRAG_BROADCAST_INTERVAL_MS = 50;
 
+/** Private Storage bucket holding evidence images. Create it in the dashboard. */
+const EVIDENCE_BUCKET = "evidence";
+
+/**
+ * Signed-URL lifetime, in seconds (7 days).
+ *
+ * Long enough that images never break during a session, yet the URL is still a
+ * time-limited grant that only a knight can mint. The path — not the URL — is
+ * what lives in the database, so a stranger who cannot read the RLS-gated row
+ * can never obtain a URL at all.
+ */
+const SIGNED_URL_TTL = 604800;
+
+/** Resolved signed URLs, cached until shortly before they expire. */
+const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
+function isDirectlyDisplayable(ref: string): boolean {
+  return ref.startsWith("data:") || ref.startsWith("http://") || ref.startsWith("https://");
+}
+
 /**
  * The knights' shared board, in Supabase.
  *
@@ -116,6 +136,37 @@ export class SupabaseBoardStorage implements BoardStorage {
     if (!this.channel) return;
     void this.client.removeChannel(this.channel);
     this.channel = null;
+  }
+
+  /**
+   * Uploads the image and returns its object path — what goes in the node's
+   * `content`. The bytes stay out of the synced row, so Realtime only ever
+   * carries the short path.
+   */
+  async uploadAsset(file: File): Promise<string> {
+    const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
+    const { error } = await this.client.storage
+      .from(EVIDENCE_BUCKET)
+      .upload(path, file, { contentType: file.type || undefined, upsert: false });
+    if (error) throw new Error(`Evidence upload failed: ${error.message}`);
+    return path;
+  }
+
+  async resolveAssetUrl(ref: string): Promise<string> {
+    if (isDirectlyDisplayable(ref)) return ref;
+
+    const cached = signedUrlCache.get(ref);
+    // Refresh a little before expiry so a long-open board never shows a dead URL.
+    if (cached && cached.expiresAt - Date.now() > 60_000) return cached.url;
+
+    const { data, error } = await this.client.storage
+      .from(EVIDENCE_BUCKET)
+      .createSignedUrl(ref, SIGNED_URL_TTL);
+    if (error || !data) throw new Error(`Could not resolve evidence image: ${error?.message}`);
+
+    signedUrlCache.set(ref, { url: data.signedUrl, expiresAt: Date.now() + SIGNED_URL_TTL * 1000 });
+    return data.signedUrl;
   }
 
   async load(): Promise<BoardSnapshot> {

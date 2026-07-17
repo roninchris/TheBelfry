@@ -61,6 +61,31 @@ export interface BoardStorage {
   /** Full board read. Called on session start and on identity change. */
   load(): Promise<BoardSnapshot>;
 
+  /**
+   * Stores an uploaded image and returns the durable reference to keep in a
+   * node's `content`.
+   *
+   * The two backends return different things on purpose:
+   *  - local  → a `data:` URL. Guests have no server, and localStorage holds
+   *             the bytes fine.
+   *  - cloud  → an object path in Storage. The bytes must NOT go in the synced
+   *             row: a multi-MB data URL exceeds Realtime's payload limit, so
+   *             the change echoes back truncated and the image breaks.
+   *
+   * Neither backend alters the file — this is a forensics tool and the bytes,
+   * including their metadata, are the evidence.
+   */
+  uploadAsset(file: File): Promise<string>;
+
+  /**
+   * Resolves a node's stored `content` to something an <img> can display.
+   *
+   * `data:` and `http(s)` references pass straight through (legacy nodes,
+   * external links). A cloud object path is exchanged for a signed URL. Local
+   * storage is the identity function.
+   */
+  resolveAssetUrl(ref: string): Promise<string>;
+
   putCase(value: Case): Promise<void>;
   removeCase(id: string): Promise<void>;
 

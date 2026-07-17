@@ -20,6 +20,7 @@ import {
 import GlassPanel from "../../components/ui/GlassPanel";
 import KnightSigil from "../../components/ui/KnightSigil";
 import FittedText from "../../components/ui/FittedText";
+import EvidenceImage from "../../components/ui/EvidenceImage";
 import Badge from "../../components/ui/Badge";
 import ParticleReveal from "../../components/ui/ParticleReveal";
 import ShinyText from "../../components/react-bits/ShinyText";
@@ -31,6 +32,7 @@ import {
   Maximize2,
   Minimize2,
   Image,
+  Loader2,
   FileText,
   Link,
   Trash2,
@@ -123,6 +125,7 @@ export default function DetectiveBoardPage() {
   const commitEvidenceNode = useAppStore((state) => state.commitEvidenceNode);
   const setDraggingNode = useAppStore((state) => state.setDraggingNode);
   const broadcastDrag = useAppStore((state) => state.broadcastDrag);
+  const uploadEvidenceImage = useAppStore((state) => state.uploadEvidenceImage);
   const updateEvidenceNodeContent = useAppStore((state) => state.updateEvidenceNodeContent);
   const updateEvidenceNodeNotes = useAppStore((state) => state.updateEvidenceNodeNotes);
   const deleteEvidenceNode = useAppStore((state) => state.deleteEvidenceNode);
@@ -210,6 +213,9 @@ export default function DetectiveBoardPage() {
 
   // Node resize state, mirrors draggingNodeId's transition-disabling role
   const [resizingNodeId, setResizingNodeId] = useState<string | null>(null);
+
+  // A photo upload is in flight — for a knight this is a real network round trip.
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const startRenaming = (node: EvidenceNode) => {
     setRenamingNodeId(node.id);
@@ -538,33 +544,40 @@ export default function DetectiveBoardPage() {
   };
 
   // File uploading for photos
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      const x = (bgMenu?.canvasX) ?? 150;
-      const y = (bgMenu?.canvasY) ?? 150;
+    // Reset the input so the same file can be re-picked after an error.
+    e.target.value = "";
 
-      const nodeId = `node-${Math.random().toString(36).substring(7)}`;
-      setRevealingNodes(prev => ({ ...prev, [nodeId]: true }));
-      setTimeout(() => {
-        setRevealingNodes(prev => ({ ...prev, [nodeId]: false }));
-      }, 1200);
+    const x = (bgMenu?.canvasX) ?? 150;
+    const y = (bgMenu?.canvasY) ?? 150;
+    setBgMenu(null);
+    setIsUploadingPhoto(true);
 
+    try {
+      // The backend decides what "content" means: a data URL for a guest, or a
+      // Storage object path for a knight — the bytes never enter the synced row.
+      const content = await uploadEvidenceImage(file);
       addEvidenceNode({
         type: "photo",
         title: file.name.toUpperCase(),
-        content: dataUrl,
+        content,
         x,
         y,
         color: "cyan"
       });
-      setBgMenu(null);
       playPinClick();
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      // Abort rather than drop a broken node onto the board.
+      addLog(
+        `EVIDENCE UPLOAD FAILED // ${err instanceof Error ? err.message : String(err)}`,
+        "warning",
+        "BOARD"
+      );
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   // Center view function
@@ -725,9 +738,18 @@ export default function DetectiveBoardPage() {
         </motion.div>
       ) : (
         <div className="flex flex-col lg:flex-row h-full w-full select-none text-text-primary">
+      {/* Photo upload in flight — for a knight this is a real Storage round trip. */}
+      {isUploadingPhoto && (
+        <div className="fixed inset-0 z-[90] bg-bg-void/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3 pointer-events-none">
+          <Loader2 className="w-8 h-8 text-cyan-primary animate-spin" />
+          <span className="font-orbitron text-[13px] tracking-[0.25em] text-cyan-text uppercase">
+            Securing evidence to archive
+          </span>
+        </div>
+      )}
       {/* Hidden file input for Photo Uploads */}
-      <input 
-        type="file" 
+      <input
+        type="file"
         ref={fileInputRef}
         onChange={handlePhotoUpload}
         accept="image/*"
@@ -1218,11 +1240,10 @@ export default function DetectiveBoardPage() {
                         {node.type === "photo" ? (
                           <div className="w-full h-full min-h-0 bg-bg-void/40 border border-border-hairline/10 rounded-sm relative overflow-hidden flex items-center justify-center">
                             {node.content ? (
-                              <img
-                                src={node.content}
+                              <EvidenceImage
+                                refValue={node.content}
                                 alt={node.title}
                                 className="w-full h-full object-contain select-none"
-                                referrerPolicy="no-referrer"
                               />
                             ) : (
                               <Image className="w-6 h-6 text-border-hairline/45" />
@@ -1569,11 +1590,10 @@ export default function DetectiveBoardPage() {
                   {/* Visual Content Preview */}
                   {detailNode.type === "photo" && detailNode.content && (
                     <div className="w-full aspect-video bg-bg-void/40 border border-border-hairline/20 rounded-sm overflow-hidden flex items-center justify-center relative">
-                      <img 
-                        src={detailNode.content} 
-                        alt={detailNode.title} 
+                      <EvidenceImage
+                        refValue={detailNode.content}
+                        alt={detailNode.title}
                         className="w-full h-full object-contain"
-                        referrerPolicy="no-referrer"
                       />
                     </div>
                   )}

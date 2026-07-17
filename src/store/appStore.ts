@@ -190,6 +190,10 @@ interface AppState {
   
   // Evidence Board actions
   addEvidenceNode: (node: Omit<EvidenceNode, "id" | "createdAt" | "caseId" | "notes">) => void;
+  /** Stores an image and returns the reference to save in a node's content. */
+  uploadEvidenceImage: (file: File) => Promise<string>;
+  /** Resolves stored content to a displayable URL (signed, for cloud images). */
+  resolveAssetUrl: (ref: string) => Promise<string>;
   /** Memory-only; per-frame during a drag. Persist with commitEvidenceNode. */
   updateEvidenceNodePosition: (id: string, x: number, y: number) => void;
   /** Memory-only; per-frame during a resize. Persist with commitEvidenceNode. */
@@ -723,6 +727,9 @@ export const useAppStore = create<AppState>()(
         persistWrite(id, get().boardStorage.putNode(newNode), `NODE ${node.title || "UNNAMED"}`, get().addLog);
         get().addLog(`ADDED EVIDENCE NODE: ${node.title || "UNNAMED"}`, "success", "BOARD");
       },
+
+      uploadEvidenceImage: (file) => get().boardStorage.uploadAsset(file),
+      resolveAssetUrl: (ref) => get().boardStorage.resolveAssetUrl(ref),
 
       // Called on every pointermove of a drag, so it is memory-only. The board
       // calls commitEvidenceNode on pointerup to persist the final position.

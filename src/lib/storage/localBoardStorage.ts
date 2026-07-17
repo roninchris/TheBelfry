@@ -87,6 +87,21 @@ export class LocalBoardStorage implements BoardStorage {
     return Promise.resolve(this.read());
   }
 
+  /** No server: the image lives in the board itself as a data URL. */
+  uploadAsset(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /** Content is already directly displayable (a data URL or plain link). */
+  resolveAssetUrl(ref: string): Promise<string> {
+    return Promise.resolve(ref);
+  }
+
   putCase(value: Case): Promise<void> {
     return this.mutate((s) => ({
       ...s,
