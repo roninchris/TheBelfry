@@ -4,7 +4,7 @@ import { LocalBoardStorage } from "./localBoardStorage";
 import { SupabaseBoardStorage } from "./supabaseBoardStorage";
 import type { BoardStorage } from "./types";
 
-export type { BoardSnapshot, BoardStorage } from "./types";
+export type { BoardRealtimeHandlers, BoardSnapshot, BoardStorage } from "./types";
 export { EMPTY_SNAPSHOT } from "./types";
 export { LocalBoardStorage, migrateLegacyGuestBoard } from "./localBoardStorage";
 export { SupabaseBoardStorage } from "./supabaseBoardStorage";
@@ -22,6 +22,6 @@ export { SupabaseBoardStorage } from "./supabaseBoardStorage";
  * back to the private board is the safe direction to fail.
  */
 export function storageFor(identity: KnightId | null): BoardStorage {
-  if (identity && supabase) return new SupabaseBoardStorage(supabase);
+  if (identity && supabase) return new SupabaseBoardStorage(supabase, identity);
   return new LocalBoardStorage();
 }

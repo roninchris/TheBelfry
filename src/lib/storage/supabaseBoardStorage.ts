@@ -1,7 +1,16 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { THREAT_LEVELS, type Case, type EvidenceConnection, type EvidenceNode } from "../../store/appStore";
-import { isKnightId } from "../identity";
-import type { BoardSnapshot, BoardStorage } from "./types";
+import { isKnightId, type KnightId } from "../identity";
+import type { BoardRealtimeHandlers, BoardSnapshot, BoardStorage } from "./types";
+
+/**
+ * Minimum gap between broadcast drag frames, in ms.
+ *
+ * A pointer can emit well over 100 events/sec. ~20/sec is smooth enough to read
+ * as live movement while keeping the channel (and the free tier's message
+ * budget) sane.
+ */
+const DRAG_BROADCAST_INTERVAL_MS = 50;
 
 /**
  * The knights' shared board, in Supabase.
@@ -17,7 +26,97 @@ import type { BoardSnapshot, BoardStorage } from "./types";
 export class SupabaseBoardStorage implements BoardStorage {
   readonly kind = "cloud" as const;
 
-  constructor(private readonly client: SupabaseClient) {}
+  private channel: RealtimeChannel | null = null;
+  private lastDragSentAt = 0;
+
+  /**
+   * Identifies this tab, not this knight.
+   *
+   * Drag echoes must be suppressed per-connection: keying on knightId would
+   * make two tabs signed in as the same operative ignore each other, which is
+   * exactly the case someone hits by opening the board twice.
+   */
+  private readonly clientId = `c${Math.random().toString(36).slice(2, 10)}`;
+
+  constructor(
+    private readonly client: SupabaseClient,
+    private readonly knightId: KnightId
+  ) {}
+
+  /**
+   * Opens one channel carrying all three realtime concerns.
+   *
+   *  - postgres_changes: durable state. Honours RLS, so a non-knight receives
+   *    no events even if they somehow opened the channel.
+   *  - broadcast: in-flight drag positions, which must never hit the database.
+   *  - presence: who is on the board.
+   */
+  subscribe(handlers: BoardRealtimeHandlers): () => void {
+    this.dispose();
+
+    const channel = this.client.channel("belfry-board", {
+      config: { presence: { key: this.knightId } },
+    });
+    this.channel = channel;
+
+    const table = (name: string, apply: (id: string, row: any | null) => void) =>
+      channel.on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: name },
+        (payload: any) => {
+          // On DELETE, Postgres only replicates the identity columns, so `old`
+          // carries the primary key and nothing else — which is all we need.
+          const id = payload.new?.id ?? payload.old?.id;
+          if (!id) return;
+          apply(id, payload.eventType === "DELETE" ? null : payload.new);
+        }
+      );
+
+    table("cases", (id, row) => handlers.onCase(id, row ? toCase(row) : null));
+    table("evidence_nodes", (id, row) => handlers.onNode(id, row ? toNode(row) : null));
+    table("evidence_connections", (id, row) =>
+      handlers.onConnection(id, row ? toConnection(row) : null)
+    );
+
+    channel.on("broadcast", { event: "drag" }, ({ payload }: any) => {
+      // Supabase does not echo broadcasts to the sender by default; this is
+      // belt-and-braces, and is keyed per-tab so a second tab belonging to the
+      // same knight still receives the movement.
+      if (!payload || payload.by === this.clientId) return;
+      handlers.onDrag(payload.nodeId, payload.x, payload.y);
+    });
+
+    channel.on("presence", { event: "sync" }, () => {
+      const state = channel.presenceState();
+      const knights = Object.keys(state).filter(isKnightId);
+      handlers.onPresence(knights);
+    });
+
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        void channel.track({ knightId: this.knightId, at: Date.now() });
+      }
+    });
+
+    return () => this.dispose();
+  }
+
+  broadcastDrag(nodeId: string, x: number, y: number): void {
+    const now = Date.now();
+    if (now - this.lastDragSentAt < DRAG_BROADCAST_INTERVAL_MS) return;
+    this.lastDragSentAt = now;
+    void this.channel?.send({
+      type: "broadcast",
+      event: "drag",
+      payload: { nodeId, x, y, by: this.clientId },
+    });
+  }
+
+  dispose(): void {
+    if (!this.channel) return;
+    void this.client.removeChannel(this.channel);
+    this.channel = null;
+  }
 
   async load(): Promise<BoardSnapshot> {
     const [cases, nodes, connections] = await Promise.all([

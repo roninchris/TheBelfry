@@ -7,7 +7,12 @@ import { detectHiddenMessageInFile, loadImageAsCanvas } from "../lib/tools/image
 import { detectMorse, detectDTMF } from "../lib/audioAnalysis";
 import { getAudioContext } from "../lib/soundEngine";
 import type { KnightId } from "../lib/identity";
-import { migrateLegacyGuestBoard, storageFor, type BoardStorage } from "../lib/storage";
+import {
+  migrateLegacyGuestBoard,
+  storageFor,
+  type BoardRealtimeHandlers,
+  type BoardStorage,
+} from "../lib/storage";
 import { onSessionLost, resolveSessionIdentity } from "../lib/session";
 import { moduleForTool } from "../lib/toolRouting";
 
@@ -116,6 +121,20 @@ interface AppState {
   boardStatus: BoardStatus;
   boardError: string | null;
 
+  /** Knights currently on the board, from presence. Empty for a guest. */
+  presentKnights: KnightId[];
+
+  /**
+   * The node this browser is dragging right now, if any.
+   *
+   * Remote updates for it are ignored while it is held: a change echoing back
+   * mid-drag would yank the card out from under the user's pointer.
+   */
+  draggingNodeId: string | null;
+  setDraggingNode: (id: string | null) => void;
+  /** Publishes an in-flight drag to the other knights. Memory-only locally. */
+  broadcastDrag: (nodeId: string, x: number, y: number) => void;
+
   /**
    * Binds the identity's board and replaces the in-memory board with it.
    *
@@ -223,6 +242,133 @@ function syncWrite(op: Promise<void>, subject: string, log: Logger): void {
   });
 }
 
+/**
+ * When each row was last written by THIS client.
+ *
+ * Realtime's postgres_changes echoes a client's own writes back to it, and
+ * applying that echo clobbers newer local edits — type "abc" fast and the echo
+ * of "a" lands on top of it, so the field reverts. There is no self-filter for
+ * postgres_changes (unlike broadcast), so we suppress by recency: a remote row
+ * that arrives within this window of our own write to it is treated as our echo
+ * and ignored. The window refreshes on every keystroke, so it covers a
+ * continuous edit and lapses shortly after typing stops, letting genuine remote
+ * changes through.
+ */
+const ECHO_SUPPRESS_MS = 3000;
+const localWriteTimes = new Map<string, number>();
+
+/** Records a local write and fires it. Marks the id so its echo is ignored. */
+function persistWrite(id: string, op: Promise<void>, subject: string, log: Logger): void {
+  localWriteTimes.set(id, Date.now());
+  syncWrite(op, subject, log);
+}
+
+function isOwnEcho(id: string): boolean {
+  const t = localWriteTimes.get(id);
+  return t !== undefined && Date.now() - t < ECHO_SUPPRESS_MS;
+}
+
+/**
+ * Per-row debounce for text that changes on every keystroke.
+ *
+ * Notes and content edits bind straight to the store, so without this each
+ * keystroke was a Supabase round-trip — the source of the board's typing lag.
+ * Memory still updates instantly; only the durable write waits for a pause.
+ */
+const commitTimers = new Map<string, ReturnType<typeof setTimeout>>();
+function debouncedCommit(id: string, fn: () => void, ms = 500): void {
+  const existing = commitTimers.get(id);
+  if (existing) clearTimeout(existing);
+  commitTimers.set(
+    id,
+    setTimeout(() => {
+      commitTimers.delete(id);
+      fn();
+    }, ms)
+  );
+}
+
+/** Upserts by id, preserving order and appending anything new. */
+function mergeById<T extends { id: string }>(list: T[], value: T): T[] {
+  const i = list.findIndex((item) => item.id === value.id);
+  if (i === -1) return [...list, value];
+  const next = [...list];
+  next[i] = value;
+  return next;
+}
+
+/** Live channel teardown, held outside the store since it is not state. */
+let unsubscribeBoard: (() => void) | null = null;
+
+/**
+ * Applies the other knights' changes to the in-memory board.
+ *
+ * These are remote-authored, so they are applied directly and never written
+ * back — echoing them to the database would have every knight rewriting every
+ * change, multiplying traffic by the number of people on the board.
+ */
+const realtimeHandlers: BoardRealtimeHandlers = {
+  onCase: (id, value) =>
+    useAppStore.setState((s) => {
+      if (!value) {
+        const cases = s.cases.filter((c) => c.id !== id);
+        return {
+          cases,
+          // Mirror the schema's ON DELETE CASCADE locally.
+          evidenceNodes: s.evidenceNodes.filter((n) => n.caseId !== id),
+          evidenceConnections: s.evidenceConnections.filter((c) => c.caseId !== id),
+          activeCaseId: s.activeCaseId === id ? cases[0]?.id ?? null : s.activeCaseId,
+        };
+      }
+      if (isOwnEcho(id)) return {};
+      return { cases: mergeById(s.cases, value) };
+    }),
+
+  onNode: (id, value) =>
+    useAppStore.setState((s) => {
+      if (!value) {
+        return {
+          evidenceNodes: s.evidenceNodes.filter((n) => n.id !== id),
+          evidenceConnections: s.evidenceConnections.filter(
+            (c) => c.fromNodeId !== id && c.toNodeId !== id
+          ),
+        };
+      }
+      // The echo of our own write, arriving after we have already moved on —
+      // applying it would revert the edit we just made.
+      if (isOwnEcho(id)) return {};
+      // A node held under the local pointer keeps its local position: the
+      // authoritative value is whatever this user is dragging it to, and
+      // applying the remote one would snatch the card away mid-gesture.
+      if (s.draggingNodeId === id) {
+        const held = s.evidenceNodes.find((n) => n.id === id);
+        if (held) return { evidenceNodes: mergeById(s.evidenceNodes, { ...value, x: held.x, y: held.y }) };
+      }
+      return { evidenceNodes: mergeById(s.evidenceNodes, value) };
+    }),
+
+  onConnection: (id, value) =>
+    useAppStore.setState((s) => {
+      if (value && isOwnEcho(id)) return {};
+      return {
+        evidenceConnections: value
+          ? mergeById(s.evidenceConnections, value)
+          : s.evidenceConnections.filter((c) => c.id !== id),
+      };
+    }),
+
+  onDrag: (nodeId, x, y) =>
+    useAppStore.setState((s) => {
+      // Never let a remote frame move a node this user is holding.
+      if (s.draggingNodeId === nodeId) return {};
+      return {
+        evidenceNodes: s.evidenceNodes.map((n) => (n.id === nodeId ? { ...n, x, y } : n)),
+      };
+    }),
+
+  onPresence: (knights) => useAppStore.setState({ presentKnights: knights }),
+};
+
 // Ordering matters: board fields are no longer persisted, so the store's first
 // write rewrites the persist blob without them. Any guest board predating the
 // storage adapter has to be lifted out before that happens.
@@ -239,10 +385,20 @@ export const useAppStore = create<AppState>()(
       boardStorage: storageFor(null),
       boardStatus: "ready",
       boardError: null,
+      presentKnights: [],
+      draggingNodeId: null,
+
+      setDraggingNode: (id) => set({ draggingNodeId: id }),
+
+      broadcastDrag: (nodeId, x, y) => {
+        get().boardStorage.broadcastDrag?.(nodeId, x, y);
+      },
 
       setIdentity: async (id) => {
         const previous = get().boardStorage;
         if (previous.kind === "cloud" || get().currentIdentity !== id) previous.dispose?.();
+        unsubscribeBoard?.();
+        unsubscribeBoard = null;
 
         const boardStorage = storageFor(id);
         // Clear the board before loading: the outgoing identity's evidence must
@@ -252,11 +408,19 @@ export const useAppStore = create<AppState>()(
           boardStorage,
           boardStatus: "loading",
           boardError: null,
+          presentKnights: [],
+          draggingNodeId: null,
           cases: [],
           evidenceNodes: [],
           evidenceConnections: [],
         });
         await get().reloadBoard();
+
+        // Subscribe only after the snapshot has landed, so an early event
+        // cannot be overwritten by the load that follows it.
+        // LocalBoardStorage has no subscribe at all — a guest has nobody to
+        // sync with, so this is simply absent rather than disabled.
+        unsubscribeBoard = boardStorage.subscribe?.(realtimeHandlers) ?? null;
       },
 
       reloadBoard: async () => {
@@ -489,7 +653,7 @@ export const useAppStore = create<AppState>()(
           cases: [...state.cases, newCase],
           activeCaseId: id
         }));
-        syncWrite(get().boardStorage.putCase(newCase), `CASE ${newCase.title}`, get().addLog);
+        persistWrite(id, get().boardStorage.putCase(newCase), `CASE ${newCase.title}`, get().addLog);
         get().addLog(`NEW CASE CREATED AND ACTIVATED: ${newCase.title}`, "success", "SYS");
       },
 
@@ -497,8 +661,11 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           cases: state.cases.map((c) => (c.id === caseId ? { ...c, notes } : c))
         }));
-        const updated = get().cases.find((c) => c.id === caseId);
-        if (updated) syncWrite(get().boardStorage.putCase(updated), "CASE NOTES", get().addLog);
+        // Case notes are a per-keystroke textarea; debounce the durable write.
+        debouncedCommit(caseId, () => {
+          const updated = get().cases.find((c) => c.id === caseId);
+          if (updated) persistWrite(caseId, get().boardStorage.putCase(updated), "CASE NOTES", get().addLog);
+        });
       },
 
       updateCaseDetails: (caseId, updates) => {
@@ -506,7 +673,7 @@ export const useAppStore = create<AppState>()(
           cases: state.cases.map((c) => (c.id === caseId ? { ...c, ...updates } : c))
         }));
         const updated = get().cases.find((c) => c.id === caseId);
-        if (updated) syncWrite(get().boardStorage.putCase(updated), "CASE DETAILS", get().addLog);
+        if (updated) persistWrite(caseId, get().boardStorage.putCase(updated), "CASE DETAILS", get().addLog);
         get().addLog(`CASE DOSSIER AMENDED: ${updated?.title ?? caseId}`, "info", "SYS");
       },
 
@@ -515,7 +682,7 @@ export const useAppStore = create<AppState>()(
           cases: state.cases.map((c) => (c.id === caseId ? { ...c, status } : c))
         }));
         const updated = get().cases.find((c) => c.id === caseId);
-        if (updated) syncWrite(get().boardStorage.putCase(updated), "CASE STATUS", get().addLog);
+        if (updated) persistWrite(caseId, get().boardStorage.putCase(updated), "CASE STATUS", get().addLog);
         get().addLog(`CASE STATUS UPDATED: ${status}`, "info", "SYS");
       },
 
@@ -553,7 +720,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           evidenceNodes: [...state.evidenceNodes, newNode]
         }));
-        syncWrite(get().boardStorage.putNode(newNode), `NODE ${node.title || "UNNAMED"}`, get().addLog);
+        persistWrite(id, get().boardStorage.putNode(newNode), `NODE ${node.title || "UNNAMED"}`, get().addLog);
         get().addLog(`ADDED EVIDENCE NODE: ${node.title || "UNNAMED"}`, "success", "BOARD");
       },
 
@@ -574,23 +741,28 @@ export const useAppStore = create<AppState>()(
         }));
       },
 
+      // Immediate persistence — used on drag/resize release, where the write
+      // must land promptly and there is no keystroke cadence to debounce.
       commitEvidenceNode: (id) => {
         const node = get().evidenceNodes.find((n) => n.id === id);
-        if (node) syncWrite(get().boardStorage.putNode(node), "NODE LAYOUT", get().addLog);
+        if (node) persistWrite(id, get().boardStorage.putNode(node), "NODE LAYOUT", get().addLog);
       },
 
       updateEvidenceNodeContent: (id, updates) => {
         set((state) => ({
           evidenceNodes: state.evidenceNodes.map((n) => (n.id === id ? { ...n, ...updates } : n))
         }));
-        get().commitEvidenceNode(id);
+        // Debounced: title rename, size inputs and text edits all flow through
+        // here, and a size field held on repeat-key would otherwise write madly.
+        debouncedCommit(id, () => get().commitEvidenceNode(id));
       },
 
       updateEvidenceNodeNotes: (id, notes) => {
         set((state) => ({
           evidenceNodes: state.evidenceNodes.map((n) => (n.id === id ? { ...n, notes } : n))
         }));
-        get().commitEvidenceNode(id);
+        // Analyst-notes textarea fires per keystroke — debounce the write.
+        debouncedCommit(id, () => get().commitEvidenceNode(id));
       },
 
       deleteEvidenceNode: (id) => {
@@ -618,7 +790,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           evidenceConnections: [...state.evidenceConnections, newConnection]
         }));
-        syncWrite(get().boardStorage.putConnection(newConnection), "CORRELATION", get().addLog);
+        persistWrite(id, get().boardStorage.putConnection(newConnection), "CORRELATION", get().addLog);
         get().addLog(`ESTABLISHED CORRELATION BETWEEN EVIDENCE NODES`, "success", "BOARD");
       },
 
@@ -634,10 +806,12 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           evidenceConnections: state.evidenceConnections.map((c) => (c.id === id ? { ...c, label } : c))
         }));
-        const updated = get().evidenceConnections.find((c) => c.id === id);
-        if (updated) {
-          syncWrite(get().boardStorage.putConnection(updated), "CORRELATION LABEL", get().addLog);
-        }
+        debouncedCommit(id, () => {
+          const updated = get().evidenceConnections.find((c) => c.id === id);
+          if (updated) {
+            persistWrite(id, get().boardStorage.putConnection(updated), "CORRELATION LABEL", get().addLog);
+          }
+        });
       },
 
       addNote: (text = "") => {

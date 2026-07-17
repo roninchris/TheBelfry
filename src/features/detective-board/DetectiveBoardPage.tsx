@@ -121,6 +121,8 @@ export default function DetectiveBoardPage() {
   const updateEvidenceNodePosition = useAppStore((state) => state.updateEvidenceNodePosition);
   const resizeEvidenceNode = useAppStore((state) => state.resizeEvidenceNode);
   const commitEvidenceNode = useAppStore((state) => state.commitEvidenceNode);
+  const setDraggingNode = useAppStore((state) => state.setDraggingNode);
+  const broadcastDrag = useAppStore((state) => state.broadcastDrag);
   const updateEvidenceNodeContent = useAppStore((state) => state.updateEvidenceNodeContent);
   const updateEvidenceNodeNotes = useAppStore((state) => state.updateEvidenceNodeNotes);
   const deleteEvidenceNode = useAppStore((state) => state.deleteEvidenceNode);
@@ -352,10 +354,18 @@ export default function DetectiveBoardPage() {
     const nodeStartX = node.x;
     const nodeStartY = node.y;
 
+    // Claim the node so incoming realtime updates leave it alone until released.
+    setDraggingNode(nodeId);
+
     const handlePointerMove = (moveEvent: PointerEvent) => {
       const dx = (moveEvent.clientX - startX) / zoom;
       const dy = (moveEvent.clientY - startY) / zoom;
-      updateEvidenceNodePosition(nodeId, nodeStartX + dx, nodeStartY + dy);
+      const nextX = nodeStartX + dx;
+      const nextY = nodeStartY + dy;
+      updateEvidenceNodePosition(nodeId, nextX, nextY);
+      // Live position to the other knights. Throttled in the backend and never
+      // persisted — the durable write happens once, below, on release.
+      broadcastDrag(nodeId, nextX, nextY);
       if (draggingNodeId !== nodeId) {
         setDraggingNodeId(nodeId);
       }
@@ -364,6 +374,7 @@ export default function DetectiveBoardPage() {
     const handlePointerUp = () => {
       stopDragThrum();
       setDraggingNodeId(null);
+      setDraggingNode(null);
       // Position updates are memory-only during the drag; persist the result.
       commitEvidenceNode(nodeId);
       window.removeEventListener("pointermove", handlePointerMove);

@@ -1,3 +1,4 @@
+import type { KnightId } from "../identity";
 import type { Case, EvidenceConnection, EvidenceNode } from "../../store/appStore";
 
 /**
@@ -35,6 +36,25 @@ export const EMPTY_SNAPSHOT: BoardSnapshot = {
  * rather than a rollback. Realtime reconciliation lands with the multiplayer
  * work; until then a failed write means the local view is ahead of the server.
  */
+/**
+ * Live board events from the other knights.
+ *
+ * A `null` value means the row was deleted; the id is always supplied so a
+ * delete can be applied without it.
+ */
+export interface BoardRealtimeHandlers {
+  onCase(id: string, value: Case | null): void;
+  onNode(id: string, value: EvidenceNode | null): void;
+  onConnection(id: string, value: EvidenceConnection | null): void;
+  /**
+   * A drag in progress on another screen. Deliberately separate from onNode:
+   * these are ephemeral and never touch the database — see broadcastDrag.
+   */
+  onDrag(nodeId: string, x: number, y: number): void;
+  /** Who is currently on the board, including yourself. */
+  onPresence(knights: KnightId[]): void;
+}
+
 export interface BoardStorage {
   readonly kind: "local" | "cloud";
 
@@ -49,6 +69,24 @@ export interface BoardStorage {
 
   putConnection(value: EvidenceConnection): Promise<void>;
   removeConnection(id: string): Promise<void>;
+
+  /**
+   * Subscribes to other operatives' changes. Returns an unsubscribe.
+   *
+   * Optional, and absent on the local backend — a guest is the only author of
+   * their board, so there is nobody to sync with. That asymmetry is the point:
+   * the guest backend has no channel to leak through.
+   */
+  subscribe?(handlers: BoardRealtimeHandlers): () => void;
+
+  /**
+   * Publishes an in-progress drag position to the other knights.
+   *
+   * Ephemeral by design. A drag emits positions continuously, and persisting
+   * each one would mean a database write per frame; the durable position is
+   * written once, on pointer release.
+   */
+  broadcastDrag?(nodeId: string, x: number, y: number): void;
 
   /** Releases subscriptions/channels. Called when the identity changes. */
   dispose?(): void;
