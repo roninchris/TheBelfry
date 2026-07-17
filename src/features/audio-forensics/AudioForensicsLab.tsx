@@ -1483,7 +1483,7 @@ ${currentSample.analysisSummary}`;
 
   return (
     <div
-      className="min-h-full w-full p-4 flex flex-col space-y-4 overflow-y-auto font-chakra select-none text-text-primary relative"
+      className="h-full w-full p-4 flex flex-col space-y-4 overflow-y-auto font-chakra select-none text-text-primary relative"
       id="audio-forensics-root"
       onDragEnter={handleDrag}
       onDragOver={handleDrag}

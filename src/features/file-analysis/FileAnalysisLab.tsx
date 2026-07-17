@@ -450,7 +450,7 @@ ${currentData.threatSummary}`;
 
   return (
     <div
-      className="min-h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra select-none text-text-primary relative"
+      className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra select-none text-text-primary relative"
       id="file-analysis-root"
       onDragEnter={handleDrag}
       onDragOver={handleDrag}
