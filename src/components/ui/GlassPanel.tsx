@@ -8,6 +8,17 @@ interface GlassPanelProps extends React.HTMLAttributes<HTMLDivElement> {
   hoverGlow?: boolean;
   clipSize?: "sm" | "md" | "none";
   className?: string;
+  /**
+   * Classes for the inner content wrapper.
+   *
+   * Children do not live directly inside the panel element — they sit in a
+   * plain block wrapper, so `flex flex-col` on `className` styles that wrapper
+   * and never reaches the children. Any `flex-1` a caller puts on its own
+   * content is therefore inert, which is why panels have repeatedly grown to
+   * their content instead of bounding it. Pass `contentClassName="flex flex-col"`
+   * to make the wrapper a flex container so `flex-1`/`min-h-0` work as written.
+   */
+  contentClassName?: string;
 }
 
 export default function GlassPanel({
@@ -18,6 +29,7 @@ export default function GlassPanel({
   hoverGlow = false,
   clipSize = "md",
   className = "",
+  contentClassName = "",
   ...props
 }: GlassPanelProps) {
   const clipClass = 
@@ -63,7 +75,7 @@ export default function GlassPanel({
       )}
 
       {/* Main Content */}
-      <div className="relative z-10 w-full h-full">
+      <div className={`relative z-10 w-full h-full min-h-0 ${contentClassName}`}>
         {children}
       </div>
     </div>

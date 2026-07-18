@@ -1677,6 +1677,57 @@ button:hover, .btn-interactive:hover {
   animation: channel-resolve 380ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
+/* ---- Holographic projection ----
+   Wireframe volume rendered as a stack of SVG ellipses. Each meridian is a
+   full-width ellipse squashed on X; driving scaleX from 1 through 0 to -1 and
+   back sweeps it round the vertical axis, and staggering the delay across the
+   stack reads as one rotating volume rather than several flat rings. transform-
+   box is required or the SVG transform-origin resolves against the viewBox
+   rather than the shape. */
+@keyframes holo-meridian {
+  0%   { transform: scaleX(1); }
+  25%  { transform: scaleX(0.04); }
+  50%  { transform: scaleX(-1); }
+  75%  { transform: scaleX(0.04); }
+  100% { transform: scaleX(1); }
+}
+.holo-meridian {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: holo-meridian 14s linear infinite;
+}
+
+/* Horizontal build band drifting up the volume — the "projection is still
+   resolving" tell. */
+@keyframes holo-band {
+  0%   { transform: translateY(46%); opacity: 0; }
+  12%  { opacity: 0.85; }
+  88%  { opacity: 0.85; }
+  100% { transform: translateY(-46%); opacity: 0; }
+}
+.holo-band {
+  transform-box: fill-box;
+  animation: holo-band 5.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Whole-projection instability: a hologram that never wavers reads as flat
+   vector art. Kept very shallow so it never becomes a flicker. */
+@keyframes holo-jitter {
+  0%, 100% { opacity: 0.92; }
+  47%      { opacity: 0.86; }
+  49%      { opacity: 1; }
+  51%      { opacity: 0.8; }
+  53%      { opacity: 0.95; }
+}
+.holo-jitter { animation: holo-jitter 6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .holo-meridian,
+  .holo-band,
+  .holo-jitter { animation: none; }
+  .holo-band { opacity: 0; }
+}
+
 /* A channel that actually produced output carries a live edge on the bus side;
    the rest stay inert. This is the difference between "sixteen rows" and
    "sixteen taps, four of which are carrying signal". */
