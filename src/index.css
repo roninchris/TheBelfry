@@ -931,6 +931,41 @@ button:hover, .btn-interactive:hover {
   animation: charge-ring-spin 2.4s linear infinite;
 }
 
+/* ---- Honeycomb field: tessellated lattice framing the console ---- */
+.honeycomb-field {
+  /* Weighted to the left/right margins; the centre stays clear for content. */
+  -webkit-mask:
+    linear-gradient(90deg, #000 0%, rgba(0,0,0,0.18) 32%, rgba(0,0,0,0.18) 68%, #000 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.35) 0%, #000 22%, #000 78%, rgba(0,0,0,0.35) 100%);
+  -webkit-mask-composite: source-in;
+          mask:
+    linear-gradient(90deg, #000 0%, rgba(0,0,0,0.18) 32%, rgba(0,0,0,0.18) 68%, #000 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.35) 0%, #000 22%, #000 78%, rgba(0,0,0,0.35) 100%);
+          mask-composite: intersect;
+}
+
+/* Base lattice. Reads as etched structure, not wallpaper. */
+.honeycomb-lattice { opacity: 0.30; }
+
+/* Cells that light up — this is what keeps the lattice feeling powered. */
+@keyframes honeycomb-cell-live {
+  0%, 100% { opacity: 0.06; }
+  50%      { opacity: 0.42; }
+}
+.honeycomb-cell-live {
+  fill: var(--color-accent-primary);
+  fill-opacity: 0.16;
+  stroke: var(--color-accent-primary);
+  stroke-width: 1.4;
+  opacity: 0.06;
+  animation: honeycomb-cell-live var(--cell-duration, 7s) ease-in-out infinite;
+  animation-delay: var(--cell-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honeycomb-cell-live { animation: none !important; opacity: 0.22 !important; }
+}
+
 /* ---- Ambient telemetry: persistent glyph columns drifting behind the console ----
    CSS-only on purpose. The corner readout in HexagonBackground drives a 100ms
    setState; multiplying that across ~20 columns would put a constant re-render

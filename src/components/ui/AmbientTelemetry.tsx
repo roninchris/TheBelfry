@@ -21,7 +21,9 @@ interface AmbientTelemetryProps {
  * animates (see .telemetry-column in index.css), so this costs no re-renders.
  */
 export default function AmbientTelemetry({
-  columns = 22,
+  // The mask hides the middle ~48%, so roughly half of these actually land in
+  // the visible margins — hence the higher count than the visible density.
+  columns = 38,
   active = false,
   className = "",
 }: AmbientTelemetryProps) {
@@ -43,7 +45,10 @@ export default function AmbientTelemetry({
           breathe: 6 + Math.random() * 8,
           delay: -Math.random() * 60,
           size: 10 + Math.round(Math.random() * 3),
-          opacity: 0.05 + Math.random() * 0.09,
+          // Composited against the #020912 void, anything below ~0.15 is within
+          // noise of the background and reads as empty. Keep the ceiling under
+          // ~0.4 so the glyphs stay behind content rather than beside it.
+          opacity: 0.16 + Math.random() * 0.22,
         };
       }),
     [columns],
