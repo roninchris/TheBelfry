@@ -39,7 +39,7 @@ export const KNIGHTS: Record<KnightId, Knight> = {
     callsign: "RED HOOD",
     label: "Red Hood",
     sigil: "/assets/Logos/sigil-redhood.png",
-    accent: "#ff3b4e",
+    accent: "var(--color-red-threat)",
     // Widest, flattest mark of the four — needs the most correction.
     sigilScale: 1.3,
   },

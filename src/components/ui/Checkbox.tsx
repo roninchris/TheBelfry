@@ -30,7 +30,7 @@ export default function Checkbox({ label, className = "", checked, onChange, dis
         {/* HUD Box Background */}
         <div className={`w-3.5 h-3.5 bg-bg-void border transition-all duration-200 flex items-center justify-center
           ${checked 
-            ? "border-cyan-primary bg-cyan-primary/10 shadow-[0_0_8px_rgba(112,162,168,0.3)]" 
+            ? "border-cyan-primary bg-cyan-primary/10 shadow-[0_0_8px_rgb(var(--rgb-primary) / 0.3)]" 
             : "border-border-hairline/40 group-hover:border-cyan-primary/40"
           }`}
           style={{ clipPath: "polygon(20% 0%, 100% 0%, 100% 80%, 80% 100%, 0% 100%, 0% 20%)" }}

@@ -458,7 +458,7 @@ ${currentData.threatSummary}`;
       onDrop={handleDrop}
     >
       {/* Subtle global binary rain in background */}
-      <BinaryRain density={15} color="rgba(47, 241, 228, 0.05)" className="fixed inset-0 -z-10" />
+      <BinaryRain density={15} color="rgb(var(--rgb-accent) / 0.05)" className="fixed inset-0 -z-10" />
       {dragActive && (
         <div className="fixed inset-0 z-[999] bg-bg-void/80 backdrop-blur-sm flex items-center justify-center pointer-events-none animate-fade-in">
           <div className="border-2 border-dashed border-cyan-primary bg-cyan-primary/5 px-12 py-10 flex flex-col items-center space-y-3">
@@ -480,7 +480,7 @@ ${currentData.threatSummary}`;
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_#2ff1e4]" />
+                <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
                 <h1 className="font-orbitron text-sm font-black tracking-widest text-cyan-text uppercase">
                   FILE SECTOR INTEGRITY LAB
                 </h1>
@@ -513,7 +513,7 @@ ${currentData.threatSummary}`;
           {/* Scanner Overlay */}
           {isScanning && (
             <div className="absolute inset-0 bg-cyan-primary/[0.02] border border-cyan-primary/20 pointer-events-none overflow-hidden z-20">
-              <div className="absolute inset-x-0 h-0.5 bg-cyan-primary/40 shadow-[0_0_8px_#2ff1e4] animate-scanline-vertical" />
+              <div className="absolute inset-x-0 h-0.5 bg-cyan-primary/40 shadow-[0_0_8px_var(--color-accent-primary)] animate-scanline-vertical" />
             </div>
           )}
 
@@ -637,7 +637,7 @@ ${currentData.threatSummary}`;
                 <button
                   disabled={isScanning}
                   onClick={triggerForensicScan}
-                  className="hud-target w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-orbitron uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
+                  className="hud-target w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgb(var(--rgb-accent) / 0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-orbitron uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
                   style={{ clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)" }}
                 >
                   <Cpu className={`w-4 h-4 text-bg-void ${isScanning ? 'animate-radar-sweep' : ''}`} />
@@ -677,7 +677,7 @@ ${currentData.threatSummary}`;
             <GlassPanel className="p-4 flex flex-col min-h-[300px] flex-1" clipSize="md">
               <div className="border-b border-border-hairline/20 pb-2 mb-3.5 flex justify-between items-center">
                 <div className="flex items-center space-x-2">
-                  <span className="w-1.5 h-3.5 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
+                  <span className="w-1.5 h-3.5 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                   <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text uppercase">
                     HEXADECIMAL SECTOR MAP (OFFSET / BYTES / CHARS)
                   </h3>
@@ -717,7 +717,7 @@ ${currentData.threatSummary}`;
                     )}
                     {isScanning && (
                       <div className="absolute inset-0 pointer-events-none z-10 mix-blend-screen bg-cyan-primary/[0.01]">
-                        <div className="absolute inset-x-0 h-0.5 bg-cyan-primary/40 shadow-[0_0_8px_#2ff1e4] animate-scanline-vertical" />
+                        <div className="absolute inset-x-0 h-0.5 bg-cyan-primary/40 shadow-[0_0_8px_var(--color-accent-primary)] animate-scanline-vertical" />
                       </div>
                     )}
                     {currentData.hexData.map((row, idx) => {
@@ -727,11 +727,11 @@ ${currentData.threatSummary}`;
                         <div className="col-span-2 text-cyan-text font-bold tracking-wider">{row.offset}</div>
                         
                         {/* Strict monospace spacing with font-share */}
-                        <div className={`col-span-7 text-text-primary text-center tracking-wider font-medium font-share ${scanComplete && isRelevant ? 'animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_#2ff1e4]' : ''}`}>
+                        <div className={`col-span-7 text-text-primary text-center tracking-wider font-medium font-share ${scanComplete && isRelevant ? 'animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_var(--color-accent-primary)]' : ''}`}>
                           {row.hex}
                         </div>
                         
-                        <div className={`col-span-3 text-right font-bold truncate font-share ${scanComplete && isRelevant ? 'animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_#2ff1e4]' : 'text-cyan-primary/80'}`}>
+                        <div className={`col-span-3 text-right font-bold truncate font-share ${scanComplete && isRelevant ? 'animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_var(--color-accent-primary)]' : 'text-cyan-primary/80'}`}>
                           {row.ascii}
                         </div>
                       </div>

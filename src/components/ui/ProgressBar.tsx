@@ -28,9 +28,9 @@ export default function ProgressBar({
   }, [value]);
 
   const variantColors = {
-    cyan: "bg-cyan-primary shadow-[0_0_8px_#2ff1e4]",
-    amber: "bg-amber-alert shadow-[0_0_8px_#ff9d2e]",
-    red: "bg-red-threat shadow-[0_0_8px_#ff3b4e]",
+    cyan: "bg-cyan-primary shadow-[0_0_8px_var(--color-accent-primary)]",
+    amber: "bg-amber-alert shadow-[0_0_8px_var(--color-amber-alert)]",
+    red: "bg-red-threat shadow-[0_0_8px_var(--color-red-threat)]",
     green: "bg-green-verified shadow-[0_0_8px_#35e58a]",
   };
 

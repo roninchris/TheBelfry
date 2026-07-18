@@ -146,7 +146,7 @@ export default function DashboardPage() {
       
       {/* Immersive background idle data-flow/grid pulse treatment scoped to Dashboard */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-20">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(47,241,228,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(47,241,228,0.03)_1px,transparent_1px)] bg-[size:32px_32px] animate-[pulse_8s_infinite]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgb(var(--rgb-accent) / 0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--rgb-accent) / 0.03)_1px,transparent_1px)] bg-[size:32px_32px] animate-[pulse_8s_infinite]" />
         <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-cyan-primary/5 rounded-full blur-[120px] animate-[pulse_4s_infinite_alternate]" />
         <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-red-threat/[0.02] rounded-full blur-[150px] animate-[pulse_6s_infinite_alternate]" />
       </div>
@@ -224,7 +224,7 @@ export default function DashboardPage() {
         <GlassPanel className="p-4 flex flex-col flex-1" clipSize="md">
           <div className="border-b border-border-hairline/25 pb-2 mb-3 flex items-center justify-between">
             <h3 className="font-display text-base font-extrabold tracking-[0.18em] text-white uppercase flex items-center">
-              <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
+              <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
               <ShinyText text="CASE DOSSIER LIST" speed={5} />
             </h3>
             {/* Uplink diagnostics */}
@@ -274,7 +274,7 @@ export default function DashboardPage() {
                     onMouseEnter={() => playHoverBlip()}
                     className={`hud-target w-full text-left p-2.5 border transition-all duration-300 flex items-center justify-between relative overflow-hidden group ${
                       isSelected
-                        ? "bg-cyan-primary/[0.06] border-cyan-primary text-text-primary shadow-[0_0_8px_rgba(47,241,228,0.15)]"
+                        ? "bg-cyan-primary/[0.06] border-cyan-primary text-text-primary shadow-[0_0_8px_rgb(var(--rgb-accent) / 0.15)]"
                         : "bg-bg-void/40 border-border-hairline/15 text-text-dim hover:border-cyan-primary/35 hover:bg-cyan-primary/[0.02]"
                     }`}
                     style={{
@@ -282,7 +282,7 @@ export default function DashboardPage() {
                     }}
                   >
                     {/* Subtle scan-line overlay on hover */}
-                    <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(47,241,228,0)_50%,rgba(47,241,228,0.06)_50%)] bg-[size:100%_4px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgb(var(--rgb-accent) / 0)_50%,rgb(var(--rgb-accent) / 0.06)_50%)] bg-[size:100%_4px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                     
                     {/* Corner reticle highlight on active selection */}
                     {isSelected && (
@@ -396,7 +396,7 @@ export default function DashboardPage() {
           <div className="border-b border-border-hairline/25 pb-3 mb-4 flex justify-between items-center relative z-10">
             <div>
               <h2 className="font-orbitron text-base font-black tracking-widest text-cyan-text flex items-center uppercase animate-data-assemble">
-                <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
+                <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                 <ShinyText text="FORENSIC SCANNER // ANALYZE ANY EVIDENCE" speed={6} />
               </h2>
               <p className="text-xs font-share text-text-dim tracking-wide uppercase mt-0.5">
@@ -476,7 +476,7 @@ export default function DashboardPage() {
               className="mt-4 relative z-10 flex items-center gap-2.5 px-3 py-2.5 border border-amber-alert/60 bg-amber-alert/[0.06] text-amber-alert overflow-hidden animate-stagger-in file-threat-pulse"
               style={{ clipPath: "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)" }}
             >
-              <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(255,157,46,0.06)_0,rgba(255,157,46,0.06)_8px,transparent_8px,transparent_16px)] pointer-events-none" />
+              <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgb(var(--rgb-amber) / 0.06)_0,rgb(var(--rgb-amber) / 0.06)_8px,transparent_8px,transparent_16px)] pointer-events-none" />
               <ShieldAlert className="w-4 h-4 shrink-0 amber-glow animate-pulse relative z-10" />
               <span className="font-share text-[13px] tracking-widest uppercase font-bold amber-glow relative z-10">{scanAlert}</span>
               <span className="ml-auto flex items-end gap-0.5 h-3 relative z-10">
@@ -646,7 +646,7 @@ export default function DashboardPage() {
         <GlassPanel className="p-4 flex flex-col flex-1" clipSize="md">
           <div className="border-b border-border-hairline/25 pb-2 mb-3 flex items-center justify-between">
             <h3 className="font-display text-base font-extrabold tracking-[0.18em] text-white uppercase flex items-center">
-              <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
+              <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
               <ShinyText text="PATTERN HEURISTICS" speed={5} />
             </h3>
             <div className="flex items-end space-x-0.5 h-3">
@@ -739,7 +739,7 @@ export default function DashboardPage() {
         <GlassPanel className="p-4 flex flex-col justify-between amber-tab" clipSize="md" showCornerTicks={true}>
           <div className="border-b border-border-hairline/25 pb-1 mb-2 flex items-baseline justify-between">
             <h3 className="font-display text-sm font-extrabold tracking-[0.18em] text-white flex items-center uppercase">
-              <span className="w-1 h-2 bg-accent-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_#00f3ff]" />
+              <span className="w-1 h-2 bg-accent-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_var(--color-accent-primary)]" />
               Lattice
             </h3>
             <span className="font-share text-[10px] tracking-widest text-text-dim/45 uppercase">

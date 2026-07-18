@@ -17,16 +17,16 @@ html {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(112, 162, 168, 0.3) #020912;
+  scrollbar-color: rgb(var(--rgb-primary) / 0.3) var(--color-bg-void);
 }
 
 /* Custom text selection highlights to preserve the cyber/dark theme */
 ::selection {
-  background-color: rgba(112, 162, 168, 0.3) !important;
+  background-color: rgb(var(--rgb-primary) / 0.3) !important;
   color: #b3e2e6 !important;
 }
 ::-moz-selection {
-  background-color: rgba(112, 162, 168, 0.3) !important;
+  background-color: rgb(var(--rgb-primary) / 0.3) !important;
   color: #b3e2e6 !important;
 }
 
@@ -342,7 +342,7 @@ html, body, #root {
   padding: 0;
   width: 100vw;
   height: 100vh;
-  background-color: #020912;
+  background-color: var(--color-bg-void);
   color: #eaf6f6;
   font-family: "Chakra Petch", sans-serif;
   font-size: 17px; /* Increased for HUD legibility */
@@ -352,8 +352,8 @@ html, body, #root {
 /* Background grid overlay + edges vignette */
 .hud-bg-grid {
   background-image: 
-    linear-gradient(rgba(112, 162, 168, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(112, 162, 168, 0.03) 1px, transparent 1px);
+    linear-gradient(rgb(var(--rgb-primary) / 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--rgb-primary) / 0.03) 1px, transparent 1px);
   background-size: 32px 32px;
   background-position: center;
 }
@@ -366,7 +366,7 @@ html, body, #root {
 .bat-bg {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(112, 162, 168, 0.03) 0%, transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgb(var(--rgb-primary) / 0.03) 0%, transparent 70%);
   z-index: -1;
 }
 
@@ -387,18 +387,18 @@ html, body, #root {
 
 .hud-scrollbar::-webkit-scrollbar-track {
   background: rgba(2, 9, 18, 0.5);
-  border-left: 1px solid rgba(112, 162, 168, 0.05);
+  border-left: 1px solid rgb(var(--rgb-primary) / 0.05);
 }
 
 .hud-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(112, 162, 168, 0.2);
+  background: rgb(var(--rgb-primary) / 0.2);
   border-radius: 0px;
-  border: 1px solid rgba(112, 162, 168, 0.1);
+  border: 1px solid rgb(var(--rgb-primary) / 0.1);
 }
 
 .hud-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(112, 162, 168, 0.5);
-  box-shadow: 0 0 8px rgba(112, 162, 168, 0.3);
+  background: rgb(var(--rgb-primary) / 0.5);
+  box-shadow: 0 0 8px rgb(var(--rgb-primary) / 0.3);
 }
 
 /* Custom Scrollbar */
@@ -408,17 +408,17 @@ html, body, #root {
 }
 
 ::-webkit-scrollbar-track {
-  background: #020912;
-  border-left: 1px solid rgba(112, 162, 168, 0.08);
+  background: var(--color-bg-void);
+  border-left: 1px solid rgb(var(--rgb-primary) / 0.08);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(112, 162, 168, 0.3);
+  background: rgb(var(--rgb-primary) / 0.3);
   border-radius: 0px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(112, 162, 168, 0.6);
+  background: rgb(var(--rgb-primary) / 0.6);
 }
 
 /* Custom Clip-Path Angular Panels */
@@ -460,24 +460,24 @@ html, body, #root {
 /* Cyber Glow Effects: Softened with a diffuse desaturated primary and secondary white bloom */
 .cyan-glow, .glow-text {
   text-shadow: 
-    0 0 4px rgba(112, 162, 168, 0.45),
+    0 0 4px rgb(var(--rgb-primary) / 0.45),
     0 0 10px rgba(255, 255, 255, 0.25);
 }
 
 .cyan-glow-border {
   box-shadow: 
-    0 0 6px rgba(112, 162, 168, 0.2), 
+    0 0 6px rgb(var(--rgb-primary) / 0.2), 
     0 0 14px rgba(255, 255, 255, 0.08),
-    inset 0 0 4px rgba(112, 162, 168, 0.12),
+    inset 0 0 4px rgb(var(--rgb-primary) / 0.12),
     inset 0 0 8px rgba(255, 255, 255, 0.04);
 }
 
 .red-glow {
-  text-shadow: 0 0 8px rgba(255, 59, 78, 0.5);
+  text-shadow: 0 0 8px rgb(var(--rgb-threat) / 0.5);
 }
 
 .amber-glow {
-  text-shadow: 0 0 8px rgba(255, 157, 46, 0.5);
+  text-shadow: 0 0 8px rgb(var(--rgb-amber) / 0.5);
 }
 
 /* Micro-interactions: brief glow-intensify on hover for buttons rather than instant state swap */
@@ -486,31 +486,31 @@ button, .btn-interactive {
 }
 button:hover, .btn-interactive:hover {
   text-shadow: 
-    0 0 4px rgba(112, 162, 168, 0.5), 
+    0 0 4px rgb(var(--rgb-primary) / 0.5), 
     0 0 10px rgba(255, 255, 255, 0.35);
   box-shadow: 
-    0 0 6px rgba(112, 162, 168, 0.25), 
+    0 0 6px rgb(var(--rgb-primary) / 0.25), 
     0 0 14px rgba(255, 255, 255, 0.12);
 }
 
 /* Sidebar glow-pulse animations */
 @keyframes glowPulse {
   0%, 100% {
-    text-shadow: 0 0 3px rgba(112, 162, 168, 0.35), 0 0 8px rgba(255, 255, 255, 0.15);
-    box-shadow: inset 0 0 4px rgba(112, 162, 168, 0.08);
+    text-shadow: 0 0 3px rgb(var(--rgb-primary) / 0.35), 0 0 8px rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 0 4px rgb(var(--rgb-primary) / 0.08);
   }
   50% {
-    text-shadow: 0 0 6px rgba(112, 162, 168, 0.6), 0 0 12px rgba(255, 255, 255, 0.3);
-    box-shadow: inset 0 0 6px rgba(112, 162, 168, 0.15);
+    text-shadow: 0 0 6px rgb(var(--rgb-primary) / 0.6), 0 0 12px rgba(255, 255, 255, 0.3);
+    box-shadow: inset 0 0 6px rgb(var(--rgb-primary) / 0.15);
   }
 }
 
 @keyframes glowPulseSubtle {
   0%, 100% {
-    text-shadow: 0 0 2px rgba(112, 162, 168, 0.2), 0 0 5px rgba(255, 255, 255, 0.1);
+    text-shadow: 0 0 2px rgb(var(--rgb-primary) / 0.2), 0 0 5px rgba(255, 255, 255, 0.1);
   }
   50% {
-    text-shadow: 0 0 4px rgba(112, 162, 168, 0.4), 0 0 8px rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 4px rgb(var(--rgb-primary) / 0.4), 0 0 8px rgba(255, 255, 255, 0.2);
   }
 }
 
@@ -533,13 +533,13 @@ button:hover, .btn-interactive:hover {
   background: linear-gradient(
     to bottom,
     transparent,
-    rgba(112, 162, 168, 0.12) 50%,
-    rgba(112, 162, 168, 0.35) 95%,
-    rgba(112, 162, 168, 0.6) 100%
+    rgb(var(--rgb-primary) / 0.12) 50%,
+    rgb(var(--rgb-primary) / 0.35) 95%,
+    rgb(var(--rgb-primary) / 0.6) 100%
   );
   height: 4px;
   box-shadow: 
-    0 0 4px rgba(112, 162, 168, 0.4),
+    0 0 4px rgb(var(--rgb-primary) / 0.4),
     0 0 12px rgba(255, 255, 255, 0.2);
 }
 
@@ -551,8 +551,8 @@ button:hover, .btn-interactive:hover {
   50% { opacity: 0.25; }
 }
 .image-forensic-grid {
-  background-image: linear-gradient(rgba(112, 162, 168, 0.2) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(112, 162, 168, 0.2) 1px, transparent 1px);
+  background-image: linear-gradient(rgb(var(--rgb-primary) / 0.2) 1px, transparent 1px),
+                    linear-gradient(90deg, rgb(var(--rgb-primary) / 0.2) 1px, transparent 1px);
   background-size: 20px 20px;
   animation: gridPulse 4s ease-in-out infinite;
 }
@@ -577,7 +577,7 @@ button:hover, .btn-interactive:hover {
   100% { transform: scale(1.5); opacity: 0; }
 }
 .audio-sonar-ring {
-  border: 1px solid rgba(112, 162, 168, 0.4);
+  border: 1px solid rgb(var(--rgb-primary) / 0.4);
   border-radius: 50%;
   position: absolute;
   animation: sonarRipple 3s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
@@ -600,12 +600,12 @@ button:hover, .btn-interactive:hover {
 }
 .binary-rain-stream {
   animation: binaryRain 20s linear infinite;
-  background: linear-gradient(to bottom, transparent, rgba(112, 162, 168, 0.1) 50%, transparent);
+  background: linear-gradient(to bottom, transparent, rgb(var(--rgb-primary) / 0.1) 50%, transparent);
 }
 
 @keyframes threatPulse {
-  0%, 100% { background-color: rgba(255, 59, 78, 0.05); }
-  50% { background-color: rgba(255, 59, 78, 0.15); }
+  0%, 100% { background-color: rgb(var(--rgb-threat) / 0.05); }
+  50% { background-color: rgb(var(--rgb-threat) / 0.15); }
 }
 .file-threat-pulse {
   animation: threatPulse 1s ease-in-out infinite;
@@ -634,11 +634,11 @@ button:hover, .btn-interactive:hover {
     transform: translateX(0);
   }
   10% {
-    filter: drop-shadow(2px 0 0 rgba(255, 59, 78, 0.4)) drop-shadow(-2px 0 0 rgba(0, 243, 255, 0.4));
+    filter: drop-shadow(2px 0 0 rgb(var(--rgb-threat) / 0.4)) drop-shadow(-2px 0 0 rgb(var(--rgb-accent) / 0.4));
     transform: translateX(1px);
   }
   64% {
-    filter: drop-shadow(-2px 0 0 rgba(255, 59, 78, 0.4)) drop-shadow(2px 0 0 rgba(0, 243, 255, 0.4));
+    filter: drop-shadow(-2px 0 0 rgb(var(--rgb-threat) / 0.4)) drop-shadow(2px 0 0 rgb(var(--rgb-accent) / 0.4));
     transform: translateX(-1px);
   }
 }
@@ -676,8 +676,8 @@ button:hover, .btn-interactive:hover {
     transform: translateX(0);
   }
   10% {
-    filter: hue-rotate(12deg) saturate(1.2) drop-shadow(2px 0 0 rgba(255, 59, 78, 0.4))
-      drop-shadow(-2px 0 0 rgba(0, 243, 255, 0.4));
+    filter: hue-rotate(12deg) saturate(1.2) drop-shadow(2px 0 0 rgb(var(--rgb-threat) / 0.4))
+      drop-shadow(-2px 0 0 rgb(var(--rgb-accent) / 0.4));
     transform: translateX(1px);
   }
   12%, 60% {
@@ -685,8 +685,8 @@ button:hover, .btn-interactive:hover {
     transform: translateX(0);
   }
   64% {
-    filter: hue-rotate(30deg) saturate(1.25) drop-shadow(-2px 0 0 rgba(255, 59, 78, 0.4))
-      drop-shadow(2px 0 0 rgba(0, 243, 255, 0.4));
+    filter: hue-rotate(30deg) saturate(1.25) drop-shadow(-2px 0 0 rgb(var(--rgb-threat) / 0.4))
+      drop-shadow(2px 0 0 rgb(var(--rgb-accent) / 0.4));
     transform: translateX(-1px);
   }
   66% {
@@ -848,7 +848,7 @@ button:hover, .btn-interactive:hover {
    panel. Layer under existing GlassPanel content or use standalone. */
 .panel-console {
   background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(112, 162, 168, 0.02) 12%, rgba(2, 9, 18, 0) 45%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgb(var(--rgb-primary) / 0.02) 12%, rgba(2, 9, 18, 0) 45%),
     linear-gradient(180deg, rgba(18, 32, 38, 0.55) 0%, rgba(9, 18, 24, 0.5) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -897,11 +897,11 @@ button:hover, .btn-interactive:hover {
   background: linear-gradient(
     to bottom,
     transparent,
-    rgba(0, 243, 255, 0.06) 60%,
-    rgba(0, 243, 255, 0.18) 92%,
-    rgba(0, 243, 255, 0.5) 100%
+    rgb(var(--rgb-accent) / 0.06) 60%,
+    rgb(var(--rgb-accent) / 0.18) 92%,
+    rgb(var(--rgb-accent) / 0.5) 100%
   );
-  box-shadow: 0 6px 14px rgba(0, 243, 255, 0.25);
+  box-shadow: 0 6px 14px rgb(var(--rgb-accent) / 0.25);
   animation: decrypt-band-sweep 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
@@ -969,7 +969,7 @@ button:hover, .btn-interactive:hover {
   width: 28%;
   pointer-events: none;
   z-index: 40;
-  background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.18) 50%, transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--rgb-accent) / 0.18) 50%, transparent);
   animation: power-sweep 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
@@ -1156,22 +1156,22 @@ button:hover, .btn-interactive:hover {
   color: var(--color-text-primary);
   background: linear-gradient(
     180deg,
-    rgba(0, 243, 255, 0.10) 0%,
-    rgba(0, 243, 255, 0.03) 100%
+    rgb(var(--rgb-accent) / 0.10) 0%,
+    rgb(var(--rgb-accent) / 0.03) 100%
   );
-  border: 1px solid rgba(0, 243, 255, 0.45);
+  border: 1px solid rgb(var(--rgb-accent) / 0.45);
   transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease,
     box-shadow 0.18s ease;
 }
 .tablet-btn:hover:not(:disabled) {
   background: linear-gradient(
     180deg,
-    rgba(0, 243, 255, 0.28) 0%,
-    rgba(0, 243, 255, 0.12) 100%
+    rgb(var(--rgb-accent) / 0.28) 0%,
+    rgb(var(--rgb-accent) / 0.12) 100%
   );
   border-color: var(--color-accent-primary);
   color: #ffffff;
-  box-shadow: 0 0 18px rgba(0, 243, 255, 0.35), inset 0 0 12px rgba(0, 243, 255, 0.15);
+  box-shadow: 0 0 18px rgb(var(--rgb-accent) / 0.35), inset 0 0 12px rgb(var(--rgb-accent) / 0.15);
 }
 .tablet-btn:active:not(:disabled) { transform: translateY(1px); }
 .tablet-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -1215,4 +1215,83 @@ button:hover, .btn-interactive:hover {
 }
 @media (prefers-reduced-motion: reduce) {
   .hex-lattice-ripple { animation-duration: 1ms; }
+}
+
+/* =====================================================================
+   THEMES
+   Every colour utility in this app compiles to var(--color-*), so
+   overriding those variables on the root element retints the entire UI at
+   runtime with no rebuild and no per-component work.
+
+   The --rgb-* channel triplets exist for the many inline rgba()/shadow
+   values in TSX: those cannot consume a hex token and keep an alpha, so
+   they use rgb(var(--rgb-accent) / 0.4) instead.
+
+   Adding a theme = one more block here plus an entry in THEMES in
+   src/lib/themes.ts. Nothing else should need to change.
+   ===================================================================== */
+
+:root,
+:root[data-theme="cyan"] {
+  --color-bg-void: #020912;
+  --color-bg-panel: rgba(18, 32, 38, 0.45);
+  --color-cyan-primary: #70a2a8;
+  --color-cyan-dim: #456c70;
+  --color-cyan-text: #b3e2e6;
+  --color-accent-primary: #00f3ff;
+  --color-amber-alert: #ff9d2e;
+  --color-red-threat: #ff3b4e;
+  --color-green-verified: #70a2a8;
+  --color-text-primary: #f5f8f9;
+  --color-text-dim: #f5f8f9;
+  --color-border-hairline: rgba(112, 162, 168, 0.15);
+
+  --rgb-accent: 0 243 255;
+  --rgb-primary: 112 162 168;
+  --rgb-threat: 255 59 78;
+  --rgb-amber: 255 157 46;
+}
+
+/* WayneTech red — the Gotham Knights console. Near-black chassis, signal
+   red as the working colour, white reserved for primary readouts. */
+:root[data-theme="crimson"] {
+  --color-bg-void: #0a0305;
+  --color-bg-panel: rgba(38, 16, 20, 0.45);
+  --color-cyan-primary: #c8434f;
+  --color-cyan-dim: #7a2730;
+  --color-cyan-text: #ffd9dd;
+  --color-accent-primary: #ff2b3d;
+  --color-amber-alert: #ffa02e;
+  --color-red-threat: #ff5c5c;
+  --color-green-verified: #c8434f;
+  --color-text-primary: #fdf4f5;
+  --color-text-dim: #fdf4f5;
+  --color-border-hairline: rgba(200, 67, 79, 0.18);
+
+  --rgb-accent: 255 43 61;
+  --rgb-primary: 200 67 79;
+  --rgb-threat: 255 92 92;
+  --rgb-amber: 255 160 46;
+}
+
+/* Deep violet — the Gotham Knights menu palette. Cooler and softer than the
+   other two; accent leans magenta so it stays legible on the blue base. */
+:root[data-theme="violet"] {
+  --color-bg-void: #070518;
+  --color-bg-panel: rgba(30, 24, 60, 0.45);
+  --color-cyan-primary: #8f7fd4;
+  --color-cyan-dim: #574b8c;
+  --color-cyan-text: #ddd4ff;
+  --color-accent-primary: #b06bff;
+  --color-amber-alert: #ffb347;
+  --color-red-threat: #ff4d7d;
+  --color-green-verified: #8f7fd4;
+  --color-text-primary: #f4f1ff;
+  --color-text-dim: #f4f1ff;
+  --color-border-hairline: rgba(143, 127, 212, 0.18);
+
+  --rgb-accent: 176 107 255;
+  --rgb-primary: 143 127 212;
+  --rgb-threat: 255 77 125;
+  --rgb-amber: 255 179 71;
 }

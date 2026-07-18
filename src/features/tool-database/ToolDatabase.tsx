@@ -428,7 +428,7 @@ function ToolHandoff({ toolId, onOpen }: { toolId: string; onOpen: (id: string) 
         className="hud-target w-full py-2.5 px-3 flex items-center justify-center gap-2
                    border border-accent-primary/50 text-accent-primary bg-accent-primary/[0.06]
                    font-orbitron text-[13px] font-black uppercase tracking-[0.2em]
-                   hover:bg-accent-primary/15 hover:shadow-[0_0_16px_rgba(0,243,255,0.25)]
+                   hover:bg-accent-primary/15 hover:shadow-[0_0_16px_rgb(var(--rgb-accent) / 0.25)]
                    transition-all duration-200 cursor-pointer"
       >
         <Zap className="w-4 h-4" />
@@ -557,7 +557,7 @@ export default function ToolDatabase() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_#2ff1e4]" />
+                <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
                 <h1 className="font-orbitron text-sm font-black tracking-widest text-cyan-text uppercase">
                   <ShinyText text="SECURE CRYPTOGRAPHIC CODEX" speed={3} />
                 </h1>
@@ -615,7 +615,7 @@ export default function ToolDatabase() {
                 }}
                 className={`px-3 py-1 text-[12px] font-mono font-bold uppercase tracking-widest transition-all ${
                   selectedCategory === "all"
-                    ? "bg-cyan-primary/15 text-cyan-text font-bold shadow-[inset_0_0_8px_rgba(47,241,228,0.25)]"
+                    ? "bg-cyan-primary/15 text-cyan-text font-bold shadow-[inset_0_0_8px_rgb(var(--rgb-accent) / 0.25)]"
                     : "text-text-dim hover:text-text-primary"
                 }`}
               >
@@ -641,7 +641,7 @@ export default function ToolDatabase() {
                 }}
                 className={`px-3 py-1 text-[12px] font-mono font-bold uppercase tracking-widest transition-all border-l border-border-hairline/15 ${
                   selectedCategory === "encoding"
-                    ? "bg-cyan-primary/15 text-cyan-text font-bold shadow-[inset_0_0_8px_rgba(47,241,228,0.25)]"
+                    ? "bg-cyan-primary/15 text-cyan-text font-bold shadow-[inset_0_0_8px_rgb(var(--rgb-accent) / 0.25)]"
                     : "text-text-dim hover:text-text-primary"
                 }`}
               >
@@ -654,7 +654,7 @@ export default function ToolDatabase() {
                 }}
                 className={`px-3 py-1 text-[13px] font-mono font-bold uppercase tracking-widest transition-all border-l border-border-hairline/15 ${
                   selectedCategory === "utility"
-                    ? "bg-cyan-primary/15 text-cyan-text font-bold shadow-[inset_0_0_8px_rgba(47,241,228,0.25)]"
+                    ? "bg-cyan-primary/15 text-cyan-text font-bold shadow-[inset_0_0_8px_rgb(var(--rgb-accent) / 0.25)]"
                     : "text-text-dim hover:text-text-primary"
                 }`}
               >
@@ -733,7 +733,7 @@ export default function ToolDatabase() {
                         isSelected
                           ? isCipher
                             ? "bg-amber-alert/10 border-amber-alert shadow-[0_0_12px_rgba(245,158,11,0.25)] scale-[1.01]"
-                            : "bg-cyan-primary/10 border-cyan-primary shadow-[0_0_12px_rgba(47,241,228,0.25)] scale-[1.01]"
+                            : "bg-cyan-primary/10 border-cyan-primary shadow-[0_0_12px_rgb(var(--rgb-accent) / 0.25)] scale-[1.01]"
                           : "bg-bg-void/65 border-border-hairline/20 hover:bg-bg-void hover:border-text-primary/45"
                       }`}
                       style={{
@@ -756,10 +756,10 @@ export default function ToolDatabase() {
                         style={{
                           clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
                           background: isSelected 
-                            ? isCipher ? "rgba(245,158,11,0.15)" : "rgba(47,241,228,0.15)" 
+                            ? isCipher ? "rgba(245,158,11,0.15)" : "rgb(var(--rgb-accent) / 0.15)" 
                             : "rgba(255,255,255,0.03)",
                           border: isSelected
-                            ? `1px solid ${isCipher ? "#f59e0b" : "#2ff1e4"}`
+                            ? `1px solid ${isCipher ? "var(--color-amber-alert)" : "var(--color-accent-primary)"}`
                             : "1px solid rgba(255,255,255,0.1)"
                         }}
                       >
@@ -876,7 +876,7 @@ export default function ToolDatabase() {
                     </p>
                     {/* Visual Branching Cipher Diagram */}
                     <div key={activeToolDoc.id} className="w-16 h-16 shrink-0 bg-bg-void/60 border border-border-hairline/10 rounded flex items-center justify-center overflow-hidden relative" title="Structural branching mapping">
-                      <TreeGrowth active={true} color="rgba(47, 241, 228, 0.45)" className="scale-35 transform absolute" />
+                      <TreeGrowth active={true} color="rgb(var(--rgb-accent) / 0.45)" className="scale-35 transform absolute" />
                     </div>
                   </div>
                 </div>

@@ -42,9 +42,9 @@ export default function Card({
               <h3 className="font-chakra text-xs font-bold uppercase tracking-wider text-text-primary flex items-center">
                 {headerAccent !== "none" && (
                   <span className={`w-1.5 h-3 bg-current mr-2 transform -skew-x-12 inline-block ${
-                    headerAccent === "cyan" ? "text-cyan-primary shadow-[0_0_6px_#2ff1e4]" :
-                    headerAccent === "amber" ? "text-amber-alert shadow-[0_0_6px_#ff9d2e]" :
-                    headerAccent === "red" ? "text-red-threat shadow-[0_0_6px_#ff3b4e]" :
+                    headerAccent === "cyan" ? "text-cyan-primary shadow-[0_0_6px_var(--color-accent-primary)]" :
+                    headerAccent === "amber" ? "text-amber-alert shadow-[0_0_6px_var(--color-amber-alert)]" :
+                    headerAccent === "red" ? "text-red-threat shadow-[0_0_6px_var(--color-red-threat)]" :
                     "text-green-verified shadow-[0_0_6px_#35e58a]"
                   }`} />
                 )}

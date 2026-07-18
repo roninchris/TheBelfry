@@ -55,7 +55,7 @@ export default function AudioScanner({
 
       {/* Sonar rings via React Bits */}
       <div className="absolute inset-0 flex items-center justify-center opacity-70">
-        <SonarRings active={active} rings={4} color="rgba(47, 241, 228, 0.4)" className="w-80 h-80" />
+        <SonarRings active={active} rings={4} color="rgb(var(--rgb-accent) / 0.4)" className="w-80 h-80" />
       </div>
 
       <div className="relative z-30 bg-bg-void/80 p-6 rounded-full border border-cyan-primary/30">

@@ -45,7 +45,7 @@ export default function AmbientTelemetry({
           breathe: 6 + Math.random() * 8,
           delay: -Math.random() * 60,
           size: 10 + Math.round(Math.random() * 3),
-          // Composited against the #020912 void, anything below ~0.15 is within
+          // Composited against the near-black void, anything below ~0.15 is within
           // noise of the background and reads as empty. Keep the ceiling under
           // ~0.4 so the glyphs stay behind content rather than beside it.
           opacity: 0.16 + Math.random() * 0.22,

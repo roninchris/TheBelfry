@@ -41,14 +41,14 @@ export default function BinaryScanner({
     <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden select-none flex items-center justify-center bg-bg-void/95">
       
       {/* Background Binary Rain via React Bits */}
-      <BinaryRain density={20} color="rgba(47, 241, 228, 0.15)" />
+      <BinaryRain density={20} color="rgb(var(--rgb-accent) / 0.15)" />
 
       {/* Structure / Dependency Tree via React Bits */}
       <div className="absolute inset-0 flex items-center justify-center opacity-30">
-        <TreeGrowth active={active} color="rgba(47, 241, 228, 0.4)" className="w-80 h-80" />
+        <TreeGrowth active={active} color="rgb(var(--rgb-accent) / 0.4)" className="w-80 h-80" />
       </div>
 
-      <div className="relative z-30 bg-bg-void/90 p-4 border border-cyan-primary/40 flex items-center justify-center shadow-[0_0_15px_#2ff1e4]">
+      <div className="relative z-30 bg-bg-void/90 p-4 border border-cyan-primary/40 flex items-center justify-center shadow-[0_0_15px_var(--color-accent-primary)]">
         <ParticleReveal active={active} duration={1200} icon={Terminal} className="scale-125" />
       </div>
 

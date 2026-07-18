@@ -7,7 +7,7 @@ interface TreeGrowthProps {
   className?: string;
 }
 
-export default function TreeGrowth({ active = true, color = "rgba(47, 241, 228, 0.8)", className = "" }: TreeGrowthProps) {
+export default function TreeGrowth({ active = true, color = "rgb(var(--rgb-accent) / 0.8)", className = "" }: TreeGrowthProps) {
   const shouldReduceMotion = useReducedMotion();
 
   if (!active) return null;

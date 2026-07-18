@@ -37,7 +37,7 @@ export default function FactoryThroughputBar({
                 <div 
                   key={i} 
                   className={`w-4 h-0.5 skew-x-[-25deg] ${
-                    lane === 1 ? "bg-cyan-primary/70 shadow-[0_0_4px_#2ff1e4]" : "bg-cyan-primary/40"
+                    lane === 1 ? "bg-cyan-primary/70 shadow-[0_0_4px_var(--color-accent-primary)]" : "bg-cyan-primary/40"
                   }`} 
                 />
               ))}
