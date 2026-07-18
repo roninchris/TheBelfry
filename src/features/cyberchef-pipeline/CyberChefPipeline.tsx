@@ -26,9 +26,11 @@ import {
   Radio,
   Cpu,
   SearchCode,
-  Award
+  Award,
+  Info
 } from "lucide-react";
 import GlassPanel from "../../components/ui/GlassPanel";
+import HolographicProjector from "../../components/ui/HolographicProjector";
 import Checkbox from "../../components/ui/Checkbox";
 import Badge from "../../components/ui/Badge";
 import DecryptText from "../../components/ui/DecryptText";
@@ -119,6 +121,20 @@ export default function CyberChefPipeline() {
   const [bruteFailedCount, setBruteFailedCount] = useState<number>(0);
   // Candidate registry uses progressive disclosure instead of a cramped inner scroller.
   const [showAllCandidates, setShowAllCandidates] = useState<boolean>(false);
+  const CONFIDENCE_THRESHOLD = 40;
+  const CANDIDATE_PREVIEW = 6;
+  /**
+   * Derived once at component scope rather than inside the workspace render.
+   * The candidate registry now lives in the right-hand column while the gates
+   * that produce it stay on the left, so both halves have to read the same
+   * numbers — deriving them in either branch would guarantee they drift.
+   */
+  const topMatch = bruteResults.length > 0 ? bruteResults.find((r, idx) => idx === 0 && r.score > 40) : null;
+  const alternativeMatches = topMatch ? bruteResults.slice(1) : bruteResults;
+  const feasibleCount = bruteResults.filter(r => r.score > CONFIDENCE_THRESHOLD).length;
+  const visibleAlternatives = showAllCandidates
+    ? alternativeMatches
+    : alternativeMatches.slice(0, CANDIDATE_PREVIEW);
   const [bruteWordlist, setBruteWordlist] = useState<string[]>(DEFAULT_WORDLIST);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanProgress, setScanProgress] = useState<number>(0);
@@ -576,7 +592,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
   // the same again around the workspace. The header now takes what it needs and
   // the workspace claims the rest.
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 lg:grid-rows-[auto_minmax(0,1fr)] content-start gap-4 overflow-hidden font-chakra text-text-primary animate-fade-in" id="cyberchef-pipeline-root">
+    <div className="h-full w-full p-4 grid grid-cols-12 lg:grid-rows-[auto_minmax(0,1fr)_auto] content-start gap-4 overflow-hidden font-chakra text-text-primary animate-fade-in" id="cyberchef-pipeline-root">
       
       {/* ================= HEADER SECTION (SPAN 12) ================= */}
       <div className="col-span-12 flex flex-col space-y-3">
@@ -591,11 +607,6 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   FORENSIC DECRYPTION CORES
                 </h1>
               </div>
-              <p className="text-[13px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
-                Chain operations together to peel apart data that has been encoded or
-                encrypted more than once. Paste your text, add operations in order, and
-                each one feeds the next &mdash; or switch to auto-crack to try many keys at once.
-              </p>
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant={mode === "manual" ? "cyan" : "amber"} size="xs" className="animate-hex-pulse-flicker">
@@ -1029,16 +1040,6 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
         {/* ================= BRUTE FORCE WORKSPACE LAYOUT ================= */}
         {mode === "brute" && (() => {
-          const topMatch = bruteResults.length > 0 ? bruteResults.find((r, idx) => idx === 0 && r.score > 40) : null;
-          const alternativeMatches = topMatch ? bruteResults.slice(1) : bruteResults;
-          // One coherent story: how many were evaluated vs. how many cleared the confidence bar.
-          const CONFIDENCE_THRESHOLD = 40;
-          const feasibleCount = bruteResults.filter(r => r.score > CONFIDENCE_THRESHOLD).length;
-          const CANDIDATE_PREVIEW = 6;
-          const visibleAlternatives = showAllCandidates
-            ? alternativeMatches
-            : alternativeMatches.slice(0, CANDIDATE_PREVIEW);
-
           return (
             <GlassPanel className="p-4 flex-1 flex flex-col min-h-[500px]" contentClassName="flex flex-col" clipSize="md">
               
@@ -1405,106 +1406,6 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 </div>
               )}
 
-              {/* SECONDARY ROW: ALTERNATIVE CANDIDATES REGISTER */}
-              {bruteResults.length > 0 && alternativeMatches.length > 0 && (
-                <div className="mt-2 pt-3.5 border-t border-border-hairline/15 flex flex-col min-h-0">
-                  {/* Single coherent summary: evaluated vs. cleared the bar vs. skipped */}
-                  <div className="flex items-center justify-between border-b border-border-hairline/10 pb-1.5 mb-2.5 gap-3">
-                    <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider truncate">
-                      CANDIDATE REGISTRY — {alternativeMatches.length} EVALUATED
-                      {bruteFailedCount > 0 && ` · ${bruteFailedCount} SKIPPED`}
-                    </span>
-                    <Badge variant={feasibleCount > 0 ? "green" : "dim"} size="xs">
-                      {feasibleCount > 0
-                        ? `${feasibleCount} ABOVE ${CONFIDENCE_THRESHOLD}%`
-                        : `NONE ABOVE ${CONFIDENCE_THRESHOLD}%`}
-                    </Badge>
-                  </div>
-
-                  {/* Ranked grid — no inner scroller; expands on demand */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {visibleAlternatives.map((result, idx) => {
-                      const rank = (topMatch ? idx + 2 : idx + 1);
-                      const plausible = result.score > CONFIDENCE_THRESHOLD;
-                      return (
-                        <div
-                          key={idx}
-                          className="hud-target hud-target-amber bg-bg-void/40 border border-border-hairline/10 p-2.5 flex flex-col justify-between hover:border-amber-alert/25 hover:bg-bg-void/75 transition-all"
-                        >
-                          <div className="flex items-center justify-between mb-1.5 gap-2">
-                            <div className="flex items-center space-x-1.5 min-w-0">
-                              <span className="font-mono text-[12px] text-text-dim/60 shrink-0">#{rank}</span>
-                              <span className="font-mono text-[12px] text-amber-text font-black truncate">{result.label}</span>
-                              {result.parameter && (
-                                <Badge variant="cyan" size="xs" className="px-1 py-0 font-mono text-[12px] shrink-0">
-                                  {result.parameter}
-                                </Badge>
-                              )}
-                            </div>
-                            {/* Confidence readout + bar, so ranking is legible at a glance */}
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <div className="w-10 h-1 bg-bg-void border border-border-hairline/15 overflow-hidden">
-                                <div
-                                  className={`h-full ${plausible ? "bg-green-verified" : "bg-amber-alert/50"}`}
-                                  style={{ width: `${Math.max(2, Math.min(100, result.score))}%` }}
-                                />
-                              </div>
-                              <span className={`font-mono text-[12px] ${plausible ? "text-green-verified" : "text-text-dim/60"}`}>
-                                {result.score}%
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="bg-bg-void/50 p-1.5 border border-border-hairline/5 font-mono text-[12px] text-text-dim/95 mb-2 truncate select-text">
-                            {result.text}
-                          </div>
-
-                          <div className="flex justify-end space-x-1.5 text-[12px] font-mono border-t border-border-hairline/5 pt-1.5">
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(result.text);
-                                playPinClick();
-                                addLog(`COPIED RESULT: ${result.label}`, "success", "SYS");
-                              }}
-                              className="hover:text-cyan-text text-text-dim uppercase transition-colors"
-                            >
-                              Copy
-                            </button>
-                            <span className="text-border-hairline/30">|</span>
-                            <button
-                              onClick={() => {
-                                setInputText(result.text);
-                                playPinClick();
-                                addLog(`FED ALTERNATIVE MATCH INTO INPUT`, "info", "SYS");
-                              }}
-                              className="hover:text-amber-text text-text-dim uppercase transition-colors"
-                            >
-                              Use as Input
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Progressive disclosure replaces the cramped scroll viewport */}
-                  {alternativeMatches.length > CANDIDATE_PREVIEW && (
-                    <button
-                      onClick={() => {
-                        setShowAllCandidates(v => !v);
-                        playPinClick();
-                      }}
-                      onMouseEnter={() => playHoverEvidence()}
-                      className="hud-target mt-2 self-center px-3 py-1 border border-border-hairline/20 bg-bg-void/40 hover:border-amber-alert/50 hover:text-amber-text text-text-dim text-[12px] font-mono uppercase tracking-widest transition-all"
-                    >
-                      {showAllCandidates
-                        ? `Collapse — showing all ${alternativeMatches.length}`
-                        : `Show all ${alternativeMatches.length} candidates`}
-                    </button>
-                  )}
-                </div>
-              )}
-
             </GlassPanel>
           );
         })()}
@@ -1605,6 +1506,108 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
         ) : (
           /* Brute Force Modes Sidebar presets & heuristic notes */
           <>
+            {/* ===== CANDIDATE REGISTRY =====
+                Moved out of the workspace panel on the left, where it was
+                stacked under the three gate cards and competing with them for
+                height while this column sat empty. A ranked list belongs in the
+                tall narrow column, and it leaves the left half to the gates
+                that produce it. One card per row here rather than the old two,
+                since the column is ~409px wide. */}
+            {bruteResults.length > 0 && alternativeMatches.length > 0 && (
+              <GlassPanel className="p-4 flex flex-col min-h-0" contentClassName="flex flex-col min-h-0" clipSize="sm">
+                <div className="shrink-0 flex items-center justify-between border-b border-border-hairline/15 pb-1.5 mb-2.5 gap-3">
+                  <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider truncate">
+                    CANDIDATE REGISTRY — {alternativeMatches.length} EVALUATED
+                    {bruteFailedCount > 0 && ` · ${bruteFailedCount} SKIPPED`}
+                  </span>
+                  <Badge variant={feasibleCount > 0 ? "green" : "dim"} size="xs">
+                    {feasibleCount > 0
+                      ? `${feasibleCount} ABOVE ${CONFIDENCE_THRESHOLD}%`
+                      : `NONE ABOVE ${CONFIDENCE_THRESHOLD}%`}
+                  </Badge>
+                </div>
+
+                <div className="min-h-0 overflow-y-auto scrollbar-thin grid grid-cols-1 gap-2 pr-1">
+                  {visibleAlternatives.map((result, idx) => {
+                    const rank = (topMatch ? idx + 2 : idx + 1);
+                    const plausible = result.score > CONFIDENCE_THRESHOLD;
+                    return (
+                      <div
+                        key={idx}
+                        className="hud-target hud-target-amber bg-bg-void/40 border border-border-hairline/10 p-2.5 flex flex-col justify-between hover:border-amber-alert/25 hover:bg-bg-void/75 transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-1.5 gap-2">
+                          <div className="flex items-center space-x-1.5 min-w-0">
+                            <span className="font-mono text-[12px] text-text-dim/60 shrink-0">#{rank}</span>
+                            <span className="font-mono text-[12px] text-amber-text font-black truncate">{result.label}</span>
+                            {result.parameter && (
+                              <Badge variant="cyan" size="xs" className="px-1 py-0 font-mono text-[12px] shrink-0">
+                                {result.parameter}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="w-10 h-1 bg-bg-void border border-border-hairline/15 overflow-hidden">
+                              <div
+                                className={`h-full ${plausible ? "bg-green-verified" : "bg-amber-alert/50"}`}
+                                style={{ width: `${Math.max(2, Math.min(100, result.score))}%` }}
+                              />
+                            </div>
+                            <span className={`font-mono text-[12px] ${plausible ? "text-green-verified" : "text-text-dim/60"}`}>
+                              {result.score}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="bg-bg-void/50 p-1.5 border border-border-hairline/5 font-mono text-[12px] text-text-dim/95 mb-2 truncate select-text">
+                          {result.text}
+                        </div>
+
+                        <div className="flex justify-end space-x-1.5 text-[12px] font-mono border-t border-border-hairline/5 pt-1.5">
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(result.text);
+                              playPinClick();
+                              addLog(`COPIED RESULT: ${result.label}`, "success", "SYS");
+                            }}
+                            className="hover:text-cyan-text text-text-dim uppercase transition-colors"
+                          >
+                            Copy
+                          </button>
+                          <span className="text-border-hairline/30">|</span>
+                          <button
+                            onClick={() => {
+                              setInputText(result.text);
+                              playPinClick();
+                              addLog(`FED ALTERNATIVE MATCH INTO INPUT`, "info", "SYS");
+                            }}
+                            className="hover:text-amber-text text-text-dim uppercase transition-colors"
+                          >
+                            Use as Input
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {alternativeMatches.length > CANDIDATE_PREVIEW && (
+                  <button
+                    onClick={() => {
+                      setShowAllCandidates(v => !v);
+                      playPinClick();
+                    }}
+                    onMouseEnter={() => playHoverEvidence()}
+                    className="hud-target shrink-0 mt-2 self-center px-3 py-1 border border-border-hairline/20 bg-bg-void/40 hover:border-amber-alert/50 hover:text-amber-text text-text-dim text-[12px] font-mono uppercase tracking-widest transition-all"
+                  >
+                    {showAllCandidates
+                      ? `Collapse — showing all ${alternativeMatches.length}`
+                      : `Show all ${alternativeMatches.length} candidates`}
+                  </button>
+                )}
+              </GlassPanel>
+            )}
+
             {/* Heuristics Intelligence Core Panel */}
             <GlassPanel className="p-4" clipSize="sm">
               <div className="border-b border-border-hairline/20 pb-2 mb-3">
@@ -1627,9 +1630,43 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 </li>
               </ul>
             </GlassPanel>
+
+            {/* Ambient fill for the run-not-started state. Once a sweep produces
+                candidates the registry above claims this height instead, so the
+                decoration never competes with real results. */}
+            {bruteResults.length === 0 && (
+              <GlassPanel className="p-4 flex-1 flex flex-col min-h-[180px] relative overflow-hidden" contentClassName="flex flex-col" clipSize="sm">
+                <div className="absolute inset-0 bg-grid-pattern opacity-[0.04] pointer-events-none" />
+                <div className="shrink-0 flex items-center justify-between border-b border-border-hairline/20 pb-2 mb-2">
+                  <span className="font-display text-[13px] font-black tracking-widest text-cyan-text/70 uppercase flex items-center">
+                    <span className="w-1.5 h-1.5 bg-amber-alert mr-2 inline-block animate-ping-cyan" />
+                    KEYSPACE FIELD
+                  </span>
+                  <span className="font-mono text-[12px] text-text-dim/50 tracking-widest uppercase">
+                    Idle
+                  </span>
+                </div>
+                <div className="flex-1 min-h-0 flex items-center justify-center pointer-events-none">
+                  <HolographicProjector />
+                </div>
+              </GlassPanel>
+            )}
           </>
         )}
 
+      </div>
+
+      {/* ================= FOOTER: ORIENTATION STRIP =================
+          The explanation used to be a three-line paragraph in the header ribbon,
+          which pushed the whole workspace down before the operator reached a
+          single control. Condensed to one line and moved out of the way. */}
+      <div className="col-span-12 shrink-0">
+        <div className="flex items-center gap-2.5 px-3 py-2 bg-bg-void/40 border border-border-hairline/15 font-share text-[12px] text-text-dim/70 uppercase tracking-wider">
+          <Info className="w-3.5 h-3.5 text-cyan-primary/50 shrink-0" />
+          <span className="truncate">
+            Chain operations so each one feeds the next — or switch to brute force to try many keys at once.
+          </span>
+        </div>
       </div>
 
     </div>
