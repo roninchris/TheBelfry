@@ -406,7 +406,7 @@ export default function EncodingLab() {
               definite height and overflow-y-auto could never engage — "show all"
               grew the container to ~2600px and pushed the page down instead of
               scrolling inside it. */}
-          <div className="flex-1 min-h-0 max-h-[72vh] space-y-3 overflow-y-auto pr-1 scrollbar-thin">
+          <div className="flex-1 min-h-0 max-h-[72vh] space-y-3 overflow-y-auto overflow-x-hidden pr-1 hud-scroll-hidden">
             {(() => {
               const rowsData = [
                 {
@@ -536,13 +536,13 @@ export default function EncodingLab() {
               const shown = showAllPorts ? rowsData : activeRows;
 
               const renderRow = (row: typeof rowsData[0], idx: number, total: number) => (
-                <div key={row.key} className="flex items-stretch group" id={`breakout-container-${row.key}`}>
+                <div key={row.key} className="flex items-stretch group min-w-0" id={`breakout-container-${row.key}`}>
                   {/* Visually connecting signal breakout line */}
                   <BreakoutLine index={idx} total={rowsData.length} isActive={!!row.value} />
 
                   {/* Translator Node Port */}
                   <div
-                    className={`hud-target flex-1 bg-bg-void/50 border p-2.5 space-y-1.5 relative hover:border-cyan-dim/30 hover:bg-bg-void/65 transition-all duration-300 ${
+                    className={`hud-target flex-1 min-w-0 bg-bg-void/50 border p-2.5 space-y-1.5 relative hover:border-cyan-dim/30 hover:bg-bg-void/65 transition-all duration-300 ${
                       highlightedRow === row.key
                         ? "border-accent-primary/70 bg-accent-primary/[0.06] shadow-[0_0_16px_rgb(var(--rgb-accent) / 0.2)]"
                         : "border-border-hairline/15"
@@ -568,7 +568,13 @@ export default function EncodingLab() {
                     {/* Read-only stream row */}
                     <div className="flex flex-col space-y-1">
                       <div className="flex items-center space-x-2">
-                        <div className="flex-1 bg-bg-void/80 border border-border-hairline/10 p-2 font-mono text-[13px] text-text-primary h-8 flex items-center overflow-x-auto overflow-y-hidden scrollbar-none whitespace-nowrap leading-none select-all select-text">
+                        {/* Wraps and clamps instead of scrolling sideways. A
+                            fixed-height nowrap box with overflow-x meant every
+                            long value got its own horizontal scrollbar, and a
+                            single wide value stretched the whole row past the
+                            column. Long output now wraps to two lines and is
+                            still selectable and copyable in full. */}
+                        <div className="flex-1 min-w-0 bg-bg-void/80 border border-border-hairline/10 p-2 font-mono text-[13px] text-text-primary leading-snug select-all select-text break-all overflow-hidden max-h-[2.9em] min-h-[2.9em]">
                           {row.value ? (
                             <ShinyText text={row.value} speed={3} className="tracking-wide" />
                           ) : (
