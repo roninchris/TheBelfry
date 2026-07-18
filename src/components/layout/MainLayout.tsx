@@ -5,6 +5,7 @@ import TopBar from "./TopBar";
 import StatusBar from "./StatusBar";
 import HexagonBackground from "../ui/HexagonBackground";
 import AmbientTelemetry from "../ui/AmbientTelemetry";
+import HoneycombField from "../ui/HoneycombField";
 import NotesPanel from "../ui/NotesPanel";
 
 interface MainLayoutProps {
@@ -23,6 +24,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
       
       {/* Dynamic Hexagon background with pulsing effects */}
       <HexagonBackground />
+
+      {/* Tessellated honeycomb lattice framing the workspace */}
+      <HoneycombField />
 
       {/* Ambient glyph telemetry drifting in the left/right margins */}
       <AmbientTelemetry active={isScanning} />
