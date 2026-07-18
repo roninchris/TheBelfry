@@ -570,8 +570,13 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
     </button>
   );
 
+  // Row sizing is explicit. Auto rows in a grid taller than its content get
+  // stretched by align-content, which silently inflated the header row from its
+  // natural 104px to 240px — 136px of dead space above the mode switcher, and
+  // the same again around the workspace. The header now takes what it needs and
+  // the workspace claims the rest.
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra text-text-primary animate-fade-in" id="cyberchef-pipeline-root">
+    <div className="h-full w-full p-4 grid grid-cols-12 lg:grid-rows-[auto_minmax(0,1fr)] content-start gap-4 overflow-hidden font-chakra text-text-primary animate-fade-in" id="cyberchef-pipeline-root">
       
       {/* ================= HEADER SECTION (SPAN 12) ================= */}
       <div className="col-span-12 flex flex-col space-y-3">
@@ -603,7 +608,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
       </div>
 
       {/* ================= LEFT SECTION: ACTIVE TOOL / WORKSPACE ================= */}
-      <div className="col-span-12 lg:col-span-8 flex flex-col space-y-4">
+      <div className="col-span-12 lg:col-span-8 flex flex-col space-y-4 min-h-0">
         
         {/* Unified conveyor layout replaces former separate input rows */}
         {/* Mode switcher, directly above the workspace it controls. It used to
@@ -636,7 +641,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
         {/* MANUAL WORKSPACE LAYOUT (Steps List) */}
         {mode === "manual" && (
-          <GlassPanel className="p-4 flex-1 flex flex-col min-h-0" clipSize="md">
+          <GlassPanel className="p-4 flex-1 flex flex-col min-h-0" contentClassName="flex flex-col" clipSize="md">
             <div className="border-b border-border-hairline/20 pb-2 mb-4 flex justify-between items-center flex-wrap gap-2">
               <div className="flex items-center space-x-2">
                 <Sliders className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
@@ -1035,7 +1040,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
             : alternativeMatches.slice(0, CANDIDATE_PREVIEW);
 
           return (
-            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[500px]" clipSize="md">
+            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[500px]" contentClassName="flex flex-col" clipSize="md">
               
               {/* Brute Mode Config Header */}
               <div className="border-b border-border-hairline/20 pb-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1507,7 +1512,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
       </div>
 
       {/* ================= RIGHT SECTION: OPERATIONS / PRESETS (SPAN 4) ================= */}
-      <div className="col-span-12 lg:col-span-4 flex flex-col space-y-4">
+      <div className="col-span-12 lg:col-span-4 flex flex-col space-y-4 min-h-0 overflow-y-auto scrollbar-thin">
         
         {mode === "manual" ? (
           <>
