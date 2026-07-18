@@ -492,7 +492,7 @@ export default function DashboardPage() {
             <button
               onClick={handleScanTrigger}
               disabled={isScanning}
-              className={`tablet-btn tablet-frame hud-target flex-1 text-sm py-3 relative flex items-center justify-center space-x-2 ${
+              className={`tablet-btn hud-target flex-1 text-sm py-3 relative flex items-center justify-center space-x-2 ${
                 isScanning
                   ? "tablet-active cursor-not-allowed"
                   : textInput.trim()

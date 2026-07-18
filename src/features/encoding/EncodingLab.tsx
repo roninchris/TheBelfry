@@ -508,9 +508,9 @@ export default function EncodingLab() {
       </div>
 
       {/* ================= CENTER COLUMN: THE SIMULTANEOUS FORMAT BREAKOUT BOARD ================= */}
-      <div className="col-span-12 xl:col-span-4 flex flex-col space-y-4">
+      <div className="col-span-12 xl:col-span-4 flex flex-col space-y-4 min-h-0">
         
-        <GlassPanel className="p-4 flex-1 flex flex-col" clipSize="md" showCornerTicks={true}>
+        <GlassPanel className="p-4 flex-1 flex flex-col min-h-0" clipSize="md" showCornerTicks={true}>
           <div className="border-b border-border-hairline/25 pb-2 mb-3.5 flex justify-between items-center">
             <div>
               <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
@@ -545,7 +545,12 @@ export default function EncodingLab() {
             </div>
           </div>
 
-          <div className="flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-thin">
+          {/* Bounded with max-h, not just flex-1 + min-h-0. This panel sits in a
+              grid row that sizes to its content, so no ancestor ever gives it a
+              definite height and overflow-y-auto could never engage — "show all"
+              grew the container to ~2600px and pushed the page down instead of
+              scrolling inside it. */}
+          <div className="flex-1 min-h-0 max-h-[58vh] space-y-3 overflow-y-auto pr-1 scrollbar-thin">
             {(() => {
               const rowsData = [
                 {

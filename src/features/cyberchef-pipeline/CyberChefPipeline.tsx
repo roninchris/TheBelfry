@@ -29,6 +29,7 @@ import {
   Award
 } from "lucide-react";
 import GlassPanel from "../../components/ui/GlassPanel";
+import DataWall from "../../components/ui/DataWall";
 import Checkbox from "../../components/ui/Checkbox";
 import Badge from "../../components/ui/Badge";
 import DecryptText from "../../components/ui/DecryptText";
@@ -695,10 +696,13 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 to act on. The empty state is now a card inside the chain. */}
             {(
               // Horizontal Conveyor Assembly Line
-              <div className="flex-1 flex flex-col justify-between min-h-0">
+              <div className="relative flex-1 flex flex-col justify-between min-h-0">
+                {/* Decorative machine chatter behind the chain — fills the dead
+                    space around the cards without competing with them. */}
+                <DataWall lines={12} className="z-0" />
 
                 {/* ===== SEQUENCE PROGRESS RAIL — the "flow" identity for a chain of ops ===== */}
-                <div className="mb-3 flex items-center gap-0.5 overflow-x-auto scrollbar-none pb-1.5 border-b border-border-hairline/10">
+                <div className="relative z-10 mb-3 flex items-center gap-0.5 overflow-x-auto scrollbar-none pb-1.5 border-b border-border-hairline/10">
                   {(() => {
                     // Node state helper: idle | active | done | error
                     const nodeCls = (state: string, danger = false) =>
@@ -754,7 +758,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   })()}
                 </div>
 
-                <div className="flex-1 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
+                <div className="relative z-10 flex-1 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
                   
                   {/* GATE 1: INPUT VESSEL CARD */}
                   <div className="w-[250px] shrink-0 flex items-stretch">

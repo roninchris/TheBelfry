@@ -1135,17 +1135,21 @@ button:hover, .btn-interactive:hover {
   opacity: 0.85;
   transition: opacity 0.2s ease, width 0.2s ease, height 0.2s ease;
 }
+/* Inset, not overhanging. At -2px with a 2px rule these sat directly on top of
+   the host element's own border corner and merged with it into a solid square
+   block instead of reading as a bracket. Pulled inside with a gap so the
+   bracket is legible as its own mark. */
 .tablet-frame::before {
-  top: -2px;
-  left: -2px;
-  border-top: 2px solid;
-  border-left: 2px solid;
+  top: 3px;
+  left: 3px;
+  border-top: 1.5px solid;
+  border-left: 1.5px solid;
 }
 .tablet-frame::after {
-  bottom: -2px;
-  right: -2px;
-  border-bottom: 2px solid;
-  border-right: 2px solid;
+  bottom: 3px;
+  right: 3px;
+  border-bottom: 1.5px solid;
+  border-right: 1.5px solid;
 }
 .tablet-frame:hover::before,
 .tablet-frame:hover::after {
@@ -1469,4 +1473,53 @@ button:hover, .btn-interactive:hover {
 
 @media (prefers-reduced-motion: reduce) {
   .engine-btn { transition: none; }
+}
+
+/* ---- Data wall: horizontal machine-chatter for empty panel regions ----
+   CSS-only, same discipline as .telemetry-column: lines are generated once and
+   only transform animates, so this costs no re-renders and stays on the
+   compositor. Masked at all four edges so it fades into the panel rather than
+   ending on a hard line. */
+@keyframes data-wall-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes data-wall-drift-rev {
+  from { transform: translate3d(-50%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+
+.data-wall {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  font-family: "Share Tech Mono", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--color-cyan-primary);
+  -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent),
+                linear-gradient(180deg, transparent, #000 15%, #000 85%, transparent);
+  -webkit-mask-composite: source-in;
+          mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent),
+                linear-gradient(180deg, transparent, #000 15%, #000 85%, transparent);
+          mask-composite: intersect;
+}
+
+.data-wall-row {
+  white-space: nowrap;
+  will-change: transform;
+  animation: data-wall-drift var(--wall-duration, 40s) linear infinite;
+  animation-delay: var(--wall-delay, 0s);
+}
+.data-wall-row--rev {
+  animation-name: data-wall-drift-rev;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .data-wall-row { animation: none !important; }
 }
