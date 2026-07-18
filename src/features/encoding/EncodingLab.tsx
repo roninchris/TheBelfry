@@ -611,6 +611,17 @@ export default function EncodingLab() {
                   description: isDecodeMode ? "Decode rad-64 index stream to text" : "Standard rad-64 index representation"
                 },
                 {
+                  // Base32 was computed into base32Val and detected by the
+                  // source-signature panel, but never had a channel — so the
+                  // deck would report the buffer as BASE32 and then offer no
+                  // way to decode it.
+                  key: "base32",
+                  label: isDecodeMode ? "BASE32 CHARACTER DECODER (RFC 4648)" : "BASE32 CHARACTER BRANCH (RFC 4648)",
+                  value: base32Val,
+                  badge: "B32",
+                  description: isDecodeMode ? "Decode rad-32 index stream to text" : "Case-insensitive rad-32 index representation"
+                },
+                {
                   key: "binary",
                   label: isDecodeMode ? "RAW BINARY BYTE STREAM DECODER" : "RAW BINARY BYTE STREAM (8-BIT OCTETS)",
                   value: binaryVal,

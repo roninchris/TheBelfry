@@ -95,7 +95,7 @@ export default function CyberChefPipeline() {
   const [intermediateResults, setIntermediateResults] = useState<string[]>([]);
   const [autoRun, setAutoRun] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [activeCategory, setActiveCategory] = useState<"all" | "cipher" | "encoding">("all");
+  const [activeCategory, setActiveCategory] = useState<"all" | "cipher" | "encoding" | "utility">("all");
   
   // Drag and drop sorting state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -162,6 +162,13 @@ export default function CyberChefPipeline() {
 
   const filteredEncodings = useMemo(() => {
     return filteredTools.filter(t => t.category === "encoding");
+  }, [filteredTools]);
+
+  // Anything that is neither a cipher nor an encoding — RSA Factorizer, Hash
+  // Lab. Written as an exclusion rather than `=== "utility"` so a future
+  // category cannot silently vanish from this panel the way utility did.
+  const filteredUtilities = useMemo(() => {
+    return filteredTools.filter(t => t.category !== "cipher" && t.category !== "encoding");
   }, [filteredTools]);
 
   // Execute the entire chain of recipes (Manual mode)
@@ -1559,8 +1566,8 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               </div>
 
               {/* Category Tabs */}
-              <div className="grid grid-cols-3 gap-1.5 mb-3.5 font-mono text-[12px] text-center">
-                {["all", "cipher", "encoding"].map((cat) => (
+              <div className="grid grid-cols-4 gap-1.5 mb-3.5 font-mono text-[12px] text-center">
+                {["all", "cipher", "encoding", "utility"].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => {
@@ -1612,6 +1619,23 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                           </span>
                         </div>
                         {filteredEncodings.map(tool => renderToolItem(tool))}
+                      </div>
+                    )}
+
+                    {/* Utilities group. RSA Factorizer and Hash Lab have always
+                        been implemented and registered, but this panel only ever
+                        rendered the cipher and encoding lists, so the whole
+                        utility category was unreachable here — including under
+                        "ALL". */}
+                    {filteredUtilities.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center space-x-2 border-b border-border-hairline/10 pb-1 mb-2">
+                          <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
+                          <span className="font-display text-[12px] font-black tracking-widest text-green-verified uppercase">
+                            FORENSIC UTILITIES
+                          </span>
+                        </div>
+                        {filteredUtilities.map(tool => renderToolItem(tool))}
                       </div>
                     )}
                   </>
