@@ -206,6 +206,15 @@ export default function EncodingLab() {
   const [showAllPorts, setShowAllPorts] = useState(false);
   const sourceStats = useMemo(() => analyseSource(inputText), [inputText]);
 
+  // Bumped whenever the buffer changes so the channels replay their resolve.
+  // Without this the decode is instantaneous and nothing conveys that sixteen
+  // formats were just driven off one stream.
+  const [decodeGen, setDecodeGen] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setDecodeGen((g) => g + 1), 90);
+    return () => clearTimeout(t);
+  }, [inputText, isDecodeMode]);
+
   useEffect(() => {
     if (!pendingToolId) return;
     const requested = consumePendingTool();
@@ -714,7 +723,13 @@ export default function EncodingLab() {
               const shown = showAllPorts ? rowsData : activeRows;
 
               const renderRow = (row: typeof rowsData[0], idx: number, total: number) => (
-                <div key={row.key} className="flex items-stretch group min-w-0" id={`breakout-container-${row.key}`}>
+                <div
+                  key={`${row.key}-${decodeGen}`}
+                  className="channel-resolve flex items-stretch group min-w-0"
+                  data-hit={isHit(row.value) ? "" : undefined}
+                  style={{ animationDelay: `${Math.min(idx, 10) * 45}ms` }}
+                  id={`breakout-container-${row.key}`}
+                >
                   {/* Visually connecting signal breakout line */}
                   <BreakoutLine index={idx} total={rowsData.length} isActive={!!row.value} />
 
