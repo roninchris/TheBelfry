@@ -32,7 +32,8 @@ import {
   playFileAnalysisComplete,
   playFileAnalysisScanner,
   playScanOpen,
-  playBinaryScanLoop
+  playBinaryScanLoop,
+  playBakeFailure
 } from "../../lib/soundEngine";
 import { useAppStore } from "../../store/appStore";
 import { carveEmbeddedFiles, CarvedFile } from "../../lib/tools/fileCarving";
@@ -56,6 +57,20 @@ interface BinaryPreset {
 
 const TACTICAL_BINARY_PRESETS: BinaryPreset[] = [];
 
+/**
+ * The dropzone has always advertised "MAX 10MB" but nothing enforced it. A
+ * larger file walked the whole buffer byte-by-byte in extractStringsAsync,
+ * which yields to the UI thread only every 100KB — a 500MB drop locked the tab
+ * for minutes with no way to cancel and no indication anything was wrong.
+ */
+const MAX_CARRIER_BYTES = 10 * 1024 * 1024;
+
+interface CarrierRejection {
+  code: "OVERSIZE" | "EMPTY" | "UNREADABLE";
+  headline: string;
+  detail: string;
+}
+
 export default function FileAnalysisLab() {
   const cases = useAppStore((state) => state.cases);
   const activeCaseId = useAppStore((state) => state.activeCaseId);
@@ -78,6 +93,10 @@ export default function FileAnalysisLab() {
   // Custom dynamically loaded file analysis states
   const [customMetadata, setCustomMetadata] = useState<any | null>(null);
   const [carvedFiles, setCarvedFiles] = useState<CarvedFile[]>([]);
+  const [rejection, setRejection] = useState<CarrierRejection | null>(null);
+  // Real byte-frequency histogram of the loaded carrier, kept for the entropy
+  // strip so that readout is driven by the file rather than decorated.
+  const [byteHistogram, setByteHistogram] = useState<number[] | null>(null);
   const scanSoundRef = useRef<{ stop: () => void } | null>(null);
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -159,14 +178,51 @@ export default function FileAnalysisLab() {
   };
 
   // Convert custom uploaded file into real binary sector simulation
+  const rejectCarrier = (code: CarrierRejection["code"], headline: string, detail: string) => {
+    playBakeFailure();
+    setRejection({ code, headline, detail });
+    setActiveFile(null);
+    setCustomMetadata(null);
+    setByteHistogram(null);
+    setCarvedFiles([]);
+    setScanComplete(false);
+    addLog(`CARRIER REJECTED (${code}): ${headline}`, "warning", "SYS");
+  };
+
   const loadCustomFile = (file: File) => {
+    if (file.size === 0) {
+      rejectCarrier(
+        "EMPTY",
+        "CARRIER HOLDS NO BYTES",
+        `'${file.name}' reports a length of zero. There is no stream to parse — the container is empty or the source truncated it in transit.`,
+      );
+      return;
+    }
+    if (file.size > MAX_CARRIER_BYTES) {
+      rejectCarrier(
+        "OVERSIZE",
+        "CARRIER EXCEEDS BUFFER CEILING",
+        `'${file.name}' is ${(file.size / 1024 / 1024).toFixed(1)} MB. The buffer port accepts up to ${MAX_CARRIER_BYTES / 1024 / 1024} MB — string extraction walks every byte, and a stream this size would stall the console.`,
+      );
+      return;
+    }
+
     playScanOpen();
+    setRejection(null);
     setActiveFile(file);
     setSelectedPresetId(null);
     setScanComplete(false);
     setScanProgress(0);
+    setByteHistogram(null);
 
     const reader = new FileReader();
+    reader.onerror = () => {
+      rejectCarrier(
+        "UNREADABLE",
+        "STREAM READ FAILED",
+        `The host denied or aborted the read on '${file.name}'. The file may have been moved, locked by another process, or revoked mid-transfer.`,
+      );
+    };
     reader.onload = async (event) => {
       const buffer = event.target?.result as ArrayBuffer;
       const fullBytes = new Uint8Array(buffer);
@@ -240,10 +296,13 @@ export default function FileAnalysisLab() {
       }
 
       // Calculate real Shannon entropy of full file
+      // Returns the histogram alongside the score — the entropy strip renders
+      // the same distribution the number is derived from, so the visual can
+      // never drift from the readout.
       const calculateFileEntropy = (arr: Uint8Array) => {
         const counts = new Uint32Array(256);
         const len = arr.length;
-        if (len === 0) return 0;
+        if (len === 0) return { entropy: 0, counts };
         for (let i = 0; i < len; i++) {
           counts[arr[i]]++;
         }
@@ -254,9 +313,10 @@ export default function FileAnalysisLab() {
             entropy -= p * Math.log2(p);
           }
         }
-        return +entropy.toFixed(2);
+        return { entropy: +entropy.toFixed(2), counts };
       };
-      const realEntropy = calculateFileEntropy(fullBytes);
+      const { entropy: realEntropy, counts: byteCounts } = calculateFileEntropy(fullBytes);
+      setByteHistogram(Array.from(byteCounts));
 
       // Generate simulated hex dump rows from the actual loaded file bytes
       const generatedHexRows: any[] = [];
@@ -372,7 +432,7 @@ export default function FileAnalysisLab() {
       "SNIFFING header magic bytes...",
       "RECONSTRUCTING sector block offsets...",
       "PARSING printable ASCII character loops...",
-      "COMPUTING Shannon Shannon Byte Entropy...",
+      "COMPUTING Shannon byte entropy...",
       "MAPPING signature extension indices..."
     ];
 
@@ -391,7 +451,9 @@ export default function FileAnalysisLab() {
         setIsScanning(false);
         setScanComplete(true);
         playFileAnalysisComplete();
-        addLog(`COMPLETED DEEP BINARY INSPECTION ON ${currentData.name}`, "success", "SYS");
+        // Read through the ref-free closure carefully: currentData is captured
+        // at trigger time, and flushing the buffer mid-scan would null it.
+        addLog(`COMPLETED DEEP BINARY INSPECTION ON ${currentData?.name ?? "CARRIER"}`, "success", "SYS");
       }
     }, 100);
   };
@@ -446,6 +508,11 @@ ${currentData.threatSummary}`;
     setSelectedPresetId(null);
     setScanComplete(false);
     setCustomMetadata(null);
+    setRejection(null);
+    setByteHistogram(null);
+    setCarvedFiles([]);
+    if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+    setIsScanning(false);
   };
 
   return (
@@ -536,7 +603,34 @@ ${currentData.threatSummary}`;
             )}
           </div>
 
-          {!activeFile && !selectedPresetId ? (
+          {rejection ? (
+            /* Carrier refused at the port — an in-fiction alert, not a form error. */
+            <div className="flex-1 flex flex-col items-center justify-center text-center border border-amber-alert/40 bg-amber-alert/[0.04] p-6 relative overflow-hidden animate-fade-in">
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-amber-alert/50 shadow-[0_0_8px_var(--color-alert)] animate-scanline-vertical pointer-events-none" />
+              <div className="w-14 h-14 border border-amber-alert/40 flex items-center justify-center mb-3 bg-bg-void relative">
+                <AlertTriangle className="w-6 h-6 text-amber-alert animate-hex-pulse-flicker" />
+              </div>
+              <span className="font-display text-xs font-black tracking-widest text-amber-alert uppercase">
+                {rejection.headline}
+              </span>
+              <span className="font-mono text-[12px] text-amber-alert/60 uppercase tracking-widest mt-1">
+                PORT CODE {rejection.code}
+              </span>
+              <p className="text-[13px] text-text-dim font-share tracking-wider mt-3 leading-relaxed max-w-xs">
+                {rejection.detail}
+              </p>
+              <button
+                onClick={() => {
+                  playPinClick();
+                  setRejection(null);
+                }}
+                className="hud-target mt-5 px-5 py-2 border border-amber-alert/40 text-amber-alert hover:bg-amber-alert hover:text-bg-void transition-all duration-200 text-[13px] font-black tracking-widest font-display uppercase"
+                style={{ clipPath: "polygon(0 0, 100% 0, 94% 100%, 0 100%)" }}
+              >
+                CLEAR PORT
+              </button>
+            </div>
+          ) : !activeFile && !selectedPresetId ? (
             // Upload Dropzone
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -631,9 +725,73 @@ ${currentData.threatSummary}`;
                       {currentData.entropy} bits/byte
                     </span>
                   </div>
+
+                  {/* Byte-distribution strip — the actual histogram the entropy
+                      score above is computed from, bucketed to 64 bins and log
+                      scaled so a flat encrypted/compressed stream reads as an
+                      even wall while structured text stays visibly spiky. */}
+                  {byteHistogram && (
+                    <div className="pt-1.5">
+                      <div className="flex items-end gap-px h-8 bg-bg-void/60 border border-border-hairline/10 px-1 pt-1">
+                        {(() => {
+                          const bins = Array.from({ length: 64 }, (_, b) =>
+                            byteHistogram
+                              .slice(b * 4, b * 4 + 4)
+                              .reduce((sum, n) => sum + n, 0),
+                          );
+                          const peak = Math.max(...bins, 1);
+                          return bins.map((count, b) => {
+                            const ratio = count === 0 ? 0 : Math.log2(count + 1) / Math.log2(peak + 1);
+                            return (
+                              <div
+                                key={b}
+                                className={`flex-1 min-w-0 transition-all duration-500 ${
+                                  count === 0 ? "bg-border-hairline/20" : "bg-cyan-primary"
+                                }`}
+                                style={{
+                                  height: `${Math.max(ratio * 100, count === 0 ? 4 : 8)}%`,
+                                  opacity: count === 0 ? 1 : 0.35 + ratio * 0.65,
+                                }}
+                                title={`0x${(b * 4).toString(16).toUpperCase().padStart(2, "0")}–0x${(b * 4 + 3).toString(16).toUpperCase().padStart(2, "0")}: ${count}`}
+                              />
+                            );
+                          });
+                        })()}
+                      </div>
+                      <div className="flex justify-between text-[12px] text-text-dim/60 tracking-widest mt-1">
+                        <span>0x00</span>
+                        <span>BYTE VALUE DISTRIBUTION</span>
+                        <span>0xFF</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
               </div>
+
+              {/* Inspection progress rail. The scan already tracked progress and
+                  stage narration in state, but neither was ever rendered — the
+                  only sign the console was working was the button label. */}
+              {isScanning && (
+                <div className="mt-3 border border-cyan-primary/25 bg-cyan-primary/[0.03] p-2.5 relative overflow-hidden">
+                  <div className="flex justify-between items-center font-mono text-[12px] tracking-widest mb-1.5">
+                    <span className="text-cyan-primary uppercase flex items-center">
+                      <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />
+                      INSPECTING SECTORS
+                    </span>
+                    <span className="text-cyan-text tabular-nums">{scanProgress}%</span>
+                  </div>
+                  <div className="h-1 bg-bg-void border border-border-hairline/10 relative overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-cyan-primary shadow-[0_0_8px_var(--color-accent-primary)] transition-[width] duration-100 ease-linear"
+                      style={{ width: `${scanProgress}%` }}
+                    />
+                  </div>
+                  <div className="font-share text-[12px] text-text-dim uppercase tracking-wider mt-1.5 truncate">
+                    {scanMessage}
+                  </div>
+                </div>
+              )}
 
               {/* Decrypter Action Trigger */}
               <div className="mt-auto pt-4 border-t border-border-hairline/10">
@@ -781,8 +939,28 @@ ${currentData.threatSummary}`;
 
                     {!scanComplete ? (
                       isScanning ? (
+                        /**
+                         * This used to stream a hardcoded string of invented
+                         * malware findings ("KEYLOG_SYS_HOOK",
+                         * "TROJAN_VESSEL_DETECTED") over whatever the user had
+                         * actually loaded — fabricated results presented as if
+                         * they came off their file. It now streams the real
+                         * extracted strings, which is both honest and better
+                         * atmosphere: the buffer genuinely scrolls past.
+                         */
                         <div className="py-5 font-mono text-[12px] text-cyan-primary">
-                          <DataStream text="STREAMING DETECTED STRINGS IN MEMORY BUFFER: 0x0A4F... KEYLOG_SYS_HOOK... SYSTEM_RECOVERY_DECRYPT... TROJAN_VESSEL_DETECTED... MEMORY_FLUSH_COMPLETE... INTERCEPT_SUCCESS" speed={12} active={true} />
+                          <DataStream
+                            text={
+                              currentData.detectedStrings.length > 0
+                                ? currentData.detectedStrings
+                                    .slice(0, 24)
+                                    .map((s: any) => `${s.offset}  ${s.stringVal}`)
+                                    .join("     ")
+                                : "WALKING CARRIER STREAM FOR PRINTABLE SEQUENCES..."
+                            }
+                            speed={12}
+                            active={true}
+                          />
                         </div>
                       ) : (
                         <div className="py-6 text-center text-[13px] text-text-dim uppercase font-mono">
