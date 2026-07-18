@@ -574,12 +574,36 @@ export default function EncodingLab() {
                             single wide value stretched the whole row past the
                             column. Long output now wraps to two lines and is
                             still selectable and copyable in full. */}
-                        <div className="flex-1 min-w-0 bg-bg-void/80 border border-border-hairline/10 p-2 font-mono text-[13px] text-text-primary leading-snug select-all select-text break-all overflow-hidden max-h-[2.9em] min-h-[2.9em]">
+                        <div className="flex-1 min-w-0 bg-bg-void/80 border border-border-hairline/10 p-2 font-mono text-[13px] text-text-primary">
+                          {/* The clamp lives on this inner div, not the flex
+                              item above it. Flex items get their `display`
+                              blockified, so -webkit-box became flow-root and
+                              the line clamp silently did nothing — which is why
+                              both the Tailwind utility and an inline style
+                              failed here. A max-height clamp is not a
+                              substitute: it cuts at an arbitrary pixel and
+                              slices the last row of glyphs in half. */}
+                          <div
+                            className="select-all select-text break-all"
+                            style={{
+                              // Height clamp pinned to an exact multiple of the
+                              // line box: 2 x 1.45em. That is what makes it cut
+                              // between lines rather than through one — the
+                              // earlier 2.9em against leading-snug was not an
+                              // exact multiple, which is why glyphs were sliced.
+                              // -webkit-box/line-clamp is not used: it is
+                              // rejected here and silently degrades.
+                              lineHeight: 1.45,
+                              height: "2.9em",
+                              overflow: "hidden",
+                            }}
+                          >
                           {row.value ? (
                             <ShinyText text={row.value} speed={3} className="tracking-wide" />
                           ) : (
                             <span className="text-text-dim/20 italic">-- PORT STANDBY --</span>
                           )}
+                          </div>
                         </div>
 
                         {/* Actions column */}
