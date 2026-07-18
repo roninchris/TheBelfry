@@ -1346,3 +1346,64 @@ button:hover, .btn-interactive:hover {
 @media (prefers-reduced-motion: reduce) {
   .hud-target { transition: none; }
 }
+
+/* ---- Forensic scan overlay ----
+   Sized in % / em so the readout fits any panel; the old version centred a
+   fixed 306px ring stack and got sliced by narrower containers. */
+@keyframes scan-sweep-bar {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(400%); }
+}
+.scan-sweep-bar {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--rgb-accent) / 0.18) 45%,
+    rgb(var(--rgb-accent) / 0.32) 50%,
+    rgb(var(--rgb-accent) / 0.18) 55%,
+    transparent
+  );
+  animation: scan-sweep-bar 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Register rows resolve one after another, then hold. */
+@keyframes scan-register-tick {
+  0%, 40%   { background-color: transparent; box-shadow: none; }
+  55%, 100% {
+    background-color: var(--color-accent-primary);
+    box-shadow: 0 0 6px var(--color-accent-primary);
+  }
+}
+.scan-register-tick {
+  animation: scan-register-tick 2.8s ease-out infinite;
+}
+
+@keyframes scan-register-fill {
+  0%        { width: 0; }
+  55%, 100% { width: var(--fill, 70%); }
+}
+.scan-register-fill {
+  width: 0;
+  animation: scan-register-fill 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes scan-register-state {
+  0%, 60%   { opacity: 0; }
+  70%, 100% { opacity: 1; }
+}
+.scan-register-state {
+  opacity: 0;
+  animation: scan-register-state 2.8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-sweep-bar { animation: none; opacity: 0.25; }
+  .scan-register-tick,
+  .scan-register-fill,
+  .scan-register-state {
+    animation: none;
+    opacity: 1;
+    width: var(--fill, 70%);
+    background-color: var(--color-accent-primary);
+  }
+}
