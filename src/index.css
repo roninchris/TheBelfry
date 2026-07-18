@@ -617,17 +617,34 @@ button:hover, .btn-interactive:hover {
   100% { transform: translateY(100vh); opacity: 0; }
 }
 
+/* Signal instability on the scanned carrier.
+   Runs on a long cycle with the displacement confined to two brief windows, so
+   it reads as an occasional tracking error rather than a strobe. The previous
+   version ran a full cycle every 0.2s (5Hz) at 4px amplitude — that is inside
+   the 3-5Hz band associated with photosensitive seizure risk, and it is the
+   reason the light table looked like a broken television. Keep the period
+   above ~1.5s and the amplitude low if this is ever retuned. */
 @keyframes rgb-split-flicker {
-  0%, 100% { filter: drop-shadow(0 0 0 transparent); transform: translateX(0); }
-  15% { filter: drop-shadow(4px 0 0 rgba(255,0,0,0.6)) drop-shadow(-4px 0 0 rgba(0,255,255,0.6)); transform: translateX(1px); }
-  30% { filter: drop-shadow(0 0 0 transparent); transform: translateX(0); }
-  45% { filter: drop-shadow(-4px 0 0 rgba(255,0,0,0.6)) drop-shadow(4px 0 0 rgba(0,255,255,0.6)); transform: translateX(-1px); }
+  0%, 8%, 12%, 62%, 66%, 100% {
+    filter: drop-shadow(0 0 0 transparent);
+    transform: translateX(0);
+  }
+  10% {
+    filter: drop-shadow(2px 0 0 rgba(255, 59, 78, 0.4)) drop-shadow(-2px 0 0 rgba(0, 243, 255, 0.4));
+    transform: translateX(1px);
+  }
+  64% {
+    filter: drop-shadow(-2px 0 0 rgba(255, 59, 78, 0.4)) drop-shadow(2px 0 0 rgba(0, 243, 255, 0.4));
+    transform: translateX(-1px);
+  }
 }
 
+/* Spectral pass. A full 360deg rotation cycled the carrier through every hue,
+   which read as a colour bug rather than analysis; this stays in a narrow
+   cyan-to-violet arc that looks like a filter sweeping the image. */
 @keyframes spectral-hue-shift {
-  0% { filter: hue-rotate(0deg) saturate(1); }
-  50% { filter: hue-rotate(180deg) saturate(2); }
-  100% { filter: hue-rotate(360deg) saturate(1); }
+  0%, 100% { filter: hue-rotate(0deg) saturate(1.05); }
+  50%      { filter: hue-rotate(45deg) saturate(1.35); }
 }
 
 @keyframes scanline-sweep-vertical {
@@ -636,11 +653,49 @@ button:hover, .btn-interactive:hover {
 }
 
 .animate-rgb-split {
-  animation: rgb-split-flicker 0.2s infinite;
+  animation: rgb-split-flicker 2.6s infinite steps(1, end);
 }
 
 .animate-spectral-shift {
-  animation: spectral-hue-shift 3s infinite linear;
+  animation: spectral-hue-shift 4.5s infinite ease-in-out;
+}
+
+/* Combined carrier-under-scan treatment.
+   .animate-rgb-split and .animate-spectral-shift both set the `animation`
+   shorthand at equal specificity and both animate `filter`, so stacking the two
+   classes on one element silently drops whichever is declared first — they can
+   never compose. This single keyframe does both jobs: a slow spectral arc with
+   two brief tracking slips. Use this on the carrier, not the pair. */
+@keyframes carrier-unstable {
+  0%, 100% {
+    filter: hue-rotate(0deg) saturate(1.05);
+    transform: translateX(0);
+  }
+  10% {
+    filter: hue-rotate(12deg) saturate(1.2) drop-shadow(2px 0 0 rgba(255, 59, 78, 0.4))
+      drop-shadow(-2px 0 0 rgba(0, 243, 255, 0.4));
+    transform: translateX(1px);
+  }
+  12%, 60% {
+    filter: hue-rotate(45deg) saturate(1.35);
+    transform: translateX(0);
+  }
+  64% {
+    filter: hue-rotate(30deg) saturate(1.25) drop-shadow(-2px 0 0 rgba(255, 59, 78, 0.4))
+      drop-shadow(2px 0 0 rgba(0, 243, 255, 0.4));
+    transform: translateX(-1px);
+  }
+  66% {
+    filter: hue-rotate(20deg) saturate(1.15);
+    transform: translateX(0);
+  }
+}
+.animate-carrier-unstable {
+  animation: carrier-unstable 4.5s infinite ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-carrier-unstable { animation: none !important; filter: none !important; }
 }
 
 .animate-scanline-vertical {

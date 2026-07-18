@@ -110,6 +110,103 @@ function calculateShannonEntropy(imageData: ImageData) {
   };
 }
 
+/**
+ * Fills the dead space under the light table with the carrier's actual
+ * signature: per-channel Shannon entropy plus the core envelope facts. The
+ * channel bars are diagnostic — a channel sitting well clear of its siblings,
+ * or all three pinned near the 8.0 ceiling, is the standard LSB-embedding
+ * tell that the decode tab then goes looking for.
+ */
+function CarrierSignatureStrip({
+  metadata,
+  scanning,
+}: {
+  metadata: any | null;
+  scanning: boolean;
+}) {
+  const channels: { key: "r" | "g" | "b"; label: string; tint: string }[] = [
+    { key: "r", label: "R", tint: "var(--color-red-threat)" },
+    { key: "g", label: "G", tint: "var(--color-green-verified)" },
+    { key: "b", label: "B", tint: "var(--color-accent-primary)" },
+  ];
+
+  const ch = metadata?.channelEntropy;
+  // 8.0 bits is the theoretical ceiling for an 8-bit channel.
+  const pct = (v: number) => Math.max(0, Math.min(100, (v / 8) * 100));
+  const spread = ch
+    ? +(Math.max(ch.r, ch.g, ch.b) - Math.min(ch.r, ch.g, ch.b)).toFixed(2)
+    : null;
+
+  return (
+    <div className="mt-3 border-t border-border-hairline/15 pt-3">
+      <div className="flex items-baseline justify-between mb-2">
+        <span className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text uppercase">
+          Carrier Signature
+        </span>
+        <span className="font-share text-[11px] tracking-widest text-text-dim/60 uppercase">
+          Shannon entropy · bits per channel
+        </span>
+      </div>
+
+      {!ch ? (
+        <p className="font-share text-[12px] tracking-widest text-text-dim/50 uppercase py-3">
+          No carrier loaded — channel entropy unavailable.
+        </p>
+      ) : (
+        <>
+          <div className="space-y-1.5">
+            {channels.map((c) => {
+              const v = ch[c.key] as number;
+              return (
+                <div key={c.key} className="flex items-center gap-2">
+                  <span
+                    className="font-orbitron text-[11px] font-black w-3 shrink-0"
+                    style={{ color: c.tint }}
+                  >
+                    {c.label}
+                  </span>
+                  <div className="relative flex-1 h-[6px] bg-bg-void/80 border border-border-hairline/20 overflow-hidden">
+                    <div
+                      className={`absolute inset-y-0 left-0 transition-[width] duration-700 ease-out ${
+                        scanning ? "animate-hex-pulse-flicker" : ""
+                      }`}
+                      style={{
+                        width: `${pct(v)}%`,
+                        backgroundColor: c.tint,
+                        boxShadow: `0 0 8px ${c.tint}`,
+                        opacity: 0.75,
+                      }}
+                    />
+                  </div>
+                  <span className="font-mono text-[11px] text-cyan-text/80 w-10 text-right tabular-nums shrink-0">
+                    {v.toFixed(2)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-4 gap-2 mt-3 pt-2 border-t border-border-hairline/10">
+            {[
+              ["Envelope", metadata.format ?? "—"],
+              ["Raster", metadata.dimensions ?? "—"],
+              ["Payload", metadata.fileSize ?? "—"],
+              ["Δ Spread", spread !== null ? `${spread.toFixed(2)}` : "—"],
+            ].map(([label, value]) => (
+              <div key={label as string}>
+                <div className="font-share text-[10px] tracking-widest text-text-dim/50 uppercase">
+                  {label}
+                </div>
+                <div className="font-mono text-[12px] text-cyan-text/90 truncate">{value}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 type AnalysisTab = "overview" | "decode" | "extract" | "anomaly" | "exif" | "ink" | "qr" | "stereogram" | "c2pa";
 
 export default function ImageForensicsLab() {
@@ -288,6 +385,14 @@ export default function ImageForensicsLab() {
           format: file.type.replace("image/", "").toUpperCase(),
           colors: "RGB 24-bit",
           entropy: +entropyResult.average.toFixed(2),
+          // Per-channel figures drive the carrier signature strip. A channel
+          // sitting well above its siblings is a classic LSB-embedding tell,
+          // so this is diagnostic rather than decorative.
+          channelEntropy: {
+            r: +entropyResult.r.toFixed(2),
+            g: +entropyResult.g.toFixed(2),
+            b: +entropyResult.b.toFixed(2),
+          },
           date: dateString,
           badgeLabel
         });
@@ -702,14 +807,16 @@ export default function ImageForensicsLab() {
                   src={activePreview}
                   alt="Forensic Source Preview"
                   className={`max-h-[300px] max-w-full object-contain filter drop-shadow-[0_0_12px_rgba(47,241,228,0.25)] transition-all duration-300 ${
-                    isScanningLocal ? "animate-spectral-shift animate-rgb-split opacity-80 brightness-150 contrast-150 saturate-200" : ""
+                    isScanningLocal ? "animate-carrier-unstable opacity-90 brightness-110 contrast-110" : ""
                   }`}
                 />
 
                 {isScanningLocal && (
                   <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-bg-void/40 backdrop-blur-[1px] pointer-events-none">
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-primary/30 to-transparent w-full h-[15%] animate-scanline-vertical opacity-80 mix-blend-screen" />
-                    <div className="absolute inset-0 bg-cyan-primary/10 mix-blend-color-dodge animate-rgb-split" />
+                    {/* The carrier itself already carries animate-rgb-split; running it
+                        on this overlay too doubled the flicker out of sync with it. */}
+                    <div className="absolute inset-0 bg-cyan-primary/10 mix-blend-color-dodge" />
                     <div className="font-orbitron text-base font-black text-cyan-primary animate-hex-pulse-flicker tracking-[0.4em] z-40 drop-shadow-[0_0_12px_rgba(47,241,228,0.9)] mix-blend-screen text-center">
                       {scanningMessage}
                     </div>
@@ -744,6 +851,8 @@ export default function ImageForensicsLab() {
                   </p>
                 )}
               </div>
+
+              <CarrierSignatureStrip metadata={activeMetadata} scanning={isScanningLocal} />
             </div>
           )}
         </GlassPanel>
