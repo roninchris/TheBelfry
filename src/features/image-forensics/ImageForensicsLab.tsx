@@ -721,7 +721,7 @@ export default function ImageForensicsLab() {
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_#2ff1e4]" />
+                <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
                 <h1 className="font-orbitron text-sm font-black tracking-widest text-cyan-text uppercase">
                   IMAGE FORENSICS &amp; STEGANOGRAPHY LAB
                 </h1>
@@ -774,7 +774,7 @@ export default function ImageForensicsLab() {
                 className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-cyan-primary/20 hover:border-cyan-primary/50 cursor-pointer bg-bg-void/40 hover:bg-cyan-primary/[0.02] p-8 transition-all duration-300 group min-h-[320px] relative overflow-hidden"
               >
                 <div className="absolute inset-0 opacity-10 pointer-events-none">
-                  <BinaryRain density={15} color="rgba(47, 241, 228, 0.4)" />
+                  <BinaryRain density={15} color="rgb(var(--rgb-accent) / 0.4)" />
                 </div>
 
                 <input
@@ -806,7 +806,7 @@ export default function ImageForensicsLab() {
                 <img
                   src={activePreview}
                   alt="Forensic Source Preview"
-                  className={`max-h-[300px] max-w-full object-contain filter drop-shadow-[0_0_12px_rgba(47,241,228,0.25)] transition-all duration-300 ${
+                  className={`max-h-[300px] max-w-full object-contain filter drop-shadow-[0_0_12px_rgb(var(--rgb-accent) / 0.25)] transition-all duration-300 ${
                     isScanningLocal ? "animate-carrier-unstable opacity-90 brightness-110 contrast-110" : ""
                   }`}
                 />
@@ -817,7 +817,7 @@ export default function ImageForensicsLab() {
                     {/* The carrier itself already carries animate-rgb-split; running it
                         on this overlay too doubled the flicker out of sync with it. */}
                     <div className="absolute inset-0 bg-cyan-primary/10 mix-blend-color-dodge" />
-                    <div className="font-orbitron text-base font-black text-cyan-primary animate-hex-pulse-flicker tracking-[0.4em] z-40 drop-shadow-[0_0_12px_rgba(47,241,228,0.9)] mix-blend-screen text-center">
+                    <div className="font-orbitron text-base font-black text-cyan-primary animate-hex-pulse-flicker tracking-[0.4em] z-40 drop-shadow-[0_0_12px_rgb(var(--rgb-accent) / 0.9)] mix-blend-screen text-center">
                       {scanningMessage}
                     </div>
                   </div>
@@ -839,7 +839,7 @@ export default function ImageForensicsLab() {
                 <button
                   disabled={isScanningLocal}
                   onClick={triggerScan}
-                  className="hud-target w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-orbitron uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
+                  className="hud-target w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgb(var(--rgb-accent) / 0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-orbitron uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
                   style={{ clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)" }}
                 >
                   <Search className="w-4 h-4" />
@@ -871,7 +871,7 @@ export default function ImageForensicsLab() {
               }}
               className={`px-3 py-1.5 font-orbitron text-[12px] font-bold tracking-widest uppercase transition-all duration-200 whitespace-nowrap ${
                 activeTab === tab.id
-                  ? "bg-cyan-primary text-bg-void shadow-[0_0_10px_#2ff1e4]"
+                  ? "bg-cyan-primary text-bg-void shadow-[0_0_10px_var(--color-accent-primary)]"
                   : "text-text-dim hover:text-text-primary"
               }`}
             >
@@ -886,7 +886,7 @@ export default function ImageForensicsLab() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
-                    <span className="w-1.5 h-3.5 bg-amber-alert transform -skew-x-12 inline-block shadow-[0_0_6px_rgba(255,157,46,0.4)]" />
+                    <span className="w-1.5 h-3.5 bg-amber-alert transform -skew-x-12 inline-block shadow-[0_0_6px_rgb(var(--rgb-amber) / 0.4)]" />
                     <h3 className="font-orbitron text-[13px] font-black tracking-widest text-amber-alert uppercase">
                       EMBEDDED FILE CARVING
                     </h3>

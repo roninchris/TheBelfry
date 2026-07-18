@@ -148,7 +148,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
       className="fixed inset-0 z-[100] bg-bg-void/92 backdrop-blur-sm flex items-center justify-center overflow-hidden select-none"
     >
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.04] pointer-events-none" />
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-cyan-primary/30 shadow-[0_0_10px_#2ff1e4] animate-scanline-vertical pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-cyan-primary/30 shadow-[0_0_10px_var(--color-accent-primary)] animate-scanline-vertical pointer-events-none" />
 
       <motion.div
         initial={reduce ? { opacity: 1 } : { opacity: 0, y: 12, scale: 0.98 }}
@@ -162,9 +162,9 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
           glow={phase === "granted"}
           className={`p-7 transition-colors duration-300 ${
             phase === "denied"
-              ? "border-red-threat/60 shadow-[0_0_20px_rgba(255,59,78,0.25)]"
+              ? "border-red-threat/60 shadow-[0_0_20px_rgb(var(--rgb-threat) / 0.25)]"
               : phase === "granted"
-                ? "border-accent-primary/60 shadow-[0_0_24px_rgba(0,243,255,0.25)]"
+                ? "border-accent-primary/60 shadow-[0_0_24px_rgb(var(--rgb-accent) / 0.25)]"
                 : ""
           }`}
         >
@@ -196,7 +196,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
                 <img
                   src="/assets/icons/iconbelfry.png"
                   alt=""
-                  className="w-12 h-12 mx-auto object-contain filter drop-shadow-[0_0_10px_rgba(47,241,228,0.5)]"
+                  className="w-12 h-12 mx-auto object-contain filter drop-shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.5)]"
                 />
                 <h1 className="font-orbitron text-[14px] font-black tracking-[0.35em] text-cyan-primary uppercase">
                   Credential Challenge
@@ -264,7 +264,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
                   className="w-full py-2.5 font-orbitron text-[13px] font-black tracking-[0.3em] uppercase
                              border border-accent-primary/50 text-accent-primary bg-accent-primary/[0.06]
                              transition-all duration-200 cursor-pointer
-                             hover:bg-accent-primary/15 hover:shadow-[0_0_16px_rgba(0,243,255,0.25)]
+                             hover:bg-accent-primary/15 hover:shadow-[0_0_16px_rgb(var(--rgb-accent) / 0.25)]
                              disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-accent-primary/[0.06]
                              disabled:hover:shadow-none"
                 >
@@ -323,7 +323,7 @@ function SessionPanel({
         onMouseEnter={() => playHoverBlip()}
         className="mt-2 w-full py-2 font-orbitron text-[12px] font-black tracking-[0.28em] uppercase
                    border border-red-threat/40 text-red-threat/90 bg-red-threat/[0.05]
-                   hover:bg-red-threat/15 hover:shadow-[0_0_14px_rgba(255,59,78,0.2)]
+                   hover:bg-red-threat/15 hover:shadow-[0_0_14px_rgb(var(--rgb-threat) / 0.2)]
                    transition-all duration-200 cursor-pointer"
       >
         Terminate session

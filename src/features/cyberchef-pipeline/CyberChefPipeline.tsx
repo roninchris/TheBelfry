@@ -569,7 +569,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_#2ff1e4]" />
+                <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
                 <h1 className="font-orbitron text-sm font-black tracking-widest text-cyan-text uppercase">
                   FORENSIC DECRYPTION CORES
                 </h1>
@@ -598,7 +598,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
             }}
             className={`py-2.5 text-[13px] font-orbitron font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
               mode === "manual"
-                ? "bg-cyan-primary text-bg-void shadow-[0_0_15px_rgba(47,241,228,0.55)] font-black"
+                ? "bg-cyan-primary text-bg-void shadow-[0_0_15px_rgb(var(--rgb-accent) / 0.55)] font-black"
                 : "text-text-dim hover:text-white hover:bg-bg-void/40"
             }`}
           >
@@ -695,14 +695,14 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     // Node state helper: idle | active | done | error
                     const nodeCls = (state: string, danger = false) =>
                       state === "active"
-                        ? "border-cyan-primary text-cyan-text bg-cyan-primary/15 shadow-[0_0_10px_rgba(47,241,228,0.4)] animate-pulse"
+                        ? "border-cyan-primary text-cyan-text bg-cyan-primary/15 shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.4)] animate-pulse"
                         : state === "done"
                         ? danger
                           ? "border-red-threat/60 text-red-threat bg-red-threat/10"
                           : "border-green-verified/60 text-green-verified bg-green-verified/10"
                         : "border-border-hairline/25 text-text-dim/60 bg-bg-void/40";
                     const conn = (filled: boolean) =>
-                      `h-[2px] w-5 shrink-0 transition-colors duration-300 ${filled ? "bg-cyan-primary/70 shadow-[0_0_5px_#2ff1e4]" : "bg-border-hairline/20"}`;
+                      `h-[2px] w-5 shrink-0 transition-colors duration-300 ${filled ? "bg-cyan-primary/70 shadow-[0_0_5px_var(--color-accent-primary)]" : "bg-border-hairline/20"}`;
                     const nodes: React.ReactNode[] = [];
                     const inState = inputText.trim() ? "done" : "idle";
                     nodes.push(
@@ -811,7 +811,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                             showCornerTicks={true} 
                             className={`p-3 flex flex-col h-full justify-between transition-all duration-300 ${
                               isProcessing 
-                                ? "shadow-[0_0_25px_rgba(47,241,228,0.15)] border-cyan-primary/50 bg-cyan-primary/[0.03]" 
+                                ? "shadow-[0_0_25px_rgb(var(--rgb-accent) / 0.15)] border-cyan-primary/50 bg-cyan-primary/[0.03]" 
                                 : ""
                             } ${
                               isDragging 
@@ -871,7 +871,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                                   }}
                                   className={`px-2 py-0.5 text-[12px] font-mono font-black uppercase tracking-widest transition-all ${
                                     step.type === "encode"
-                                      ? "bg-cyan-primary/15 text-cyan-text border-l border-cyan-primary/25 font-bold shadow-[inset_0_0_8px_rgba(47,241,228,0.25)]"
+                                      ? "bg-cyan-primary/15 text-cyan-text border-l border-cyan-primary/25 font-bold shadow-[inset_0_0_8px_rgb(var(--rgb-accent) / 0.25)]"
                                       : "text-text-dim hover:text-text-primary"
                                   }`}
                                 >

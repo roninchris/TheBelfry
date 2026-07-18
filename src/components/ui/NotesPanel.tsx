@@ -43,7 +43,7 @@ export default function NotesPanel() {
       {/* Floating toggle */}
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="fixed bottom-16 right-4 z-[70] w-11 h-11 flex items-center justify-center bg-bg-panel/95 backdrop-blur-xl border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all shadow-[0_0_14px_rgba(47,241,228,0.15)]"
+        className="fixed bottom-16 right-4 z-[70] w-11 h-11 flex items-center justify-center bg-bg-panel/95 backdrop-blur-xl border border-cyan-primary/40 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all shadow-[0_0_14px_rgb(var(--rgb-accent) / 0.15)]"
         style={{ clipPath: "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)" }}
         title="Field Notes"
       >
@@ -94,7 +94,7 @@ export default function NotesPanel() {
                       disabled={!activeCaseId || !note.text.trim() || justPinned[note.id]}
                       className={`flex items-center space-x-1 px-2 py-0.5 text-[12px] font-orbitron font-bold uppercase tracking-wider border transition-colors disabled:cursor-not-allowed ${
                         justPinned[note.id]
-                          ? "text-accent-primary border-accent-primary/60 bg-accent-primary/10 opacity-100 shadow-[0_0_10px_rgba(0,243,255,0.25)]"
+                          ? "text-accent-primary border-accent-primary/60 bg-accent-primary/10 opacity-100 shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.25)]"
                           : "text-cyan-text border-cyan-primary/30 hover:text-bg-void hover:bg-cyan-primary disabled:opacity-30"
                       }`}
                       title={activeCaseId ? "Send to Detective Board" : "Select an active case first"}

@@ -9,7 +9,7 @@ interface BinaryRainProps {
 
 export default function BinaryRain({ 
   density = 15, 
-  color = "rgba(47, 241, 228, 0.4)", 
+  color = "rgb(var(--rgb-accent) / 0.4)", 
   className = "" 
 }: BinaryRainProps) {
   const shouldReduceMotion = useReducedMotion();

@@ -189,8 +189,8 @@ export default function HexCluster() {
                 {/* Hex background slot */}
                 <path
                   d={getHexPath(cx, cy, rHex)}
-                  fill={isCenter ? "rgba(0, 243, 255, 0.05)" : "rgba(2, 9, 18, 0.85)"}
-                  stroke="rgba(0, 243, 255, 0.12)"
+                  fill={isCenter ? "rgb(var(--rgb-accent) / 0.05)" : "rgba(2, 9, 18, 0.85)"}
+                  stroke="rgb(var(--rgb-accent) / 0.12)"
                   strokeWidth="1.5"
                 />
 

@@ -297,7 +297,7 @@ export default function DossierPage() {
           <div className="border-b border-border-hairline/25 pb-2 mb-4 flex justify-between items-center">
             <div>
               <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center">
-                <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
+                <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                 <ShinyText text="SECURE CASE ARCHIVE" speed={4} />
               </h3>
               <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
@@ -332,7 +332,7 @@ export default function DossierPage() {
                 initial={{ top: "-10%" }}
                 animate={{ top: "110%" }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="absolute left-0 right-0 h-[2px] bg-cyan-primary/20 shadow-[0_0_15px_rgba(47,241,228,0.4)] z-10 pointer-events-none"
+                className="absolute left-0 right-0 h-[2px] bg-cyan-primary/20 shadow-[0_0_15px_rgb(var(--rgb-accent) / 0.4)] z-10 pointer-events-none"
               />
 
               <AnimatePresence mode="popLayout">
@@ -356,7 +356,7 @@ export default function DossierPage() {
                       }}
                       className={`hud-target relative p-3 border transition-all duration-300 flex flex-col text-left group ${
                         isSelected
-                          ? "bg-cyan-primary/[0.04] border-cyan-primary text-text-primary shadow-[0_0_10px_rgba(0,243,255,0.08)]"
+                          ? "bg-cyan-primary/[0.04] border-cyan-primary text-text-primary shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.08)]"
                           : "bg-bg-void/40 border-border-hairline/15 text-text-dim hover:border-border-hairline/35 hover:text-text-primary"
                       }`}
                       style={{
@@ -455,7 +455,7 @@ export default function DossierPage() {
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                   className="absolute inset-0 z-50 pointer-events-none bg-cyan-primary/10 backdrop-blur-[2px] flex items-center justify-center"
                 >
-                  <div className="border border-cyan-primary p-4 bg-bg-void/90 font-orbitron text-xs tracking-[0.2em] text-cyan-primary shadow-[0_0_30px_rgba(47,241,228,0.2)]">
+                  <div className="border border-cyan-primary p-4 bg-bg-void/90 font-orbitron text-xs tracking-[0.2em] text-cyan-primary shadow-[0_0_30px_rgb(var(--rgb-accent) / 0.2)]">
                     VERIFYING ACCESS...
                   </div>
                 </motion.div>
@@ -746,7 +746,7 @@ export default function DossierPage() {
       {/* --- CONFIRM DELETE MODAL --- */}
       {deleteConfirmId && (
         <div className="fixed inset-0 bg-bg-void/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <GlassPanel className="p-4 max-w-sm w-full border-red-threat/50 shadow-[0_0_15px_rgba(255,59,78,0.25)]" clipSize="md" showCornerTicks={true}>
+          <GlassPanel className="p-4 max-w-sm w-full border-red-threat/50 shadow-[0_0_15px_rgb(var(--rgb-threat) / 0.25)]" clipSize="md" showCornerTicks={true}>
             <div className="flex justify-between items-center border-b border-red-threat/25 pb-2 mb-3 text-red-threat">
               <h3 className="font-orbitron text-xs font-black tracking-widest flex items-center uppercase">
                 <AlertTriangle className="w-4 h-4 mr-2 animate-hex-pulse-flicker" />

@@ -11,7 +11,8 @@ import {
   Check, 
   Activity, 
   ShieldAlert,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Palette
 } from "lucide-react";
 import {
   playPinClick,
@@ -19,6 +20,7 @@ import {
   playFailBuzz,
   playHoverBlip
 } from "../../lib/soundEngine";
+import { THEMES } from "../../lib/themes";
 
 export default function SettingsPage() {
   const { 
@@ -29,7 +31,9 @@ export default function SettingsPage() {
     setMuted, 
     setAmbientEnabled,
     clearLogs,
-    addLog
+    addLog,
+    theme,
+    setTheme
   } = useAppStore();
 
   const [resetConfirm, setResetConfirm] = useState(false);
@@ -75,7 +79,7 @@ export default function SettingsPage() {
       {/* Settings Module Title Block */}
       <div className="w-full text-left">
         <h2 className="font-orbitron text-base font-black tracking-widest text-cyan-text flex items-center">
-          <span className="w-1.5 h-3.5 bg-cyan-primary mr-2.5 transform -skew-x-12 inline-block shadow-[0_0_8px_#2ff1e4]" />
+          <span className="w-1.5 h-3.5 bg-cyan-primary mr-2.5 transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
           TELEMETRY & COMMAND SETTINGS
         </h2>
         <p className="text-[13px] font-share text-text-dim tracking-wider uppercase mt-1">
@@ -85,6 +89,67 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full">
         
+        {/* ================= DISPLAY PROFILE (THEME) ================= */}
+        <div className="col-span-1 md:col-span-12">
+          <GlassPanel className="panel-console p-6 space-y-4" clipSize="md">
+            <div className="border-b border-border-hairline/25 pb-2.5">
+              <h3 className="font-display text-base font-extrabold tracking-[0.18em] text-white flex items-center uppercase">
+                <Palette className="w-4 h-4 mr-2 text-accent-primary" />
+                Display Profile
+              </h3>
+              <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
+                Retints the entire console — applies immediately, persists per device
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {THEMES.map((t) => {
+                const active = theme === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      playPinClick();
+                      setTheme(t.id);
+                    }}
+                    onMouseEnter={() => playHoverBlip()}
+                    aria-pressed={active}
+                    data-theme-option={t.id}
+                    className={`tablet-btn tablet-frame text-left p-3 flex flex-col gap-2 ${
+                      active ? "tablet-active" : ""
+                    }`}
+                  >
+                    <span className="flex items-center justify-between w-full">
+                      <span className="font-display text-sm font-extrabold tracking-[0.16em] uppercase">
+                        {t.label}
+                      </span>
+                      {active && (
+                        <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                      )}
+                    </span>
+
+                    {/* Swatches are literal hex, not theme vars — they must show
+                        each palette regardless of which theme is active. */}
+                    <span className="flex gap-1" aria-hidden="true">
+                      {t.swatch.map((c) => (
+                        <span
+                          key={c}
+                          className="w-6 h-3 border border-white/15"
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </span>
+
+                    <span className="font-share text-[11px] tracking-wide uppercase opacity-70 normal-case">
+                      {t.description}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </GlassPanel>
+        </div>
+
         {/* ================= COLUMN 1: AUDIO SYNTH CONTROLS ================= */}
         <div className="col-span-1 md:col-span-7 flex flex-col space-y-6">
           <GlassPanel className="panel-console p-6 space-y-6 flex-1" clipSize="md">

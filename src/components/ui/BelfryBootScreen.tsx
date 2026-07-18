@@ -68,7 +68,7 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
       >
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
         <div className="w-32 h-32 relative flex items-center justify-center mb-8">
-          <img src="/assets/icons/iconbelfry.png" alt="Belfry Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(47,241,228,0.7)]" />
+          <img src="/assets/icons/iconbelfry.png" alt="Belfry Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgb(var(--rgb-accent) / 0.7)]" />
         </div>
         <motion.div
           animate={shouldReduceMotion ? { opacity: 1 } : { opacity: [0.2, 1, 0.2] }}
@@ -102,7 +102,7 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
             transition={{ duration: 1 }}
             className="w-24 h-24 relative flex items-center justify-center"
           >
-            <img src="/assets/icons/iconbelfry.png" alt="Belfry Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(47,241,228,0.5)]" />
+            <img src="/assets/icons/iconbelfry.png" alt="Belfry Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.5)]" />
             <div className="absolute inset-0 bg-cyan-primary/10 animate-hex-pulse-flicker mix-blend-screen pointer-events-none" />
           </motion.div>
           <motion.h1 
@@ -136,7 +136,7 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
         <div className="space-y-2">
           <div className="h-1 bg-cyan-primary/10 w-full relative">
             <motion.div 
-              className="absolute top-0 left-0 h-full bg-cyan-primary shadow-[0_0_8px_#2ff1e4]"
+              className="absolute top-0 left-0 h-full bg-cyan-primary shadow-[0_0_8px_var(--color-accent-primary)]"
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.3 }}
             />
@@ -159,7 +159,7 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
       </div>
       
       {/* HUD scanning line */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-cyan-primary/30 shadow-[0_0_10px_#2ff1e4] animate-scanline-vertical pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-[1px] bg-cyan-primary/30 shadow-[0_0_10px_var(--color-accent-primary)] animate-scanline-vertical pointer-events-none" />
     </motion.div>
   );
 }

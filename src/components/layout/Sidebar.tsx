@@ -118,7 +118,7 @@ export default function Sidebar() {
           onClick={() => { if (!currentIdentity) openChallenge(); }}
           aria-label="Belfry emblem"
           className={`relative w-14 h-14 flex items-center justify-center bg-cyan-primary/5 border border-cyan-primary/30 rounded-full animate-breathing shrink-0 transition-shadow duration-300 ${
-            currentIdentity ? "cursor-default" : "cursor-pointer hover:shadow-[0_0_12px_rgba(112,162,168,0.35)]"
+            currentIdentity ? "cursor-default" : "cursor-pointer hover:shadow-[0_0_12px_rgb(var(--rgb-primary) / 0.35)]"
           }`}
         >
           <img src="/assets/icons/belfry_sidebar.png" alt="" className="w-10 h-10 object-contain filter drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]" />

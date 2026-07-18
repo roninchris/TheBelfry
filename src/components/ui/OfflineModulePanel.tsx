@@ -39,7 +39,7 @@ export default function OfflineModulePanel({ moduleName, description }: OfflineM
         {/* Module warning header */}
         <div className="flex flex-col items-center space-y-3">
           <div className="w-14 h-14 bg-red-threat/10 border border-red-threat/30 rounded-full flex items-center justify-center animate-hex-pulse-flicker">
-            <WifiOff className="w-6 h-6 text-red-threat shadow-[0_0_12px_#ff3b4e]" />
+            <WifiOff className="w-6 h-6 text-red-threat shadow-[0_0_12px_var(--color-red-threat)]" />
           </div>
           <Badge variant="red" size="md">CONNECTION REFUSED</Badge>
         </div>
@@ -82,7 +82,7 @@ export default function OfflineModulePanel({ moduleName, description }: OfflineM
             className={`font-orbitron font-black text-xs uppercase tracking-widest py-2.5 px-6 border transition-all duration-300 flex items-center space-x-2 ${
               booting
                 ? "bg-amber-alert/10 border-amber-alert/50 text-amber-alert cursor-wait"
-                : "bg-red-threat/10 border-red-threat/40 text-red-threat hover:bg-red-threat hover:text-bg-void hover:shadow-[0_0_12px_rgba(255,59,78,0.4)] cursor-pointer"
+                : "bg-red-threat/10 border-red-threat/40 text-red-threat hover:bg-red-threat hover:text-bg-void hover:shadow-[0_0_12px_rgb(var(--rgb-threat) / 0.4)] cursor-pointer"
             }`}
             style={{
               clipPath: "polygon(6px 0, 100% 0, 92% 100%, 0 100%)"

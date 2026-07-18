@@ -126,10 +126,10 @@ function VUMeter({ active, value, isPlaying }: VUMeterProps) {
     <div className="flex space-x-[2px] items-center h-3 w-full bg-bg-void/60 px-1 py-0.5 border border-border-hairline/10 rounded-sm">
       {[...Array(segmentCount)].map((_, idx) => {
         const isLit = idx < litSegments;
-        let colorClass = "bg-[#2ff1e4]/5"; // unlit cyan
+        let colorClass = "bg-[var(--color-accent-primary)]/5"; // unlit cyan
         if (isLit) {
           if (idx < 10) {
-            colorClass = "bg-cyan-primary shadow-[0_0_5px_rgba(47,241,228,0.8)]"; // cyan normal
+            colorClass = "bg-cyan-primary shadow-[0_0_5px_rgb(var(--rgb-accent) / 0.8)]"; // cyan normal
           } else if (idx < 13) {
             colorClass = "bg-amber-500 shadow-[0_0_5px_rgba(245,158,11,0.8)]"; // amber caution
           } else {
@@ -678,11 +678,11 @@ export default function AudioForensicsLab() {
 
     const draw = () => {
       // Background clean
-      ctx.fillStyle = "#020912";
+      ctx.fillStyle = "var(--color-bg-void)";
       ctx.fillRect(0, 0, width, height);
 
       // Grid Lines
-      ctx.strokeStyle = "rgba(47, 241, 228, 0.04)";
+      ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.04)";
       ctx.lineWidth = 1;
       for (let x = 0; x < width; x += 30) {
         ctx.beginPath();
@@ -699,7 +699,7 @@ export default function AudioForensicsLab() {
 
       if (!currentSample) {
         // Flatline
-        ctx.strokeStyle = "rgba(47, 241, 228, 0.15)";
+        ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.15)";
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(0, height / 2);
@@ -712,7 +712,7 @@ export default function AudioForensicsLab() {
       if (activeTab === "waveform") {
         if (decodedBuffer && waveformPeaks) {
           // Draw real decoded waveform
-          ctx.strokeStyle = "rgba(47, 241, 228, 0.75)";
+          ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.75)";
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           
@@ -729,12 +729,12 @@ export default function AudioForensicsLab() {
             ctx.lineTo(i, height / 2 - amp);
           }
           ctx.closePath();
-          ctx.fillStyle = "rgba(47, 241, 228, 0.2)";
+          ctx.fillStyle = "rgb(var(--rgb-accent) / 0.2)";
           ctx.fill();
           ctx.stroke();
 
           // Mirror / shadow bottom fill using RMS peaks
-          ctx.strokeStyle = "rgba(47, 241, 228, 0.25)";
+          ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.25)";
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(0, height / 2);
@@ -747,14 +747,14 @@ export default function AudioForensicsLab() {
             ctx.lineTo(i, height / 2 + amp);
           }
           ctx.closePath();
-          ctx.fillStyle = "rgba(47, 241, 228, 0.05)";
+          ctx.fillStyle = "rgb(var(--rgb-accent) / 0.05)";
           ctx.fill();
           ctx.stroke();
 
           // Playhead indicator
           const progressRatio = currentTime / currentSample.duration;
           const playheadX = progressRatio * width;
-          ctx.strokeStyle = "#ff3b4e";
+          ctx.strokeStyle = "var(--color-red-threat)";
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(playheadX, 0);
@@ -762,7 +762,7 @@ export default function AudioForensicsLab() {
           ctx.stroke();
 
           // Playhead cap/handle
-          ctx.fillStyle = "#ff3b4e";
+          ctx.fillStyle = "var(--color-red-threat)";
           ctx.beginPath();
           ctx.moveTo(playheadX - 4, 0);
           ctx.lineTo(playheadX + 4, 0);
@@ -771,7 +771,7 @@ export default function AudioForensicsLab() {
           ctx.fill();
         } else {
           // Draw Preset Waveform
-          ctx.strokeStyle = "rgba(47, 241, 228, 0.65)";
+          ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.65)";
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(0, height / 2);
@@ -812,7 +812,7 @@ export default function AudioForensicsLab() {
           ctx.stroke();
 
           // Mirror / shadow bottom fill
-          ctx.strokeStyle = "rgba(47, 241, 228, 0.15)";
+          ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.15)";
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(0, height / 2);
@@ -833,7 +833,7 @@ export default function AudioForensicsLab() {
 
           // Playhead indicator
           const playheadX = progressRatio * width;
-          ctx.strokeStyle = "#ff3b4e";
+          ctx.strokeStyle = "var(--color-red-threat)";
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(playheadX, 0);
@@ -841,7 +841,7 @@ export default function AudioForensicsLab() {
           ctx.stroke();
 
           // Playhead cap/handle
-          ctx.fillStyle = "#ff3b4e";
+          ctx.fillStyle = "var(--color-red-threat)";
           ctx.beginPath();
           ctx.moveTo(playheadX - 4, 0);
           ctx.lineTo(playheadX + 4, 0);
@@ -909,7 +909,7 @@ export default function AudioForensicsLab() {
           }
 
           // Overlay horizontal frequency guide tags
-          ctx.fillStyle = "rgba(47, 241, 228, 0.6)";
+          ctx.fillStyle = "rgb(var(--rgb-accent) / 0.6)";
           ctx.font = "10px monospace";
           const maxFreq = decodedBuffer.sampleRate / 2;
           ctx.fillText(`${(maxFreq / 1000 * 0.9).toFixed(1)} kHz`, 5, 14);
@@ -917,7 +917,7 @@ export default function AudioForensicsLab() {
           ctx.fillText("0 Hz", 5, height - 6);
 
           // Playhead/scanline overlay
-          ctx.strokeStyle = "#ff3b4e";
+          ctx.strokeStyle = "var(--color-red-threat)";
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(scanLineX, 0);
@@ -953,17 +953,17 @@ export default function AudioForensicsLab() {
             const grad = ctx.createLinearGradient(x, height, x, 0);
             if (intensity > 0.7) {
               grad.addColorStop(0, "rgba(2, 9, 18, 0.8)");
-              grad.addColorStop(0.4, "rgba(47, 241, 228, 0.4)");
-              grad.addColorStop(0.7, "rgba(255, 59, 78, 0.85)");
+              grad.addColorStop(0.4, "rgb(var(--rgb-accent) / 0.4)");
+              grad.addColorStop(0.7, "rgb(var(--rgb-threat) / 0.85)");
               grad.addColorStop(1, "rgba(255, 230, 100, 0.9)");
             } else if (intensity > 0.3) {
               grad.addColorStop(0, "rgba(2, 9, 18, 0.8)");
-              grad.addColorStop(0.5, "rgba(47, 241, 228, 0.15)");
-              grad.addColorStop(0.9, "rgba(47, 241, 228, 0.75)");
-              grad.addColorStop(1, "rgba(255, 59, 78, 0.3)");
+              grad.addColorStop(0.5, "rgb(var(--rgb-accent) / 0.15)");
+              grad.addColorStop(0.9, "rgb(var(--rgb-accent) / 0.75)");
+              grad.addColorStop(1, "rgb(var(--rgb-threat) / 0.3)");
             } else {
               grad.addColorStop(0, "rgba(2, 9, 18, 0.9)");
-              grad.addColorStop(1, "rgba(47, 241, 228, 0.12)");
+              grad.addColorStop(1, "rgb(var(--rgb-accent) / 0.12)");
             }
 
             ctx.fillStyle = grad;
@@ -971,7 +971,7 @@ export default function AudioForensicsLab() {
           }
 
           // Overlay horizontal frequency guide tags
-          ctx.fillStyle = "rgba(47, 241, 228, 0.35)";
+          ctx.fillStyle = "rgb(var(--rgb-accent) / 0.35)";
           ctx.font = "7px monospace";
           ctx.fillText("3.0 kHz", 5, 12);
           ctx.fillText("1.5 kHz", 5, height / 2);
@@ -979,7 +979,7 @@ export default function AudioForensicsLab() {
 
           // Highlight spectral hotspots in red
           if (currentSample.type === "dtmf") {
-            ctx.strokeStyle = "rgba(255, 59, 78, 0.4)";
+            ctx.strokeStyle = "rgb(var(--rgb-threat) / 0.4)";
             ctx.lineWidth = 1;
             ctx.setLineDash([3, 3]);
             ctx.beginPath();
@@ -992,7 +992,7 @@ export default function AudioForensicsLab() {
           }
 
           // Playhead/scanline overlay
-          ctx.strokeStyle = "#ff3b4e";
+          ctx.strokeStyle = "var(--color-red-threat)";
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(scanLineX, 0);
@@ -1508,7 +1508,7 @@ ${currentSample.analysisSummary}`;
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_#2ff1e4]" />
+              <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
               <h1 className="font-orbitron text-sm font-black tracking-widest text-cyan-text uppercase">
                 AUDIO SPECTRAL FORENSICS
               </h1>
@@ -1527,7 +1527,7 @@ ${currentSample.analysisSummary}`;
       <GlassPanel className="p-4 flex flex-col" clipSize="md">
         <div className="border-b border-border-hairline/20 pb-2 mb-3.5 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <span className="w-1.5 h-3.5 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
+            <span className="w-1.5 h-3.5 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
             <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text uppercase">
               {!currentSample ? "AWAITING ACOUSTIC CARRIER" : activeTab === "waveform" ? "TIME-DOMAIN WAVEFORM DISPLAY" : "FREQUENCY-DOMAIN SPECTROGRAM"}
             </h3>
@@ -1544,7 +1544,7 @@ ${currentSample.analysisSummary}`;
                 }}
                 className={`px-3 py-1 font-mono text-[12px] uppercase border transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none ${
                   activeTab === tab
-                    ? "bg-cyan-primary border-cyan-primary text-bg-void font-bold shadow-[0_0_6px_#2ff1e4]"
+                    ? "bg-cyan-primary border-cyan-primary text-bg-void font-bold shadow-[0_0_6px_var(--color-accent-primary)]"
                     : "bg-bg-void/40 border-border-hairline/25 text-text-dim hover:text-text-primary hover:border-cyan-primary/30"
                 }`}
               >
@@ -1556,7 +1556,7 @@ ${currentSample.analysisSummary}`;
 
         {/* Core Canvas Viewport */}
         <div className="flex-1 bg-bg-void/90 border border-cyan-primary/10 p-3 relative min-h-[220px] overflow-hidden group">
-          <div className="absolute inset-0 border-[3px] border-cyan-primary animate-signal-lock pointer-events-none z-10 opacity-0 shadow-[inset_0_0_20px_rgba(47,241,228,0.5)]" />
+          <div className="absolute inset-0 border-[3px] border-cyan-primary animate-signal-lock pointer-events-none z-10 opacity-0 shadow-[inset_0_0_20px_rgb(var(--rgb-accent) / 0.5)]" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-primary/20 to-transparent w-full h-[10%] animate-scanline-vertical opacity-30 mix-blend-screen pointer-events-none" />
           
           {activeTab === "midi" ? (
@@ -1657,7 +1657,7 @@ ${currentSample.analysisSummary}`;
               ref={waveformCanvasRef} 
               width={1000} 
               height={220} 
-              className={`w-full h-full object-cover border border-cyan-primary/5 shadow-[inset_0_0_12px_rgba(47,241,228,0.05)] ${currentSample ? "cursor-pointer" : "cursor-not-allowed"}`}
+              className={`w-full h-full object-cover border border-cyan-primary/5 shadow-[inset_0_0_12px_rgb(var(--rgb-accent) / 0.05)] ${currentSample ? "cursor-pointer" : "cursor-not-allowed"}`}
               onClick={(e) => {
                 if (!currentSample) return;
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -1675,7 +1675,7 @@ ${currentSample.analysisSummary}`;
 
           {/* If scanning, overlay scanning label */}
           {isScanning && (
-            <div className="absolute bottom-4 right-4 flex items-center space-x-2 font-share text-[13px] text-cyan-primary tracking-widest bg-bg-void/90 px-2.5 py-1 border border-cyan-primary/30 shadow-[0_0_10px_rgba(47,241,228,0.2)]">
+            <div className="absolute bottom-4 right-4 flex items-center space-x-2 font-share text-[13px] text-cyan-primary tracking-widest bg-bg-void/90 px-2.5 py-1 border border-cyan-primary/30 shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.2)]">
               <span className="w-2 h-2 rounded-full bg-cyan-primary animate-ping-cyan" />
               <span className="font-bold">{scanningMessage}</span>
             </div>
@@ -1716,7 +1716,7 @@ ${currentSample.analysisSummary}`;
           >
             {currentSample && (
               <div 
-                className="absolute top-0 bottom-0 left-0 bg-cyan-primary shadow-[0_0_8px_#2ff1e4]" 
+                className="absolute top-0 bottom-0 left-0 bg-cyan-primary shadow-[0_0_8px_var(--color-accent-primary)]" 
                 style={{ width: `${(currentTime / currentSample.duration) * 100}%` }}
               />
             )}
@@ -1777,7 +1777,7 @@ ${currentSample.analysisSummary}`;
             <button
               disabled={!currentSample || isScanning}
               onClick={triggerSpectralScan}
-              className="hud-target w-full py-2 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgba(47,241,228,0.6)] active:scale-[0.98] transition-all duration-200 text-[13px] font-black tracking-widest font-orbitron uppercase disabled:opacity-35 disabled:pointer-events-none flex items-center justify-center space-x-2"
+              className="hud-target w-full py-2 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgb(var(--rgb-accent) / 0.6)] active:scale-[0.98] transition-all duration-200 text-[13px] font-black tracking-widest font-orbitron uppercase disabled:opacity-35 disabled:pointer-events-none flex items-center justify-center space-x-2"
               style={{ clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)" }}
             >
               <Radio className={`w-3.5 h-3.5 text-bg-void ${isScanning ? 'animate-radar-sweep' : 'animate-hex-pulse-flicker'}`} />
@@ -1800,7 +1800,7 @@ ${currentSample.analysisSummary}`;
               }}
               className={`px-3 py-1 border transition-all duration-200 disabled:opacity-30 disabled:pointer-events-none mr-2 ${
                 noiseReductionEnabled
-                  ? "bg-cyan-primary border-cyan-primary text-bg-void font-bold shadow-[0_0_6px_#2ff1e4]"
+                  ? "bg-cyan-primary border-cyan-primary text-bg-void font-bold shadow-[0_0_6px_var(--color-accent-primary)]"
                   : "bg-bg-void/40 border-border-hairline/25 text-text-dim hover:text-text-primary hover:border-cyan-primary/30"
               }`}
             >

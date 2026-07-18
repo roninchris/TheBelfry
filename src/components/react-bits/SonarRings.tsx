@@ -11,7 +11,7 @@ interface SonarRingsProps {
 export default function SonarRings({
   active = true,
   rings = 3,
-  color = "rgba(47, 241, 228, 0.5)",
+  color = "rgb(var(--rgb-accent) / 0.5)",
   className = ""
 }: SonarRingsProps) {
   const shouldReduceMotion = useReducedMotion();

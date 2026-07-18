@@ -41,10 +41,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
       </div>
 
       {/* Decorative top visual scanline band with two-layered neon cyan glow */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-primary/20 shadow-[0_0_6px_#00f3ff,0_0_16px_rgba(255,255,255,0.4)] z-50 pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-primary/20 shadow-[0_0_6px_var(--color-accent-primary),0_0_16px_rgba(255,255,255,0.4)] z-50 pointer-events-none" />
       
       {/* Decorative bottom visual scanline band with two-layered neon cyan glow matching the top */}
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-cyan-primary/20 shadow-[0_0_6px_#00f3ff,0_0_16px_rgba(255,255,255,0.4)] z-50 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-cyan-primary/20 shadow-[0_0_6px_var(--color-accent-primary),0_0_16px_rgba(255,255,255,0.4)] z-50 pointer-events-none" />
 
       {/* Primary Layout Frame */}
       <div className="flex-1 flex overflow-hidden z-10">

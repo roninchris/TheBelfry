@@ -21,22 +21,22 @@ export default function RegistrationFrame({
         {/* Corner Brackets */}
         <div
           className={`absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-cyan-primary/50 ${
-            glow ? "shadow-[0_0_8px_rgba(47,241,228,0.3)]" : ""
+            glow ? "shadow-[0_0_8px_rgb(var(--rgb-accent) / 0.3)]" : ""
           }`}
         />
         <div
           className={`absolute top-1 right-1 w-2.5 h-2.5 border-t border-r border-cyan-primary/50 ${
-            glow ? "shadow-[0_0_8px_rgba(47,241,228,0.3)]" : ""
+            glow ? "shadow-[0_0_8px_rgb(var(--rgb-accent) / 0.3)]" : ""
           }`}
         />
         <div
           className={`absolute bottom-1 left-1 w-2.5 h-2.5 border-b border-l border-cyan-primary/50 ${
-            glow ? "shadow-[0_0_8px_rgba(47,241,228,0.3)]" : ""
+            glow ? "shadow-[0_0_8px_rgb(var(--rgb-accent) / 0.3)]" : ""
           }`}
         />
         <div
           className={`absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-cyan-primary/50 ${
-            glow ? "shadow-[0_0_8px_rgba(47,241,228,0.3)]" : ""
+            glow ? "shadow-[0_0_8px_rgb(var(--rgb-accent) / 0.3)]" : ""
           }`}
         />
 
@@ -49,7 +49,7 @@ export default function RegistrationFrame({
               y1="50%"
               x2="100%"
               y2="50%"
-              stroke="rgba(47,241,228,0.35)"
+              stroke="rgb(var(--rgb-accent) / 0.35)"
               strokeDasharray="1 3"
               strokeWidth="1"
             />
@@ -63,7 +63,7 @@ export default function RegistrationFrame({
               y1="50%"
               x2="100%"
               y2="50%"
-              stroke="rgba(47,241,228,0.35)"
+              stroke="rgb(var(--rgb-accent) / 0.35)"
               strokeDasharray="1 3"
               strokeWidth="1"
             />
@@ -77,7 +77,7 @@ export default function RegistrationFrame({
               y1="0"
               x2="50%"
               y2="100%"
-              stroke="rgba(47,241,228,0.35)"
+              stroke="rgb(var(--rgb-accent) / 0.35)"
               strokeDasharray="1 3"
               strokeWidth="1"
             />
@@ -91,7 +91,7 @@ export default function RegistrationFrame({
               y1="0"
               x2="50%"
               y2="100%"
-              stroke="rgba(47,241,228,0.35)"
+              stroke="rgb(var(--rgb-accent) / 0.35)"
               strokeDasharray="1 3"
               strokeWidth="1"
             />

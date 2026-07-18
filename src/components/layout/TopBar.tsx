@@ -54,7 +54,7 @@ export default function TopBar() {
       <div className="flex items-center shrink-0">
         <div className="flex items-baseline space-x-2 whitespace-nowrap">
           <span className="font-orbitron text-xs font-black tracking-widest text-text-primary uppercase flex items-center animate-hologram-flicker">
-            <span className="w-1.5 h-3 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_8px_#2ff1e4]" />
+            <span className="w-1.5 h-3 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
             BATCOMPUTER
           </span>
           <span className="hidden 2xl:inline font-share text-[13px] text-text-dim tracking-wider uppercase font-medium">

@@ -48,7 +48,7 @@ function BreakoutLine({ index, total, isActive }: BreakoutLineProps) {
             y1="50"
             x2="18"
             y2="100"
-            stroke={isActive ? "var(--color-cyan-primary)" : "rgba(47, 241, 228, 0.15)"}
+            stroke={isActive ? "var(--color-cyan-primary)" : "rgb(var(--rgb-accent) / 0.15)"}
             strokeWidth="2"
             className="transition-all duration-300"
           />
@@ -58,7 +58,7 @@ function BreakoutLine({ index, total, isActive }: BreakoutLineProps) {
             y1="0"
             x2="18"
             y2="50"
-            stroke={isActive ? "var(--color-cyan-primary)" : "rgba(47, 241, 228, 0.15)"}
+            stroke={isActive ? "var(--color-cyan-primary)" : "rgb(var(--rgb-accent) / 0.15)"}
             strokeWidth="2"
             className="transition-all duration-300"
           />
@@ -68,7 +68,7 @@ function BreakoutLine({ index, total, isActive }: BreakoutLineProps) {
             y1="0"
             x2="18"
             y2="100"
-            stroke={isActive ? "var(--color-cyan-primary)" : "rgba(47, 241, 228, 0.15)"}
+            stroke={isActive ? "var(--color-cyan-primary)" : "rgb(var(--rgb-accent) / 0.15)"}
             strokeWidth="2"
             className="transition-all duration-300"
           />
@@ -80,7 +80,7 @@ function BreakoutLine({ index, total, isActive }: BreakoutLineProps) {
           y1="50"
           x2="48"
           y2="50"
-          stroke={isActive ? "var(--color-cyan-primary)" : "rgba(47, 241, 228, 0.15)"}
+          stroke={isActive ? "var(--color-cyan-primary)" : "rgb(var(--rgb-accent) / 0.15)"}
           strokeWidth="2"
           className="transition-all duration-300"
         />
@@ -90,7 +90,7 @@ function BreakoutLine({ index, total, isActive }: BreakoutLineProps) {
           cx="18"
           cy="50"
           r={isActive ? "4" : "3"}
-          fill={isActive ? "var(--color-cyan-primary)" : "rgba(47, 241, 228, 0.25)"}
+          fill={isActive ? "var(--color-cyan-primary)" : "rgb(var(--rgb-accent) / 0.25)"}
           className="transition-all duration-300"
         />
 
@@ -100,7 +100,7 @@ function BreakoutLine({ index, total, isActive }: BreakoutLineProps) {
           y="46"
           width="4"
           height="8"
-          fill={isActive ? "var(--color-cyan-primary)" : "rgba(47, 241, 228, 0.15)"}
+          fill={isActive ? "var(--color-cyan-primary)" : "rgb(var(--rgb-accent) / 0.15)"}
           className="transition-all duration-300"
         />
       </svg>
@@ -108,7 +108,7 @@ function BreakoutLine({ index, total, isActive }: BreakoutLineProps) {
       {/* Floating data packet animation traveling down the branch */}
       {isActive && !shouldReduceMotion && (
         <motion.div
-          className="absolute w-2 h-2 bg-cyan-primary rounded-full shadow-[0_0_8px_#2ff1e4]"
+          className="absolute w-2 h-2 bg-cyan-primary rounded-full shadow-[0_0_8px_var(--color-accent-primary)]"
           initial={{ left: "18px", top: "50%", y: "-50%", x: "-50%" }}
           animate={{ left: "48px" }}
           transition={{
@@ -151,7 +151,7 @@ function LogicOscilloscope({ isActive }: { isActive: boolean }) {
         <motion.path
           d="M 0 20 Q 15 35, 30 20 T 60 20 T 90 20 T 120 20 T 150 20 T 180 20 T 200 20"
           fill="none"
-          stroke="rgba(47, 241, 228, 0.25)"
+          stroke="rgb(var(--rgb-accent) / 0.25)"
           strokeWidth="1"
           animate={isActive && !shouldReduceMotion ? {
             strokeDashoffset: [0, 40],
@@ -366,7 +366,7 @@ export default function EncodingLab() {
           <div className="border-b border-border-hairline/25 pb-2 mb-3 flex justify-between items-center">
             <div>
               <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
-                <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
+                <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                 ENCODING BUFFER INPUT
               </h3>
               <p className="text-[12px] font-share text-text-dim uppercase tracking-wider mt-0.5">
@@ -410,7 +410,7 @@ export default function EncodingLab() {
           <div className="border-b border-border-hairline/25 pb-1 mb-3.5 flex justify-between items-end">
             <div>
               <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text flex items-center uppercase">
-                <span className="w-1.5 h-3 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_#2ff1e4]" />
+                <span className="w-1.5 h-3 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_var(--color-accent-primary)]" />
                 LOGIC ANALYZER // BYTE-BIT MONITOR
               </h3>
               <span className="text-[12px] font-share text-text-dim block uppercase mt-0.5">
@@ -445,7 +445,7 @@ export default function EncodingLab() {
                   >
                     {/* Channel */}
                     <div className="col-span-2 font-mono text-[12px] text-cyan-dim/80 flex items-center space-x-1">
-                      <span className={`w-1 h-1 rounded-full ${row.charCode ? "bg-cyan-primary shadow-[0_0_4px_#2ff1e4]" : "bg-text-dim/10"}`} />
+                      <span className={`w-1 h-1 rounded-full ${row.charCode ? "bg-cyan-primary shadow-[0_0_4px_var(--color-accent-primary)]" : "bg-text-dim/10"}`} />
                       <span>BUS.0{row.index + 1}</span>
                     </div>
 
@@ -465,7 +465,7 @@ export default function EncodingLab() {
                             key={bitIdx}
                             className={`w-3.5 h-3.5 border transition-all duration-300 relative group flex items-center justify-center ${
                               isOne
-                                ? "bg-cyan-primary border-cyan-primary shadow-[0_0_8px_rgba(47,241,228,0.9)] scale-105"
+                                ? "bg-cyan-primary border-cyan-primary shadow-[0_0_8px_rgb(var(--rgb-accent) / 0.9)] scale-105"
                                 : "bg-bg-void border-border-hairline/15 hover:border-cyan-primary/40"
                             }`}
                             style={{ clipPath: "polygon(2px 0, 100% 0, 100% calc(100% - 2px), calc(100% - 2px) 100%, 0 100%, 0 2px)" }}
@@ -513,7 +513,7 @@ export default function EncodingLab() {
           <div className="border-b border-border-hairline/25 pb-2 mb-3.5 flex justify-between items-center">
             <div>
               <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
-                <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
+                <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                 BREAKOUT ROUTING CHANNELS
               </h3>
               <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
@@ -528,7 +528,7 @@ export default function EncodingLab() {
                   setIsDecodeMode(false);
                   playPinClick();
                 }}
-                className={`px-2 py-0.5 transition-colors uppercase cursor-pointer ${!isDecodeMode ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_6px_rgba(47,241,228,0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
+                className={`px-2 py-0.5 transition-colors uppercase cursor-pointer ${!isDecodeMode ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_6px_rgb(var(--rgb-accent) / 0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
               >
                 ENCODE
               </button>
@@ -537,7 +537,7 @@ export default function EncodingLab() {
                   setIsDecodeMode(true);
                   playPinClick();
                 }}
-                className={`px-2 py-0.5 transition-colors uppercase cursor-pointer ${isDecodeMode ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_6px_rgba(47,241,228,0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
+                className={`px-2 py-0.5 transition-colors uppercase cursor-pointer ${isDecodeMode ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_6px_rgb(var(--rgb-accent) / 0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
               >
                 DECODE
               </button>
@@ -670,7 +670,7 @@ export default function EncodingLab() {
                   <div
                     className={`hud-target flex-1 bg-bg-void/50 border p-2.5 space-y-1.5 relative hover:border-cyan-dim/30 hover:bg-bg-void/65 transition-all duration-300 ${
                       highlightedRow === row.key
-                        ? "border-accent-primary/70 bg-accent-primary/[0.06] shadow-[0_0_16px_rgba(0,243,255,0.2)]"
+                        ? "border-accent-primary/70 bg-accent-primary/[0.06] shadow-[0_0_16px_rgb(var(--rgb-accent) / 0.2)]"
                         : "border-border-hairline/15"
                     }`}
                     style={{ clipPath: "polygon(0 0, 100% 0, 99% 100%, 0 100%)", ["--reticle-size" as any]: "7px" }}
@@ -679,7 +679,7 @@ export default function EncodingLab() {
                     <div className="flex justify-between items-center text-[13px]">
                       <div className="flex flex-col">
                         <span className="font-chakra font-extrabold text-cyan-dim uppercase tracking-wider flex items-center">
-                          <span className={`w-1 h-2.5 mr-1.5 inline-block ${row.value ? "bg-cyan-primary shadow-[0_0_4px_#2ff1e4]" : "bg-cyan-dim/20"}`} />
+                          <span className={`w-1 h-2.5 mr-1.5 inline-block ${row.value ? "bg-cyan-primary shadow-[0_0_4px_var(--color-accent-primary)]" : "bg-cyan-dim/20"}`} />
                           {row.label}
                         </span>
                         <span className="text-[12px] text-text-dim/60 font-share uppercase tracking-wide mt-0.2">
@@ -774,7 +774,7 @@ export default function EncodingLab() {
                     setIsPipelineDecode(false);
                     playPinClick();
                   }}
-                  className={`px-1.5 py-0.5 transition-colors uppercase cursor-pointer ${!isPipelineDecode ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_4px_rgba(47,241,228,0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
+                  className={`px-1.5 py-0.5 transition-colors uppercase cursor-pointer ${!isPipelineDecode ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_4px_rgb(var(--rgb-accent) / 0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
                 >
                   ENC
                 </button>
@@ -783,7 +783,7 @@ export default function EncodingLab() {
                     setIsPipelineDecode(true);
                     playPinClick();
                   }}
-                  className={`px-1.5 py-0.5 transition-colors uppercase cursor-pointer ${isPipelineDecode ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_4px_rgba(47,241,228,0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
+                  className={`px-1.5 py-0.5 transition-colors uppercase cursor-pointer ${isPipelineDecode ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_4px_rgb(var(--rgb-accent) / 0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
                 >
                   DEC
                 </button>
@@ -886,7 +886,7 @@ export default function EncodingLab() {
                     setBigIntInput("");
                     playPinClick();
                   }}
-                  className={`px-1.5 py-0.5 transition-colors uppercase cursor-pointer ${bigIntMode === "toBigInt" ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_4px_rgba(47,241,228,0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
+                  className={`px-1.5 py-0.5 transition-colors uppercase cursor-pointer ${bigIntMode === "toBigInt" ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_4px_rgb(var(--rgb-accent) / 0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
                 >
                   TEXT → INT
                 </button>
@@ -896,7 +896,7 @@ export default function EncodingLab() {
                     setBigIntInput("");
                     playPinClick();
                   }}
-                  className={`px-1.5 py-0.5 transition-colors uppercase cursor-pointer ${bigIntMode === "toText" ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_4px_rgba(47,241,228,0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
+                  className={`px-1.5 py-0.5 transition-colors uppercase cursor-pointer ${bigIntMode === "toText" ? "bg-cyan-primary text-bg-void font-bold shadow-[0_0_4px_rgb(var(--rgb-accent) / 0.4)]" : "text-text-dim hover:text-cyan-primary"}`}
                 >
                   INT → TEXT
                 </button>

@@ -42,7 +42,7 @@ export default function IconTabs({
             <div
               className={`absolute inset-0 border transition-all duration-300 ${
                 isActive
-                  ? "bg-cyan-primary/20 border-cyan-primary text-cyan-primary shadow-[0_0_6px_rgba(0,243,255,0.3)]"
+                  ? "bg-cyan-primary/20 border-cyan-primary text-cyan-primary shadow-[0_0_6px_rgb(var(--rgb-accent) / 0.3)]"
                   : "bg-bg-void border-border-hairline/20 text-text-dim hover:border-cyan-primary/40 hover:text-text-primary"
               }`}
               style={{

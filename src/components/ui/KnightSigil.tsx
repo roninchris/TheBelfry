@@ -44,7 +44,7 @@ export default function KnightSigil({
         alt=""
         draggable={false}
         className="w-full h-full object-contain"
-        style={{ filter: `drop-shadow(0 0 5px ${knight.accent}90) drop-shadow(0 0 1px #020912)` }}
+        style={{ filter: `drop-shadow(0 0 5px ${knight.accent}90) drop-shadow(0 0 1px var(--color-bg-void))` }}
       />
     </motion.div>
   );

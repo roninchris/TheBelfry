@@ -40,7 +40,7 @@ export default React.memo(function StatusBar() {
       <div className="flex items-center space-x-2">
         <div className="flex items-center bg-red-threat/10 border border-red-threat/30 text-red-threat px-2 py-0.5 animate-hex-pulse-flicker"
              style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}>
-          <AlertTriangle className="w-3 h-3 mr-1 text-red-threat shadow-[0_0_8px_rgba(255,59,78,0.5)]" />
+          <AlertTriangle className="w-3 h-3 mr-1 text-red-threat shadow-[0_0_8px_rgb(var(--rgb-threat) / 0.5)]" />
           <span className="font-mono font-black text-[12px] tracking-widest leading-none">THREAT LEVEL // CODE RED</span>
         </div>
       </div>

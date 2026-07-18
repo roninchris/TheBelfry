@@ -102,7 +102,7 @@ export function ContextMenu({ x, y, onClose, children }: ContextMenuProps) {
       className="absolute z-50 min-w-[170px]"
     >
       <GlassPanel 
-        className="py-1 px-1 bg-bg-void/95 border-cyan-primary/50 text-xs shadow-[0_0_15px_rgba(0,243,255,0.3)]"
+        className="py-1 px-1 bg-bg-void/95 border-cyan-primary/50 text-xs shadow-[0_0_15px_rgb(var(--rgb-accent) / 0.3)]"
         clipSize="sm"
         showCornerTicks={false}
       >
@@ -761,7 +761,7 @@ export default function DetectiveBoardPage() {
         <div className="space-y-4">
           <div className="border-b border-border-hairline/25 pb-2">
             <h2 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center">
-              <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_#2ff1e4]" />
+              <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
               <SplitText text="BOARD MATRIX ARCHIVE" delay={0.005} />
             </h2>
           </div>
@@ -905,7 +905,7 @@ export default function DetectiveBoardPage() {
           className="absolute inset-0 canvas-bg pointer-events-none"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            backgroundImage: `radial-gradient(rgba(112,162,168,0.1) 1.2px, transparent 1.2px)`,
+            backgroundImage: `radial-gradient(rgb(var(--rgb-primary) / 0.1) 1.2px, transparent 1.2px)`,
             backgroundSize: "28px 28px",
             transformOrigin: "0 0",
             transition: isPanning ? "none" : "transform 0.1s ease-out"
@@ -963,7 +963,7 @@ export default function DetectiveBoardPage() {
                   {/* Outer glow line: Draws on incrementally after the nodes build */}
                   <motion.path
                     d={`M ${x1} ${y1} L ${x2} ${y2}`}
-                    stroke={isConnHighlighted ? "#00f3ff" : "#70a2a8"}
+                    stroke={isConnHighlighted ? "var(--color-accent-primary)" : "var(--color-cyan-primary)"}
                     strokeWidth="3.5"
                     initial={prefersReducedMotion ? { pathLength: 1 } : { pathLength: 0 }}
                     animate={{ pathLength: 1 }}
@@ -984,7 +984,7 @@ export default function DetectiveBoardPage() {
                   {/* Primary sharp connection line: Draws on as a solid connection using animated stroke-dashoffset */}
                   <motion.path
                     d={`M ${x1} ${y1} L ${x2} ${y2}`}
-                    stroke={isConnHighlighted ? "#00f3ff" : "#70a2a8"}
+                    stroke={isConnHighlighted ? "var(--color-accent-primary)" : "var(--color-cyan-primary)"}
                     strokeWidth="1.5"
                     initial={prefersReducedMotion ? { pathLength: 1, strokeDashoffset: 0 } : { pathLength: 0, strokeDashoffset: length }}
                     animate={{ pathLength: 1, strokeDashoffset: 0 }}
@@ -1010,7 +1010,7 @@ export default function DetectiveBoardPage() {
                   {!prefersReducedMotion && (
                     <motion.path
                       d={`M ${x1} ${y1} L ${x2} ${y2}`}
-                      stroke="#00f3ff"
+                      stroke="var(--color-accent-primary)"
                       strokeWidth="1"
                       strokeDasharray="6 12"
                       initial={{ strokeDashoffset: 100 }}
@@ -1034,7 +1034,7 @@ export default function DetectiveBoardPage() {
                   {!prefersReducedMotion && (
                     <motion.circle
                       r={isConnHighlighted ? 3.5 : 2.2}
-                      fill="#00f3ff"
+                      fill="var(--color-accent-primary)"
                       initial={{ cx: x1, cy: y1 }}
                       animate={{ cx: [x1, x2], cy: [y1, y2] }}
                       transition={{
@@ -1043,7 +1043,7 @@ export default function DetectiveBoardPage() {
                         ease: "linear",
                         delay: index * 0.35
                       }}
-                      style={{ filter: "drop-shadow(0 0 5px #00f3ff)" }}
+                      style={{ filter: "drop-shadow(0 0 5px var(--color-accent-primary))" }}
                       className={`pointer-events-none transition-opacity duration-300 ${
                         hoveredNodeId
                           ? isConnHighlighted
@@ -1093,7 +1093,7 @@ export default function DetectiveBoardPage() {
 
               const hoverEffectClass = hoveredNodeId
                 ? isHighlighted
-                  ? "opacity-100 scale-[1.02] shadow-[0_0_15px_rgba(0,243,255,0.3)] border-accent-primary/50"
+                  ? "opacity-100 scale-[1.02] shadow-[0_0_15px_rgb(var(--rgb-accent) / 0.3)] border-accent-primary/50"
                   : "opacity-30 scale-[0.98] blur-[0.5px]"
                 : "opacity-100 scale-100";
 
@@ -1147,7 +1147,7 @@ export default function DetectiveBoardPage() {
                   <GlassPanel 
                     className={`p-2.5 h-full flex flex-col justify-between transition-all duration-300 relative ${
                       isLinkingFrom 
-                        ? "border-amber-alert/60 shadow-[0_0_12px_rgba(255,157,46,0.3)] bg-amber-alert/[0.04]" 
+                        ? "border-amber-alert/60 shadow-[0_0_12px_rgb(var(--rgb-amber) / 0.3)] bg-amber-alert/[0.04]" 
                         : "bg-bg-panel/95 hover:bg-cyan-primary/[0.02]"
                     }`}
                     clipSize="sm"
@@ -1155,7 +1155,7 @@ export default function DetectiveBoardPage() {
                     glow={isLinkingFrom}
                   >
                     {/* Tiny Pinned/Conspiracy HUD Glyph */}
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-cyan-primary/20 border border-cyan-primary rounded-full flex items-center justify-center shadow-[0_0_4px_#2ff1e4]">
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-cyan-primary/20 border border-cyan-primary rounded-full flex items-center justify-center shadow-[0_0_4px_var(--color-accent-primary)]">
                       <div className="w-0.5 h-0.5 bg-white rounded-full" />
                     </div>
 

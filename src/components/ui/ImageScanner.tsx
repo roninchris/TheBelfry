@@ -17,10 +17,10 @@ export default function ImageScanner({
   return (
     <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden select-none flex items-center justify-center">
       {/* Grid overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(47,241,228,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(47,241,228,0.05)_1px,transparent_1px)] bg-[size:20px_20px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(rgb(var(--rgb-accent) / 0.05)_1px,transparent_1px),linear-gradient(90deg,rgb(var(--rgb-accent) / 0.05)_1px,transparent_1px)] bg-[size:20px_20px]" />
       
       {/* Scanning Laser */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-cyan-primary shadow-[0_0_10px_#2ff1e4] animate-[scan_2s_linear_infinite]" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-cyan-primary shadow-[0_0_10px_var(--color-accent-primary)] animate-[scan_2s_linear_infinite]" />
 
       {/* Target Crosshair */}
       <div className="absolute w-64 h-64 border-2 border-dashed border-cyan-primary/40 rounded-sm flex items-center justify-center animate-hex-pulse-flicker">
