@@ -29,13 +29,13 @@ export const THEMES: ThemeDef[] = [
     id: "crimson",
     label: "WayneTech",
     description: "Signal red on black. Alert-forward, high contrast.",
-    swatch: ["#0a0305", "#c8434f", "#ff2b3d"],
+    swatch: ["#0b0406", "#a4838a", "#ff1f36"],
   },
   {
     id: "violet",
     label: "Nightfall",
     description: "Deep violet. Cooler and softer than the other two.",
-    swatch: ["#070518", "#8f7fd4", "#b06bff"],
+    swatch: ["#05031a", "#737b9e", "#d633ff"],
   },
 ];
 

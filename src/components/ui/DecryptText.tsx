@@ -12,6 +12,18 @@ interface DecryptTextProps {
 
 const DEFAULT_SCRAMBLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*<>/\\";
 
+/**
+ * Content already revealed, keyed by trigger + text.
+ *
+ * Module scope on purpose: it has to outlive the component. Switching modules
+ * unmounts the page, so returning to it remounted every DecryptText and
+ * replayed the scramble over unchanged data — a stale scan result re-animated
+ * (and re-chimed) as though a fresh scan had just completed, which read as the
+ * app inventing a result out of nowhere. The decrypt should fire when data
+ * arrives, not every time you look at it.
+ */
+const revealed = new Set<string>();
+
 export default function DecryptText({
   text,
   duration = 900,
@@ -30,6 +42,15 @@ export default function DecryptText({
 
     const chars = text.split("");
     const totalChars = chars.length;
+
+    // Already seen this exact content for this trigger — show it settled and
+    // skip the animation and the sound entirely.
+    const revealKey = `${String(trigger)}::${text}`;
+    if (revealed.has(revealKey)) {
+      setDisplayChars(chars.map((char) => ({ char, resolved: true })));
+      return;
+    }
+    revealed.add(revealKey);
 
     // Calculate individual lock times (in ms) for each character position
     const lockTimes = chars.map((char, index) => {
