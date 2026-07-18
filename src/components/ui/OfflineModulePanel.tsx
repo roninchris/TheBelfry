@@ -46,7 +46,7 @@ export default function OfflineModulePanel({ moduleName, description }: OfflineM
 
         {/* Info panel */}
         <div className="space-y-2">
-          <h2 className="font-orbitron text-lg font-black tracking-widest text-text-primary uppercase">
+          <h2 className="font-display text-lg font-black tracking-widest text-text-primary uppercase">
             {moduleName} // MODULE DISCONNECTED
           </h2>
           <p className="text-xs text-text-dim tracking-wide max-w-lg mx-auto leading-relaxed">
@@ -79,7 +79,7 @@ export default function OfflineModulePanel({ moduleName, description }: OfflineM
           <button
             onClick={handleBootDiagnostics}
             disabled={booting}
-            className={`font-orbitron font-black text-xs uppercase tracking-widest py-2.5 px-6 border transition-all duration-300 flex items-center space-x-2 ${
+            className={`font-display font-black text-xs uppercase tracking-widest py-2.5 px-6 border transition-all duration-300 flex items-center space-x-2 ${
               booting
                 ? "bg-amber-alert/10 border-amber-alert/50 text-amber-alert cursor-wait"
                 : "bg-red-threat/10 border-red-threat/40 text-red-threat hover:bg-red-threat hover:text-bg-void hover:shadow-[0_0_12px_rgb(var(--rgb-threat) / 0.4)] cursor-pointer"

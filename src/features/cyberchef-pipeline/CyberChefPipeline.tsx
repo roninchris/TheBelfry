@@ -570,7 +570,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
             <div>
               <div className="flex items-center space-x-2">
                 <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
-                <h1 className="font-orbitron text-sm font-black tracking-widest text-cyan-text uppercase">
+                <h1 className="font-display text-sm font-black tracking-widest text-cyan-text uppercase">
                   FORENSIC DECRYPTION CORES
                 </h1>
               </div>
@@ -596,7 +596,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               playPinClick();
               setMode("manual");
             }}
-            className={`py-2.5 text-[13px] font-orbitron font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
+            className={`py-2.5 text-[13px] font-display font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
               mode === "manual"
                 ? "bg-cyan-primary text-bg-void shadow-[0_0_15px_rgb(var(--rgb-accent) / 0.55)] font-black"
                 : "text-text-dim hover:text-white hover:bg-bg-void/40"
@@ -611,7 +611,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               playPinClick();
               setMode("brute");
             }}
-            className={`py-2.5 text-[13px] font-orbitron font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
+            className={`py-2.5 text-[13px] font-display font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
               mode === "brute"
                 ? "bg-amber-alert text-bg-void shadow-[0_0_15px_rgba(245,158,11,0.55)] font-black"
                 : "text-text-dim hover:text-white hover:bg-bg-void/40"
@@ -635,7 +635,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
             <div className="border-b border-border-hairline/20 pb-2 mb-4 flex justify-between items-center flex-wrap gap-2">
               <div className="flex items-center space-x-2">
                 <Sliders className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
-                <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text uppercase">
+                <h3 className="font-display text-xs font-black tracking-widest text-cyan-text uppercase">
                   ACTIVE RECIPE PIPELINE STACK
                 </h3>
               </div>
@@ -665,7 +665,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 <button
                   onClick={handleBake}
                   disabled={isBaking || pipelineSteps.length === 0}
-                  className="hud-target px-3 py-1 bg-cyan-primary hover:bg-white text-bg-void transition-all duration-150 text-[13px] font-black tracking-widest font-orbitron uppercase disabled:opacity-30 disabled:pointer-events-none flex items-center space-x-1"
+                  className="hud-target px-3 py-1 bg-cyan-primary hover:bg-white text-bg-void transition-all duration-150 text-[13px] font-black tracking-widest font-display uppercase disabled:opacity-30 disabled:pointer-events-none flex items-center space-x-1"
                   style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
                 >
                   <RefreshCw className={`w-3 h-3 ${isBaking ? "animate-radar-sweep" : ""}`} />
@@ -678,7 +678,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               // Empty State
               <div className="flex-1 flex flex-col items-center justify-center text-center p-10 border border-dashed border-border-hairline/15 bg-bg-void/25 rounded-none">
                 <Terminal className="w-12 h-12 text-cyan-primary/20 animate-hex-pulse-flicker mb-3" />
-                <h4 className="font-orbitron text-xs font-black tracking-widest text-cyan-text uppercase">
+                <h4 className="font-display text-xs font-black tracking-widest text-cyan-text uppercase">
                   RECIPE CONTAINER DISCHARGED
                 </h4>
                 <p className="text-[13px] text-text-dim uppercase tracking-widest font-share max-w-sm mt-1.5 leading-relaxed">
@@ -754,7 +754,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="w-1.5 h-3 bg-cyan-primary inline-block transform -skew-x-12" />
-                          <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text uppercase">
+                          <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-text uppercase">
                             INPUT STREAM VESSEL
                           </h3>
                         </div>
@@ -830,7 +830,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                                 <span className="font-mono text-[12px] text-cyan-primary font-bold shrink-0 uppercase">
                                   L-{index + 1}
                                 </span>
-                                <h4 className={`font-orbitron text-[13px] font-black tracking-widest uppercase truncate transition-colors ${isProcessing ? "text-cyan-text" : "text-white"}`}>
+                                <h4 className={`font-display text-[13px] font-black tracking-widest uppercase truncate transition-colors ${isProcessing ? "text-cyan-text" : "text-white"}`}>
                                   {tool.label}
                                 </h4>
                               </div>
@@ -935,7 +935,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
-                          <h3 className="font-orbitron text-[13px] font-black tracking-widest text-green-verified uppercase flex items-center">
+                          <h3 className="font-display text-[13px] font-black tracking-widest text-green-verified uppercase flex items-center">
                             OUTPUT GATE VESSEL
                             {!bakeSuccess && <AlertCircle className="w-3.5 h-3.5 text-red-threat ml-2 animate-hex-pulse-flicker" />}
                           </h3>
@@ -1019,7 +1019,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               <div className="border-b border-border-hairline/20 pb-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center space-x-2">
                   <Cpu className="w-5 h-5 text-amber-alert animate-spin-slow" />
-                  <h3 className="font-orbitron text-xs font-black tracking-widest text-amber-text uppercase">
+                  <h3 className="font-display text-xs font-black tracking-widest text-amber-text uppercase">
                     BRUTE CRACK MATRIX ARRAY
                   </h3>
                 </div>
@@ -1031,7 +1031,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       playPinClick();
                       setBruteSubMode("sweep");
                     }}
-                    className={`px-3 py-1 text-[12px] font-orbitron font-bold uppercase tracking-widest transition-all ${
+                    className={`px-3 py-1 text-[12px] font-display font-bold uppercase tracking-widest transition-all ${
                       bruteSubMode === "sweep"
                         ? "bg-amber-alert/15 text-amber-text font-black shadow-[inset_0_0_8px_rgba(245,158,11,0.25)]"
                         : "text-text-dim hover:text-white"
@@ -1044,7 +1044,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       playPinClick();
                       setBruteSubMode("auto");
                     }}
-                    className={`px-3 py-1 text-[12px] font-orbitron font-bold uppercase tracking-widest transition-all ${
+                    className={`px-3 py-1 text-[12px] font-display font-bold uppercase tracking-widest transition-all ${
                       bruteSubMode === "auto"
                         ? "bg-amber-alert/15 text-amber-text font-black shadow-[inset_0_0_8px_rgba(245,158,11,0.25)]"
                         : "text-text-dim hover:text-white"
@@ -1064,7 +1064,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12" />
-                        <h3 className="font-orbitron text-[13px] font-black tracking-widest text-amber-text uppercase">
+                        <h3 className="font-display text-[13px] font-black tracking-widest text-amber-text uppercase">
                           GATE 1: STREAM SOURCE
                         </h3>
                       </div>
@@ -1182,7 +1182,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12 animate-hex-pulse-flicker" />
-                        <h3 className="font-orbitron text-[13px] font-black tracking-widest text-amber-text uppercase">
+                        <h3 className="font-display text-[13px] font-black tracking-widest text-amber-text uppercase">
                           GATE 2: MATRIX CORE
                         </h3>
                       </div>
@@ -1201,7 +1201,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                             <Cpu className="w-4 h-4 text-amber-alert animate-hex-pulse-flicker" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="font-orbitron text-[12px] font-black tracking-widest text-amber-text uppercase block truncate animate-hex-pulse-flicker">
+                            <span className="font-display text-[12px] font-black tracking-widest text-amber-text uppercase block truncate animate-hex-pulse-flicker">
                               ANALYZING ENTROPY
                             </span>
                             <div className="w-full bg-bg-void border border-border-hairline/25 h-1.5 p-0.5 mt-1">
@@ -1236,7 +1236,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                         <button
                           onClick={() => triggerBruteScan(inputText, bruteSubMode, sweepCipher)}
                           disabled={isScanning || !inputText}
-                          className="w-full py-2 bg-amber-alert hover:bg-white text-bg-void transition-all duration-150 text-[13px] font-black tracking-widest font-orbitron uppercase disabled:opacity-35 flex items-center justify-center space-x-1.5 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                          className="w-full py-2 bg-amber-alert hover:bg-white text-bg-void transition-all duration-150 text-[13px] font-black tracking-widest font-display uppercase disabled:opacity-35 flex items-center justify-center space-x-1.5 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
                           style={{ clipPath: "polygon(0 0, 100% 0, 93% 100%, 0 100%)" }}
                         >
                           <SearchCode className="w-3.5 h-3.5" />
@@ -1268,7 +1268,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
-                        <h3 className="font-orbitron text-[13px] font-black tracking-widest text-green-verified uppercase">
+                        <h3 className="font-display text-[13px] font-black tracking-widest text-green-verified uppercase">
                           GATE 3: TERMINAL MATCH
                         </h3>
                       </div>
@@ -1280,7 +1280,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     {isScanning ? (
                       <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-border-hairline/10 bg-bg-void/25">
                         <Cpu className="w-8 h-8 text-cyan-primary/20 animate-radar-sweep mb-1.5" />
-                        <span className="font-orbitron text-[12px] font-black tracking-widest text-text-dim uppercase">
+                        <span className="font-display text-[12px] font-black tracking-widest text-text-dim uppercase">
                           AWAITING MATCH CORE
                         </span>
                       </div>
@@ -1336,7 +1336,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     ) : bruteResults.length > 0 ? (
                       <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-red-threat/20 bg-red-threat/[0.01]">
                         <ShieldAlert className="w-8 h-8 text-red-threat/20 mb-1 animate-hex-pulse-flicker" />
-                        <span className="font-orbitron text-[12px] font-black tracking-widest text-red-threat uppercase block">
+                        <span className="font-display text-[12px] font-black tracking-widest text-red-threat uppercase block">
                           NO PLAUSIBLE TOP MATCH
                         </span>
                         <span className="text-[12px] font-mono text-text-dim uppercase mt-1 leading-normal">
@@ -1346,7 +1346,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     ) : (
                       <div className="flex-1 flex flex-col items-center justify-center text-center p-3 border border-dashed border-border-hairline/10 bg-bg-void/25">
                         <Terminal className="w-8 h-8 text-text-dim/20 mb-1.5" />
-                        <span className="font-orbitron text-[12px] font-black tracking-widest text-text-dim uppercase">
+                        <span className="font-display text-[12px] font-black tracking-widest text-text-dim uppercase">
                           VESSEL IDLE
                         </span>
                       </div>
@@ -1492,7 +1492,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
             {/* Searchable / Browsable Registry of available tools */}
             <GlassPanel className="p-4 flex-1 flex flex-col min-h-[350px]" clipSize="sm">
               <div className="border-b border-border-hairline/20 pb-2 mb-3">
-                <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+                <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                   <Plus className="w-4 h-4 mr-1.5 text-cyan-primary" />
                   TOOL REGISTRY INDEX
                 </h3>
@@ -1546,7 +1546,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="space-y-1.5 mb-2">
                         <div className="flex items-center space-x-2 border-b border-border-hairline/10 pb-1 mb-2">
                           <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12" />
-                          <span className="font-orbitron text-[12px] font-black tracking-widest text-amber-alert uppercase">
+                          <span className="font-display text-[12px] font-black tracking-widest text-amber-alert uppercase">
                             CRYPTO-CIPHER RECIPES
                           </span>
                         </div>
@@ -1559,7 +1559,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="space-y-1.5">
                         <div className="flex items-center space-x-2 border-b border-border-hairline/10 pb-1 mb-2">
                           <span className="w-1.5 h-3 bg-cyan-primary inline-block transform -skew-x-12" />
-                          <span className="font-orbitron text-[12px] font-black tracking-widest text-cyan-text uppercase">
+                          <span className="font-display text-[12px] font-black tracking-widest text-cyan-text uppercase">
                             DATA-ENCODING SCHEMES
                           </span>
                         </div>
@@ -1581,7 +1581,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
             {/* Heuristics Intelligence Core Panel */}
             <GlassPanel className="p-4" clipSize="sm">
               <div className="border-b border-border-hairline/20 pb-2 mb-3">
-                <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text uppercase">
+                <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-text uppercase">
                   INTELLIGENCE COHESION HEURISTICS
                 </h3>
               </div>

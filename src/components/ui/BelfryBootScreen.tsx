@@ -109,7 +109,7 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
             initial={{ letterSpacing: "1em", opacity: 0 }}
             animate={{ letterSpacing: "0.4em", opacity: 1 }}
             transition={{ duration: 1.5 }}
-            className="text-cyan-primary text-2xl font-black font-orbitron tracking-[0.4em] ml-[0.4em]"
+            className="text-cyan-primary text-2xl font-black font-display tracking-[0.4em] ml-[0.4em]"
           >
             BELFRY
           </motion.h1>

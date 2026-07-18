@@ -253,7 +253,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <Database className="w-6 h-6 text-cyan-dim/60 group-hover:text-cyan-primary transition-colors relative z-10" />
-                <span className="font-orbitron text-[13px] font-black tracking-widest text-text-dim uppercase relative z-10">
+                <span className="font-display text-[13px] font-black tracking-widest text-text-dim uppercase relative z-10">
                   NO DOSSIERS ON FILE
                 </span>
                 <span className="font-share text-[12px] text-text-dim/60 tracking-wide uppercase relative z-10 leading-relaxed">
@@ -335,7 +335,7 @@ export default function DashboardPage() {
 
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-orbitron text-[13px] font-black text-text-primary tracking-widest uppercase flex items-center min-w-0" title={activeCase.title} key={activeCase.id}>
+                  <h4 className="font-display text-[13px] font-black text-text-primary tracking-widest uppercase flex items-center min-w-0" title={activeCase.title} key={activeCase.id}>
                     <span className="truncate">{activeCase.title}</span>
                   </h4>
                   <p className="font-share text-[13px] text-text-dim/60 uppercase">
@@ -395,7 +395,7 @@ export default function DashboardPage() {
           {/* Top border header banner */}
           <div className="border-b border-border-hairline/25 pb-3 mb-4 flex justify-between items-center relative z-10">
             <div>
-              <h2 className="font-orbitron text-base font-black tracking-widest text-cyan-text flex items-center uppercase animate-data-assemble">
+              <h2 className="font-display text-base font-black tracking-widest text-cyan-text flex items-center uppercase animate-data-assemble">
                 <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                 <ShinyText text="FORENSIC SCANNER // ANALYZE ANY EVIDENCE" speed={6} />
               </h2>

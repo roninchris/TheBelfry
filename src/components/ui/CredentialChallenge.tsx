@@ -198,7 +198,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
                   alt=""
                   className="w-12 h-12 mx-auto object-contain filter drop-shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.5)]"
                 />
-                <h1 className="font-orbitron text-[14px] font-black tracking-[0.35em] text-cyan-primary uppercase">
+                <h1 className="font-display text-[14px] font-black tracking-[0.35em] text-cyan-primary uppercase">
                   Credential Challenge
                 </h1>
                 <p className="font-share text-[12px] tracking-[0.18em] text-cyan-dim uppercase">
@@ -261,7 +261,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
                   type="submit"
                   disabled={!canSubmit}
                   onMouseEnter={() => canSubmit && playReticleLock()}
-                  className="w-full py-2.5 font-orbitron text-[13px] font-black tracking-[0.3em] uppercase
+                  className="w-full py-2.5 font-display text-[13px] font-black tracking-[0.3em] uppercase
                              border border-accent-primary/50 text-accent-primary bg-accent-primary/[0.06]
                              transition-all duration-200 cursor-pointer
                              hover:bg-accent-primary/15 hover:shadow-[0_0_16px_rgb(var(--rgb-accent) / 0.25)]
@@ -310,7 +310,7 @@ function SessionPanel({
       />
       <div className="space-y-1">
         <p className="font-share text-[12px] tracking-[0.3em] text-cyan-dim uppercase">Active operative</p>
-        <h2 className="font-orbitron text-sm font-black tracking-[0.25em] text-accent-primary uppercase">
+        <h2 className="font-display text-sm font-black tracking-[0.25em] text-accent-primary uppercase">
           {knight.label}
         </h2>
         <p className="font-share text-[11px] tracking-[0.18em] text-cyan-dim/80 uppercase pt-1">
@@ -321,7 +321,7 @@ function SessionPanel({
         type="button"
         onClick={onSignOut}
         onMouseEnter={() => playHoverBlip()}
-        className="mt-2 w-full py-2 font-orbitron text-[12px] font-black tracking-[0.28em] uppercase
+        className="mt-2 w-full py-2 font-display text-[12px] font-black tracking-[0.28em] uppercase
                    border border-red-threat/40 text-red-threat/90 bg-red-threat/[0.05]
                    hover:bg-red-threat/15 hover:shadow-[0_0_14px_rgb(var(--rgb-threat) / 0.2)]
                    transition-all duration-200 cursor-pointer"
@@ -394,7 +394,7 @@ function GrantedPanel({ label, sigil, reduce }: { label: string; sigil: string |
       )}
       <div className="space-y-1.5">
         <p className="font-share text-[12px] tracking-[0.3em] text-cyan-dim uppercase">Identity Confirmed</p>
-        <h2 className="font-orbitron text-base font-black tracking-[0.25em] text-accent-primary uppercase">
+        <h2 className="font-display text-base font-black tracking-[0.25em] text-accent-primary uppercase">
           <DecryptText text={label} duration={700} silent />
         </h2>
         <p className="font-share text-[11px] tracking-[0.18em] text-cyan-dim/80 uppercase pt-1">

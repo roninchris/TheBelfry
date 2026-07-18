@@ -1295,3 +1295,24 @@ button:hover, .btn-interactive:hover {
   --rgb-threat: 255 77 125;
   --rgb-amber: 255 179 71;
 }
+
+/* ---- hud-target: bracketed corner accents on hover/focus ----
+   Applied here rather than on 151 individual buttons: every interactive
+   element that already opted into .hud-target inherits the Arkham-tablet
+   framing, and per-button state colours stay untouched. The reticle uses
+   ::before/::after, so these brackets use box-shadow on a wrapper-free
+   pseudo-free approach — outline plus inset shadow — to avoid colliding. */
+.hud-target {
+  transition: box-shadow 0.18s ease, background-color 0.18s ease;
+}
+.hud-target:hover:not(:disabled),
+.hud-target:focus-visible:not(:disabled) {
+  box-shadow:
+    inset 2px 2px 0 -1px var(--reticle-color),
+    inset -2px -2px 0 -1px var(--reticle-color),
+    0 0 12px -4px var(--reticle-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-target { transition: none; }
+}

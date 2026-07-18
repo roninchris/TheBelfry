@@ -742,7 +742,7 @@ export default function DetectiveBoardPage() {
       {isUploadingPhoto && (
         <div className="fixed inset-0 z-[90] bg-bg-void/70 backdrop-blur-sm flex flex-col items-center justify-center gap-3 pointer-events-none">
           <Loader2 className="w-8 h-8 text-cyan-primary animate-spin" />
-          <span className="font-orbitron text-[13px] tracking-[0.25em] text-cyan-text uppercase">
+          <span className="font-display text-[13px] tracking-[0.25em] text-cyan-text uppercase">
             Securing evidence to archive
           </span>
         </div>
@@ -760,7 +760,7 @@ export default function DetectiveBoardPage() {
       <div className="w-full lg:w-72 bg-bg-void/80 border-b lg:border-b-0 lg:border-r border-border-hairline/20 p-4 flex flex-col justify-between shrink-0 relative z-20">
         <div className="space-y-4">
           <div className="border-b border-border-hairline/25 pb-2">
-            <h2 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center">
+            <h2 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center">
               <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
               <SplitText text="BOARD MATRIX ARCHIVE" delay={0.005} />
             </h2>
@@ -795,7 +795,7 @@ export default function DetectiveBoardPage() {
                     {new Date(activeCase.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <h3 className="font-orbitron text-sm font-black text-text-primary tracking-wide line-clamp-1 uppercase">{activeCase.title}</h3>
+                <h3 className="font-display text-sm font-black text-text-primary tracking-wide line-clamp-1 uppercase">{activeCase.title}</h3>
                 <p className="font-share text-[13px] leading-relaxed text-text-dim italic line-clamp-3">"{activeCase.synopsis}"</p>
 
                 <div className="border-t border-border-hairline/10 pt-2 grid grid-cols-2 gap-2 text-center text-text-dim font-mono text-[12px]">
@@ -1172,7 +1172,7 @@ export default function DetectiveBoardPage() {
                               if (e.key === "Enter") { e.preventDefault(); commitRename(node.id); }
                               if (e.key === "Escape") { e.preventDefault(); setRenamingNodeId(null); }
                             }}
-                            className="nocanvasdrag font-orbitron text-[12px] font-black text-cyan-text tracking-widest uppercase bg-bg-void/60 border border-cyan-primary/40 outline-none px-1 py-0.5 w-[100px]"
+                            className="nocanvasdrag font-display text-[12px] font-black text-cyan-text tracking-widest uppercase bg-bg-void/60 border border-cyan-primary/40 outline-none px-1 py-0.5 w-[100px]"
                           />
                         ) : (
                           // Plain text, not BlurText: its per-character inline-block
@@ -1180,7 +1180,7 @@ export default function DetectiveBoardPage() {
                           // mid-character ("NURSERY R|") instead of ellipsising.
                           // flex-1/min-w-0 lets it use the width the buttons leave.
                           <span
-                            className="font-orbitron text-[13px] font-black text-cyan-text tracking-wider uppercase truncate flex-1 min-w-0 mr-1.5"
+                            className="font-display text-[13px] font-black text-cyan-text tracking-wider uppercase truncate flex-1 min-w-0 mr-1.5"
                             title={node.title}
                           >
                             {node.title}
@@ -1315,7 +1315,7 @@ export default function DetectiveBoardPage() {
         {!activeCaseId ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-bg-void/70 backdrop-blur-sm pointer-events-auto z-40">
             <Network className="w-16 h-16 text-cyan-dim opacity-50 animate-hex-pulse-flicker mb-4" />
-            <h3 className="font-orbitron text-base font-black text-cyan-text tracking-widest uppercase mb-1">
+            <h3 className="font-display text-base font-black text-cyan-text tracking-widest uppercase mb-1">
               <SplitText text="THE BELFRY DETECTIVE BOARD" delay={0.03} />
             </h3>
             <p className="text-[13px] font-share text-text-dim max-w-sm mb-4 leading-relaxed">
@@ -1332,7 +1332,7 @@ export default function DetectiveBoardPage() {
         ) : boardNodes.length === 0 ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 pointer-events-none select-none z-10">
             <Compass className="w-10 h-10 text-cyan-dim opacity-40 animate-spin-slow mb-3" />
-            <h4 className="font-orbitron text-xs font-black text-text-dim tracking-widest uppercase">
+            <h4 className="font-display text-xs font-black text-text-dim tracking-widest uppercase">
               EMPTY WORKSPACE CANVAS
             </h4>
             <p className="text-[13px] font-share text-text-dim/60 max-w-xs mt-1 leading-normal">
@@ -1473,7 +1473,7 @@ export default function DetectiveBoardPage() {
           <div className="absolute inset-0 bg-bg-void/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 pointer-events-auto">
             <GlassPanel className={`p-4 max-w-sm w-full origin-top ${prefersReducedMotion ? "" : "animate-clip-reveal"}`} clipSize="md" showCornerTicks={true}>
               <div className="flex justify-between items-center border-b border-border-hairline/25 pb-2 mb-3">
-                <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+                <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                   ADD {formType} CLUE CARD
                 </h3>
                 <button onClick={() => setShowAddForm(false)} className="text-text-dim hover:text-text-primary">
@@ -1554,11 +1554,11 @@ export default function DetectiveBoardPage() {
                             if (e.key === "Enter") { e.preventDefault(); commitRename(detailNode.id); }
                             if (e.key === "Escape") { e.preventDefault(); setRenamingNodeId(null); }
                           }}
-                          className="font-orbitron text-base font-black text-cyan-text tracking-widest uppercase bg-bg-void/60 border border-cyan-primary/40 outline-none px-2 py-0.5"
+                          className="font-display text-base font-black text-cyan-text tracking-widest uppercase bg-bg-void/60 border border-cyan-primary/40 outline-none px-2 py-0.5"
                         />
                       ) : (
                         <div className="flex items-center space-x-2">
-                          <h2 className="font-orbitron text-base font-black text-cyan-text tracking-widest uppercase">
+                          <h2 className="font-display text-base font-black text-cyan-text tracking-widest uppercase">
                             {detailNode.title}
                           </h2>
                           <button
@@ -1600,7 +1600,7 @@ export default function DetectiveBoardPage() {
 
                   {detailNode.type === "text" && (
                     <div className="space-y-2">
-                      <label className="text-[13px] font-orbitron font-bold text-cyan-dim uppercase tracking-widest">Text Content</label>
+                      <label className="text-[13px] font-display font-bold text-cyan-dim uppercase tracking-widest">Text Content</label>
                       <div className="bg-bg-void/40 border border-border-hairline/20 p-4 rounded-sm font-share text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
                         {detailNode.content}
                       </div>
@@ -1609,7 +1609,7 @@ export default function DetectiveBoardPage() {
 
                   {detailNode.type === "link" && (
                     <div className="space-y-2">
-                      <label className="text-[13px] font-orbitron font-bold text-cyan-dim uppercase tracking-widest">Source Link</label>
+                      <label className="text-[13px] font-display font-bold text-cyan-dim uppercase tracking-widest">Source Link</label>
                       <a 
                         href={detailNode.content} 
                         target="_blank" 
@@ -1625,7 +1625,7 @@ export default function DetectiveBoardPage() {
                   {/* Evidence Notes (Persisted) */}
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <label className="text-[13px] font-orbitron font-bold text-cyan-dim uppercase tracking-widest flex items-center">
+                      <label className="text-[13px] font-display font-bold text-cyan-dim uppercase tracking-widest flex items-center">
                         <FileText className="w-3.5 h-3.5 mr-1.5" />
                         ANALYST NOTES
                       </label>
@@ -1686,7 +1686,7 @@ export default function DetectiveBoardPage() {
                       setDetailNodeId(null);
                       playCloseFile();
                     }}
-                    className="px-6 py-2 bg-cyan-primary text-bg-void text-xs font-black tracking-widest font-orbitron uppercase hover:bg-white transition-all"
+                    className="px-6 py-2 bg-cyan-primary text-bg-void text-xs font-black tracking-widest font-display uppercase hover:bg-white transition-all"
                     style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
                   >
                     CLOSE EVIDENCE
@@ -1703,7 +1703,7 @@ export default function DetectiveBoardPage() {
           <div className="absolute inset-0 bg-bg-void/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 pointer-events-auto">
             <GlassPanel className={`p-4 max-w-sm w-full origin-top ${prefersReducedMotion ? "" : "animate-clip-reveal"}`} clipSize="md" showCornerTicks={true}>
               <div className="flex justify-between items-center border-b border-border-hairline/25 pb-2 mb-3">
-                <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+                <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                   LABEL ASSOCIATION CORRELATION
                 </h3>
                 <button onClick={() => setLabelingConnId(null)} className="text-text-dim hover:text-text-primary">
@@ -1750,7 +1750,7 @@ export default function DetectiveBoardPage() {
           <div className="absolute inset-0 bg-bg-void/85 backdrop-blur-sm flex items-center justify-center p-4 z-50 pointer-events-auto">
             <GlassPanel className={`p-4 max-w-sm w-full origin-top ${prefersReducedMotion ? "" : "animate-clip-reveal"}`} clipSize="md" showCornerTicks={true}>
               <div className="flex justify-between items-center border-b border-border-hairline/25 pb-2 mb-3">
-                <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+                <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                   INITIATE NEW INVESTIGATION
                 </h3>
                 <button onClick={() => setShowNewCaseModal(false)} className="text-text-dim hover:text-text-primary">

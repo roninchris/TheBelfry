@@ -429,7 +429,7 @@ export default function CryptoLab() {
               playPinClick();
             }}
             onMouseEnter={() => playHoverEvidence()}
-            className={`px-4 py-2 text-xs font-orbitron font-black tracking-widest transition-all ${
+            className={`px-4 py-2 text-xs font-display font-black tracking-widest transition-all ${
               activeTab === "ciphers"
                 ? "bg-cyan-primary/[0.08] text-cyan-text border-b-2 border-cyan-primary shadow-[0_4px_10px_-2px_rgb(var(--rgb-accent) / 0.2)]"
                 : "text-text-dim hover:text-text-primary"
@@ -443,7 +443,7 @@ export default function CryptoLab() {
               playPinClick();
             }}
             onMouseEnter={() => playHoverEvidence()}
-            className={`px-4 py-2 text-xs font-orbitron font-black tracking-widest transition-all ${
+            className={`px-4 py-2 text-xs font-display font-black tracking-widest transition-all ${
               activeTab === "identifier"
                 ? "bg-cyan-primary/[0.08] text-cyan-text border-b-2 border-cyan-primary shadow-[0_4px_10px_-2px_rgb(var(--rgb-accent) / 0.2)]"
                 : "text-text-dim hover:text-text-primary"
@@ -457,7 +457,7 @@ export default function CryptoLab() {
               playPinClick();
             }}
             onMouseEnter={() => playHoverEvidence()}
-            className={`px-4 py-2 text-xs font-orbitron font-black tracking-widest transition-all ${
+            className={`px-4 py-2 text-xs font-display font-black tracking-widest transition-all ${
               activeTab === "frequency"
                 ? "bg-cyan-primary/[0.08] text-cyan-text border-b-2 border-cyan-primary shadow-[0_4px_10px_-2px_rgb(var(--rgb-accent) / 0.2)]"
                 : "text-text-dim hover:text-text-primary"
@@ -480,7 +480,7 @@ export default function CryptoLab() {
         {/* Cipher Selector */}
         <GlassPanel className="p-4 flex flex-col flex-1" clipSize="md">
           <div className="border-b border-border-hairline/25 pb-2 mb-3">
-            <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-primary flex items-center">
+            <h3 className="font-display text-xs font-black tracking-widest text-cyan-primary flex items-center">
               <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
               CRYPTOGRAPHIC CIPHERS
             </h3>
@@ -566,7 +566,7 @@ export default function CryptoLab() {
                   <div key={section.group.id} className="space-y-1.5">
                     <div className="flex items-center gap-2 pt-1.5 pb-1 sticky top-0 bg-bg-panel/95 backdrop-blur-sm z-20">
                       <span className="w-1 h-2.5 bg-cyan-primary/70 transform -skew-x-12 shadow-[0_0_4px_var(--color-accent-primary)]" />
-                      <span className="font-orbitron text-[11px] font-black tracking-[0.2em] text-cyan-primary/90 uppercase">
+                      <span className="font-display text-[11px] font-black tracking-[0.2em] text-cyan-primary/90 uppercase">
                         {section.group.label}
                       </span>
                       <span className="font-mono text-[11px] text-text-dim/50">{section.tools.length}</span>
@@ -621,7 +621,7 @@ export default function CryptoLab() {
                           transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' 
                         }} 
                       />
-                      <div className="absolute inset-0 flex items-center justify-center font-orbitron text-[13px] font-black text-cyan-text">
+                      <div className="absolute inset-0 flex items-center justify-center font-display text-[13px] font-black text-cyan-text">
                         {toolOptions.shift || 3}
                       </div>
                     </div>
@@ -672,7 +672,7 @@ export default function CryptoLab() {
                         className="w-7 h-7 text-cyan-primary drop-shadow-[0_0_6px_rgb(var(--rgb-accent) / 0.4)]" 
                         style={{ transform: `rotate(${13 * (360/26)}deg)` }} 
                       />
-                      <div className="absolute inset-0 flex items-center justify-center font-orbitron text-[13px] font-black text-cyan-text">
+                      <div className="absolute inset-0 flex items-center justify-center font-display text-[13px] font-black text-cyan-text">
                         13
                       </div>
                     </div>
@@ -798,7 +798,7 @@ export default function CryptoLab() {
             <button
               onClick={handleDecrypt}
               onMouseEnter={() => playHoverEvidence()}
-              className="flex-1 font-orbitron font-black text-xs uppercase tracking-widest py-4 border-2 border-cyan-primary bg-cyan-primary text-bg-void hover:shadow-[0_0_20px_rgb(var(--rgb-accent) / 0.5)] transition-all cursor-pointer flex items-center justify-center space-x-2"
+              className="flex-1 font-display font-black text-xs uppercase tracking-widest py-4 border-2 border-cyan-primary bg-cyan-primary text-bg-void hover:shadow-[0_0_20px_rgb(var(--rgb-accent) / 0.5)] transition-all cursor-pointer flex items-center justify-center space-x-2"
               style={{
                 clipPath: "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)"
               }}
@@ -809,7 +809,7 @@ export default function CryptoLab() {
             <button
               onClick={handleEncrypt}
               onMouseEnter={() => playHoverEvidence()}
-              className="flex-1 font-orbitron font-black text-xs uppercase tracking-widest py-4 border-2 border-amber-alert bg-amber-alert text-bg-void hover:shadow-[0_0_20px_rgba(255,176,32,0.5)] transition-all cursor-pointer flex items-center justify-center space-x-2"
+              className="flex-1 font-display font-black text-xs uppercase tracking-widest py-4 border-2 border-amber-alert bg-amber-alert text-bg-void hover:shadow-[0_0_20px_rgba(255,176,32,0.5)] transition-all cursor-pointer flex items-center justify-center space-x-2"
               style={{
                 clipPath: "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)"
               }}
@@ -896,7 +896,7 @@ export default function CryptoLab() {
         {/* Frequency distribution Recharts */}
         <GlassPanel className="p-4 flex-1 flex flex-col" clipSize="md" showCornerTicks={true}>
           <div className="border-b border-border-hairline/25 pb-2 mb-3">
-            <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center">
+            <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center">
               <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
               UNIGRAM FREQUENCY COMPASS
             </h3>
@@ -959,7 +959,7 @@ export default function CryptoLab() {
         {selectedCipher === "caesar" ? (
           <GlassPanel className="p-4 h-64 flex flex-col justify-between" clipSize="md" showCornerTicks={true}>
             <div className="border-b border-border-hairline/25 pb-1 mb-2 flex justify-between items-center">
-              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text flex items-center">
+              <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-text flex items-center">
                 <span className="w-1 h-2 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_var(--color-accent-primary)]" />
                 CAESAR BRUTE FORCE PREVIEWER
               </h3>
@@ -1049,7 +1049,7 @@ export default function CryptoLab() {
         ) : (
           <GlassPanel className="p-4 h-64 flex flex-col justify-between" clipSize="md" showCornerTicks={true}>
             <div className="border-b border-border-hairline/25 pb-1 mb-2">
-              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text flex items-center">
+              <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-text flex items-center">
                 <span className="w-1 h-2 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_var(--color-accent-primary)]" />
                 FORENSIC CRYPTO REFERENCE
               </h3>
@@ -1159,7 +1159,7 @@ export default function CryptoLab() {
           <div className="col-span-12 lg:col-span-6 flex flex-col">
             <GlassPanel className="p-5 flex-1 flex flex-col overflow-hidden" clipSize="md" showCornerTicks={true}>
               <div className="border-b border-border-hairline/25 pb-2 mb-3">
-                <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center">
+                <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center">
                   <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                   ALGORITHMIC IDENTIFICATION RESULTS
                 </h3>
@@ -1217,7 +1217,7 @@ export default function CryptoLab() {
                                 <span className="font-mono text-[13px] text-text-dim font-bold">
                                   [{String(idx + 1).padStart(2, "0")}]
                                 </span>
-                                <h4 className="font-orbitron text-xs font-black tracking-wider uppercase text-white">
+                                <h4 className="font-display text-xs font-black tracking-wider uppercase text-white">
                                   {candidate.toolId.toUpperCase()}
                                 </h4>
                                 {isTopResult && (
@@ -1231,7 +1231,7 @@ export default function CryptoLab() {
                               </p>
                             </div>
                             <div className="text-right">
-                              <span className={`font-orbitron text-xs font-black ${textColor}`}>
+                              <span className={`font-display text-xs font-black ${textColor}`}>
                                 {confidencePercent}%
                               </span>
                               <span className="text-[12px] font-share text-text-dim block uppercase">
@@ -1259,7 +1259,7 @@ export default function CryptoLab() {
                                   playSuccessChime();
                                 }}
                                 onMouseEnter={() => playHoverEvidence()}
-                                className="px-3 py-1 bg-cyan-primary/10 hover:bg-cyan-primary text-cyan-text hover:text-bg-void border border-cyan-primary/30 hover:border-cyan-primary font-orbitron font-bold text-[12px] tracking-widest uppercase transition-all flex items-center space-x-1.5 cursor-pointer"
+                                className="px-3 py-1 bg-cyan-primary/10 hover:bg-cyan-primary text-cyan-text hover:text-bg-void border border-cyan-primary/30 hover:border-cyan-primary font-display font-bold text-[12px] tracking-widest uppercase transition-all flex items-center space-x-1.5 cursor-pointer"
                                 style={{
                                   clipPath: "polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)"
                                 }}
@@ -1269,7 +1269,7 @@ export default function CryptoLab() {
                               </button>
                             ) : (
                               <span
-                                className="px-3 py-1 bg-bg-void/40 text-text-dim/50 border border-border-hairline/15 font-orbitron font-bold text-[12px] tracking-widest uppercase flex items-center space-x-1.5 cursor-not-allowed"
+                                className="px-3 py-1 bg-bg-void/40 text-text-dim/50 border border-border-hairline/15 font-display font-bold text-[12px] tracking-widest uppercase flex items-center space-x-1.5 cursor-not-allowed"
                                 style={{
                                   clipPath: "polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)"
                                 }}
@@ -1368,7 +1368,7 @@ export default function CryptoLab() {
             {/* Visualizer */}
             <GlassPanel className="p-5 h-72 flex flex-col overflow-hidden" clipSize="md" showCornerTicks={true}>
               <div className="border-b border-border-hairline/25 pb-2 mb-3">
-                <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center">
+                <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center">
                   <BarChart2 className="w-4 h-4 mr-2 text-cyan-primary animate-pulse" />
                   UNIGRAM FREQUENCY ANALYSIS
                 </h3>
@@ -1432,7 +1432,7 @@ export default function CryptoLab() {
             <GlassPanel className="p-5 flex-1 flex flex-col min-h-0" clipSize="md" showCornerTicks={true}>
               <div className="border-b border-border-hairline/25 pb-2 mb-3 flex justify-between items-center">
                 <div>
-                  <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text uppercase">
+                  <h3 className="font-display text-xs font-black tracking-widest text-cyan-text uppercase">
                     TABULAR ANALYSIS & DEVIATIONS
                   </h3>
                   <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">

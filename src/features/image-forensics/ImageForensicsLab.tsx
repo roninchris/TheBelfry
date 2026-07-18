@@ -140,7 +140,7 @@ function CarrierSignatureStrip({
   return (
     <div className="mt-3 border-t border-border-hairline/15 pt-3">
       <div className="flex items-baseline justify-between mb-2">
-        <span className="font-orbitron text-[11px] font-black tracking-widest text-cyan-text uppercase">
+        <span className="font-display text-[11px] font-black tracking-widest text-cyan-text uppercase">
           Carrier Signature
         </span>
         <span className="font-share text-[11px] tracking-widest text-text-dim/60 uppercase">
@@ -160,7 +160,7 @@ function CarrierSignatureStrip({
               return (
                 <div key={c.key} className="flex items-center gap-2">
                   <span
-                    className="font-orbitron text-[11px] font-black w-3 shrink-0"
+                    className="font-display text-[11px] font-black w-3 shrink-0"
                     style={{ color: c.tint }}
                   >
                     {c.label}
@@ -722,7 +722,7 @@ export default function ImageForensicsLab() {
             <div>
               <div className="flex items-center space-x-2">
                 <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
-                <h1 className="font-orbitron text-sm font-black tracking-widest text-cyan-text uppercase">
+                <h1 className="font-display text-sm font-black tracking-widest text-cyan-text uppercase">
                   IMAGE FORENSICS &amp; STEGANOGRAPHY LAB
                 </h1>
               </div>
@@ -752,7 +752,7 @@ export default function ImageForensicsLab() {
           <div className="absolute inset-0 lsb-noise-overlay pointer-events-none opacity-10" />
 
           <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center z-10">
-            <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+            <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
               <ImageIcon className="w-3.5 h-3.5 mr-2 text-cyan-primary animate-hex-pulse-flicker" />
               FORENSIC LIGHT TABLE INSPECTION PORT
             </h3>
@@ -789,7 +789,7 @@ export default function ImageForensicsLab() {
                 <div className="w-16 h-16 rounded-full border border-cyan-primary/25 flex items-center justify-center mb-4 bg-bg-void relative group-hover:scale-105 group-hover:border-cyan-primary/55 transition-all duration-300">
                   <Upload className="w-7 h-7 text-cyan-primary/70 group-hover:text-cyan-primary animate-hex-pulse-flicker" />
                 </div>
-                <span className="font-orbitron text-xs font-black tracking-widest text-cyan-text group-hover:text-white transition-colors">
+                <span className="font-display text-xs font-black tracking-widest text-cyan-text group-hover:text-white transition-colors">
                   DRAG &amp; DROP IMAGE CARRIER HERE
                 </span>
                 <span className="text-[13px] text-text-dim uppercase tracking-widest font-share mt-1">
@@ -817,7 +817,7 @@ export default function ImageForensicsLab() {
                     {/* The carrier itself already carries animate-rgb-split; running it
                         on this overlay too doubled the flicker out of sync with it. */}
                     <div className="absolute inset-0 bg-cyan-primary/10 mix-blend-color-dodge" />
-                    <div className="font-orbitron text-base font-black text-cyan-primary animate-hex-pulse-flicker tracking-[0.4em] z-40 drop-shadow-[0_0_12px_rgb(var(--rgb-accent) / 0.9)] mix-blend-screen text-center">
+                    <div className="font-display text-base font-black text-cyan-primary animate-hex-pulse-flicker tracking-[0.4em] z-40 drop-shadow-[0_0_12px_rgb(var(--rgb-accent) / 0.9)] mix-blend-screen text-center">
                       {scanningMessage}
                     </div>
                   </div>
@@ -839,7 +839,7 @@ export default function ImageForensicsLab() {
                 <button
                   disabled={isScanningLocal}
                   onClick={triggerScan}
-                  className="hud-target w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgb(var(--rgb-accent) / 0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-orbitron uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
+                  className="hud-target w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgb(var(--rgb-accent) / 0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-display uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
                   style={{ clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)" }}
                 >
                   <Search className="w-4 h-4" />
@@ -869,7 +869,7 @@ export default function ImageForensicsLab() {
                 playPinClick();
                 setActiveTab(tab.id);
               }}
-              className={`px-3 py-1.5 font-orbitron text-[12px] font-bold tracking-widest uppercase transition-all duration-200 whitespace-nowrap ${
+              className={`px-3 py-1.5 font-display text-[12px] font-bold tracking-widest uppercase transition-all duration-200 whitespace-nowrap ${
                 activeTab === tab.id
                   ? "bg-cyan-primary text-bg-void shadow-[0_0_10px_var(--color-accent-primary)]"
                   : "text-text-dim hover:text-text-primary"
@@ -887,7 +887,7 @@ export default function ImageForensicsLab() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <span className="w-1.5 h-3.5 bg-amber-alert transform -skew-x-12 inline-block shadow-[0_0_6px_rgb(var(--rgb-amber) / 0.4)]" />
-                    <h3 className="font-orbitron text-[13px] font-black tracking-widest text-amber-alert uppercase">
+                    <h3 className="font-display text-[13px] font-black tracking-widest text-amber-alert uppercase">
                       EMBEDDED FILE CARVING
                     </h3>
                   </div>
@@ -987,7 +987,7 @@ export default function ImageForensicsLab() {
           {activeTab === "decode" && (
             <div className="space-y-4">
               <div>
-                <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-primary uppercase mb-1">
+                <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-primary uppercase mb-1">
                   STEGANOGRAPHY DECODE (LSB / JSTEG / TRAILING BYTES)
                 </h3>
                 <p className="font-share text-[12px] text-text-dim uppercase leading-relaxed">
@@ -997,7 +997,7 @@ export default function ImageForensicsLab() {
               <button
                 disabled={!hasRealFile || isDecoding}
                 onClick={handleDecode}
-                className="w-full py-3 bg-cyan-primary text-bg-void font-orbitron font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
+                className="w-full py-3 bg-cyan-primary text-bg-void font-display font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
               >
                 <Search className="w-4 h-4" />
                 <span>{isDecoding ? "SCANNING BIT-PLANES..." : "RUN DECODE SWEEP"}</span>
@@ -1053,7 +1053,7 @@ export default function ImageForensicsLab() {
           {activeTab === "extract" && (
             <div className="space-y-4">
               <div>
-                <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-primary uppercase mb-1">
+                <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-primary uppercase mb-1">
                   STEGHIDE / OUTGUESS EXTRACTION
                 </h3>
                 <p className="font-share text-[12px] text-text-dim uppercase leading-relaxed">
@@ -1066,7 +1066,7 @@ export default function ImageForensicsLab() {
                   <button
                     key={engine}
                     onClick={() => setExtractEngine(engine)}
-                    className={`flex-1 px-3 py-1.5 text-[12px] font-orbitron font-bold uppercase tracking-widest transition-all ${
+                    className={`flex-1 px-3 py-1.5 text-[12px] font-display font-bold uppercase tracking-widest transition-all ${
                       extractEngine === engine ? "bg-cyan-primary text-bg-void" : "text-text-dim hover:text-text-primary"
                     }`}
                   >
@@ -1089,7 +1089,7 @@ export default function ImageForensicsLab() {
               <button
                 disabled={!hasRealFile || isExtracting}
                 onClick={handlePassphraseExtract}
-                className="w-full py-3 bg-cyan-primary text-bg-void font-orbitron font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
+                className="w-full py-3 bg-cyan-primary text-bg-void font-display font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
               >
                 <Lock className="w-4 h-4" />
                 <span>{isExtracting ? "ATTEMPTING EXTRACTION..." : `EXTRACT VIA ${extractEngine.toUpperCase()}`}</span>
@@ -1150,7 +1150,7 @@ export default function ImageForensicsLab() {
           {activeTab === "anomaly" && (
             <div className="space-y-4">
               <div>
-                <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-primary uppercase mb-1">
+                <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-primary uppercase mb-1">
                   STEGDETECT-STYLE ANOMALY DETECTION
                 </h3>
                 <p className="font-share text-[12px] text-text-dim uppercase leading-relaxed">
@@ -1160,7 +1160,7 @@ export default function ImageForensicsLab() {
               <button
                 disabled={!hasRealFile || isDetectingAnomaly}
                 onClick={handleAnomalyDetection}
-                className="w-full py-3 bg-cyan-primary text-bg-void font-orbitron font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
+                className="w-full py-3 bg-cyan-primary text-bg-void font-display font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
               >
                 <Search className="w-4 h-4" />
                 <span>{isDetectingAnomaly ? "COMPUTING STATS..." : "RUN STEGDETECT SCAN"}</span>
@@ -1173,7 +1173,7 @@ export default function ImageForensicsLab() {
               ) : (
                 <div className="space-y-3 animate-fade-in">
                   <div className="flex items-center justify-between">
-                    <span className="font-orbitron text-[13px] font-black text-cyan-primary uppercase tracking-widest">OVERALL SUSPICION</span>
+                    <span className="font-display text-[13px] font-black text-cyan-primary uppercase tracking-widest">OVERALL SUSPICION</span>
                     <Badge
                       variant={
                         stegdetectReport.overallSuspicion === "high" ? "red"
@@ -1202,7 +1202,7 @@ export default function ImageForensicsLab() {
 
           {activeTab === "exif" && (
             <div className="space-y-4">
-              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-primary uppercase">EXIF METADATA DICTIONARY</h3>
+              <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-primary uppercase">EXIF METADATA DICTIONARY</h3>
               {!exifData || Object.keys(exifData).length === 0 ? (
                 <div className="text-center py-8 text-text-dim italic">
                   <p className="font-share text-[13px] uppercase tracking-widest">NO EXIF METADATA DETECTED</p>
@@ -1222,11 +1222,11 @@ export default function ImageForensicsLab() {
 
           {activeTab === "ink" && (
             <div className="space-y-4">
-              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-primary uppercase">CONTRAST NORMALIZATION &amp; SPECTRAL ANALYSIS</h3>
+              <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-primary uppercase">CONTRAST NORMALIZATION &amp; SPECTRAL ANALYSIS</h3>
               <button
                 disabled={!hasRealFile || isDetectingInk}
                 onClick={handleInkDetection}
-                className="w-full py-3 bg-cyan-primary text-bg-void font-orbitron font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
+                className="w-full py-3 bg-cyan-primary text-bg-void font-display font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
               >
                 <Eye className="w-4 h-4" />
                 <span>{isDetectingInk ? "ANALYZING CHANNELS..." : "RUN INVISIBLE INK SCAN"}</span>
@@ -1238,7 +1238,7 @@ export default function ImageForensicsLab() {
               ) : (
                 <div className="space-y-3 animate-fade-in">
                   <div className="flex items-center justify-between">
-                    <span className="font-orbitron text-[13px] font-black text-cyan-primary uppercase">ENHANCED CARRIER</span>
+                    <span className="font-display text-[13px] font-black text-cyan-primary uppercase">ENHANCED CARRIER</span>
                     <Badge variant={inkConfidence > 0.6 ? "cyan" : "dim"} size="xs">CONFIDENCE: {(inkConfidence * 100).toFixed(0)}%</Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -1252,7 +1252,7 @@ export default function ImageForensicsLab() {
                   <a
                     href={inkEnhancedPreview}
                     download="enhanced_ink_carrier.png"
-                    className="w-full py-2 bg-bg-void border border-cyan-primary/40 text-cyan-primary font-orbitron text-[13px] font-bold tracking-widest uppercase hover:bg-cyan-primary hover:text-bg-void transition-all flex items-center justify-center space-x-2"
+                    className="w-full py-2 bg-bg-void border border-cyan-primary/40 text-cyan-primary font-display text-[13px] font-bold tracking-widest uppercase hover:bg-cyan-primary hover:text-bg-void transition-all flex items-center justify-center space-x-2"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>EXPORT ENHANCED IMAGE</span>
@@ -1264,11 +1264,11 @@ export default function ImageForensicsLab() {
 
           {activeTab === "qr" && (
             <div className="space-y-4">
-              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-primary uppercase">QR CODE DECODER</h3>
+              <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-primary uppercase">QR CODE DECODER</h3>
               <button
                 disabled={!hasRealFile || isScanningQr}
                 onClick={handleQrScan}
-                className="w-full py-3 bg-cyan-primary text-bg-void font-orbitron font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
+                className="w-full py-3 bg-cyan-primary text-bg-void font-display font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
               >
                 <QrCode className="w-4 h-4" />
                 <span>{isScanningQr ? "SCANNING BUFFER..." : "DECODE QR SIGNATURE"}</span>
@@ -1292,7 +1292,7 @@ export default function ImageForensicsLab() {
                       navigator.clipboard.writeText(qrResult.data);
                       addLog("QR DATA COPIED TO CLIPBOARD", "info", "SYS");
                     }}
-                    className="w-full py-2 bg-bg-void border border-border-hairline/20 text-text-primary font-orbitron text-[12px] font-bold tracking-widest uppercase hover:border-cyan-primary/50 transition-all flex items-center justify-center space-x-2"
+                    className="w-full py-2 bg-bg-void border border-border-hairline/20 text-text-primary font-display text-[12px] font-bold tracking-widest uppercase hover:border-cyan-primary/50 transition-all flex items-center justify-center space-x-2"
                   >
                     <FileText className="w-3 h-3" />
                     <span>COPY DECODED DATA</span>
@@ -1304,11 +1304,11 @@ export default function ImageForensicsLab() {
 
           {activeTab === "stereogram" && (
             <div className="space-y-4">
-              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-primary uppercase">AUTOSTEREOGRAM DEPTH RECONSTRUCTION</h3>
+              <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-primary uppercase">AUTOSTEREOGRAM DEPTH RECONSTRUCTION</h3>
               <button
                 disabled={!hasRealFile || isSolvingStereogram}
                 onClick={handleStereogramSolver}
-                className="w-full py-3 bg-cyan-primary text-bg-void font-orbitron font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
+                className="w-full py-3 bg-cyan-primary text-bg-void font-display font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
               >
                 <Layers className="w-4 h-4" />
                 <span>{isSolvingStereogram ? "ESTIMATING DEPTH..." : "RECONSTRUCT DEPTH MAP"}</span>
@@ -1325,7 +1325,7 @@ export default function ImageForensicsLab() {
                   <a
                     href={stereogramDepthPreview}
                     download="stereogram_depth_map.png"
-                    className="w-full py-2 bg-bg-void border border-cyan-primary/40 text-cyan-primary font-orbitron text-[13px] font-bold tracking-widest uppercase hover:bg-cyan-primary hover:text-bg-void transition-all flex items-center justify-center space-x-2"
+                    className="w-full py-2 bg-bg-void border border-cyan-primary/40 text-cyan-primary font-display text-[13px] font-bold tracking-widest uppercase hover:bg-cyan-primary hover:text-bg-void transition-all flex items-center justify-center space-x-2"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>EXPORT DEPTH MAP</span>
@@ -1337,11 +1337,11 @@ export default function ImageForensicsLab() {
 
           {activeTab === "c2pa" && (
             <div className="space-y-4">
-              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-primary uppercase">C2PA CONTENT CREDENTIALS</h3>
+              <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-primary uppercase">C2PA CONTENT CREDENTIALS</h3>
               <button
                 disabled={!hasRealFile || isReadingC2pa}
                 onClick={handleC2paRead}
-                className="w-full py-3 bg-cyan-primary text-bg-void font-orbitron font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
+                className="w-full py-3 bg-cyan-primary text-bg-void font-display font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>{isReadingC2pa ? "VERIFYING MANIFEST..." : "VERIFY CREDENTIALS"}</span>
@@ -1379,7 +1379,7 @@ export default function ImageForensicsLab() {
               <AlertTriangle className="w-3.5 h-3.5 text-red-threat" />
             </div>
             <div className="space-y-1">
-              <h4 className="font-orbitron text-[12px] font-black text-red-threat uppercase tracking-widest">BELFRY ADVISORY</h4>
+              <h4 className="font-display text-[12px] font-black text-red-threat uppercase tracking-widest">BELFRY ADVISORY</h4>
               <p className="font-share text-[12px] text-text-dim leading-relaxed uppercase tracking-tighter">
                 Treat results from unverified paths (BMP/WAV, other cipher modes, OutGuess) as best-effort. Analysis should be performed in an isolated sandbox; hidden payloads may contain malicious content.
               </p>

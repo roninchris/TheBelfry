@@ -1493,7 +1493,7 @@ ${currentSample.analysisSummary}`;
       {dragActive && (
         <div className="fixed inset-0 z-[999] bg-bg-void/80 backdrop-blur-sm flex items-center justify-center pointer-events-none animate-fade-in">
           <div className="border-2 border-dashed border-cyan-primary bg-cyan-primary/5 px-12 py-10 flex flex-col items-center space-y-3">
-            <span className="font-orbitron text-sm font-black tracking-[0.2em] text-cyan-primary uppercase">
+            <span className="font-display text-sm font-black tracking-[0.2em] text-cyan-primary uppercase">
               RELEASE TO ANALYZE
             </span>
             <span className="font-share text-[13px] text-text-dim uppercase tracking-widest">
@@ -1509,7 +1509,7 @@ ${currentSample.analysisSummary}`;
           <div>
             <div className="flex items-center space-x-2">
               <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
-              <h1 className="font-orbitron text-sm font-black tracking-widest text-cyan-text uppercase">
+              <h1 className="font-display text-sm font-black tracking-widest text-cyan-text uppercase">
                 AUDIO SPECTRAL FORENSICS
               </h1>
             </div>
@@ -1528,7 +1528,7 @@ ${currentSample.analysisSummary}`;
         <div className="border-b border-border-hairline/20 pb-2 mb-3.5 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <span className="w-1.5 h-3.5 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
-            <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text uppercase">
+            <h3 className="font-display text-xs font-black tracking-widest text-cyan-text uppercase">
               {!currentSample ? "AWAITING ACOUSTIC CARRIER" : activeTab === "waveform" ? "TIME-DOMAIN WAVEFORM DISPLAY" : "FREQUENCY-DOMAIN SPECTROGRAM"}
             </h3>
           </div>
@@ -1777,7 +1777,7 @@ ${currentSample.analysisSummary}`;
             <button
               disabled={!currentSample || isScanning}
               onClick={triggerSpectralScan}
-              className="hud-target w-full py-2 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgb(var(--rgb-accent) / 0.6)] active:scale-[0.98] transition-all duration-200 text-[13px] font-black tracking-widest font-orbitron uppercase disabled:opacity-35 disabled:pointer-events-none flex items-center justify-center space-x-2"
+              className="hud-target w-full py-2 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgb(var(--rgb-accent) / 0.6)] active:scale-[0.98] transition-all duration-200 text-[13px] font-black tracking-widest font-display uppercase disabled:opacity-35 disabled:pointer-events-none flex items-center justify-center space-x-2"
               style={{ clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)" }}
             >
               <Radio className={`w-3.5 h-3.5 text-bg-void ${isScanning ? 'animate-radar-sweep' : 'animate-hex-pulse-flicker'}`} />
@@ -1909,7 +1909,7 @@ ${currentSample.analysisSummary}`;
         <div className="col-span-12 lg:col-span-7 flex flex-col space-y-4">
           <GlassPanel className="p-4 h-full flex flex-col justify-between" clipSize="sm">
             <div className="border-b border-border-hairline/20 pb-1.5 mb-3">
-              <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+              <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                 <Compass className="w-3.5 h-3.5 mr-2 text-cyan-primary animate-hex-pulse-flicker" />
                 SIGNAL ARCHIVE & INPUT PORT
               </h3>
@@ -1949,7 +1949,7 @@ ${currentSample.analysisSummary}`;
                 <div className="w-10 h-10 rounded-full border border-cyan-primary/25 flex items-center justify-center mb-2 bg-bg-void group-hover:scale-105 group-hover:border-cyan-primary/55 transition-all duration-300">
                   <Upload className="w-4 h-4 text-cyan-primary/70 group-hover:text-cyan-primary" />
                 </div>
-                <span className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text text-center">
+                <span className="font-display text-[13px] font-black tracking-widest text-cyan-text text-center">
                   UPLOAD AUDIO STREAM
                 </span>
                 <span className="text-[12px] text-text-dim uppercase text-center mt-0.5">
@@ -1997,7 +1997,7 @@ ${currentSample.analysisSummary}`;
             <div className="border-b border-border-hairline/15 pb-1.5 mb-3 flex justify-between items-center">
               <div className="flex items-center">
                 <Award className="w-3.5 h-3.5 text-cyan-primary mr-1.5" />
-                <h4 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text uppercase">
+                <h4 className="font-display text-[13px] font-black tracking-widest text-cyan-text uppercase">
                   EXTRACTED FREQUENCY HARMONIC SIGNAL
                 </h4>
               </div>

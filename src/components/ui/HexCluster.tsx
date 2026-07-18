@@ -113,7 +113,7 @@ export default function HexCluster() {
 
       {/* Title */}
       <div className="w-full border-b border-border-hairline/20 pb-1 mb-2.5 flex justify-between items-center">
-        <span className="font-orbitron text-[13px] font-black text-cyan-primary tracking-widest uppercase flex items-center">
+        <span className="font-display text-[13px] font-black text-cyan-primary tracking-widest uppercase flex items-center">
           <span className="w-1.5 h-1.5 bg-cyan-primary mr-1.5 inline-block" />
           BELFRY SYNERGY GRID
         </span>

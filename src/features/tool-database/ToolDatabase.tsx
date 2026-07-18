@@ -427,7 +427,7 @@ function ToolHandoff({ toolId, onOpen }: { toolId: string; onOpen: (id: string) 
         onMouseEnter={() => playReticleLock()}
         className="hud-target w-full py-2.5 px-3 flex items-center justify-center gap-2
                    border border-accent-primary/50 text-accent-primary bg-accent-primary/[0.06]
-                   font-orbitron text-[13px] font-black uppercase tracking-[0.2em]
+                   font-display text-[13px] font-black uppercase tracking-[0.2em]
                    hover:bg-accent-primary/15 hover:shadow-[0_0_16px_rgb(var(--rgb-accent) / 0.25)]
                    transition-all duration-200 cursor-pointer"
       >
@@ -558,7 +558,7 @@ export default function ToolDatabase() {
             <div>
               <div className="flex items-center space-x-2">
                 <span className="w-2.5 h-4 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
-                <h1 className="font-orbitron text-sm font-black tracking-widest text-cyan-text uppercase">
+                <h1 className="font-display text-sm font-black tracking-widest text-cyan-text uppercase">
                   <ShinyText text="SECURE CRYPTOGRAPHIC CODEX" speed={3} />
                 </h1>
               </div>
@@ -667,7 +667,7 @@ export default function ToolDatabase() {
         {/* Dynamic Nodes Grid (Bento/Hex Theme matching Belfry Upgrade Grid) */}
         <GlassPanel className="panel-console p-4 flex-1 flex flex-col justify-between min-h-[460px]" clipSize="md">
           <div className="border-b border-border-hairline/20 pb-2 mb-4 flex justify-between items-center">
-            <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text uppercase flex items-center space-x-2">
+            <h3 className="font-display text-xs font-black tracking-widest text-cyan-text uppercase flex items-center space-x-2">
               <Layers className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
               <span>ACTIVE DATABASE CORES</span>
             </h3>
@@ -679,7 +679,7 @@ export default function ToolDatabase() {
           {filteredTools.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border border-dashed border-border-hairline/15 bg-bg-void/25 rounded-none">
               <Terminal className="w-10 h-10 text-cyan-primary/20 animate-hex-pulse-flicker mb-3" />
-              <h4 className="font-orbitron text-xs font-black tracking-widest text-red-threat uppercase">
+              <h4 className="font-display text-xs font-black tracking-widest text-red-threat uppercase">
                 NO CORRELATING NODES
               </h4>
               <p className="text-[13px] text-text-dim uppercase tracking-widest font-share max-w-xs mt-1.5 leading-relaxed">
@@ -769,7 +769,7 @@ export default function ToolDatabase() {
 
                     {/* Node Metadata Label */}
                     <div className="text-center mt-2 px-1 w-full">
-                      <h4 className="font-orbitron text-[12px] font-black tracking-widest uppercase text-white break-words leading-tight">
+                      <h4 className="font-display text-[12px] font-black tracking-widest uppercase text-white break-words leading-tight">
                         {tool.name}
                       </h4>
                       <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider block mt-0.5 truncate">
@@ -834,7 +834,7 @@ export default function ToolDatabase() {
                   CLASSIFICATION: {activeToolDoc.securityClassification}
                 </span>
               </div>
-              <h2 className="font-orbitron text-base font-black tracking-widest text-white uppercase mt-1 w-full">
+              <h2 className="font-display text-base font-black tracking-widest text-white uppercase mt-1 w-full">
                 <BlurText text={activeToolDoc.name} animateBy="words" />
               </h2>
             </div>
@@ -856,7 +856,7 @@ export default function ToolDatabase() {
               <>
                 {/* Short Summary */}
                 <div className="p-3 bg-bg-void/50 border-l-2 border-cyan-primary border-y border-r border-border-hairline/10 w-full">
-                  <h4 className="font-orbitron text-[14px] font-black tracking-widest text-cyan-text uppercase mb-1.5 flex items-center">
+                  <h4 className="font-display text-[14px] font-black tracking-widest text-cyan-text uppercase mb-1.5 flex items-center">
                     <Info className="w-3.5 h-3.5 text-cyan-primary mr-1.5" />
                     <span>Forensic Summary</span>
                   </h4>
@@ -867,7 +867,7 @@ export default function ToolDatabase() {
 
                 {/* How it Works Description */}
                 <div className="space-y-1.5 w-full">
-                  <h4 className="font-orbitron text-[14px] font-black tracking-widest text-text-dim uppercase">
+                  <h4 className="font-display text-[14px] font-black tracking-widest text-text-dim uppercase">
                     MECHANICAL ARCHITECTURE
                   </h4>
                   <div className="flex flex-col sm:flex-row gap-3 bg-bg-void/30 p-3 border border-border-hairline/15 w-full items-center">
@@ -883,7 +883,7 @@ export default function ToolDatabase() {
 
                 {/* Step-by-Step Blueprint Instructions */}
                 <div className="space-y-2">
-                  <h4 className="font-orbitron text-[14px] font-black tracking-widest text-text-dim uppercase">
+                  <h4 className="font-display text-[14px] font-black tracking-widest text-text-dim uppercase">
                     DECRYPTION BLUEPRINT ALGORITHM
                   </h4>
                   <ol className="space-y-1.5 pl-4 list-decimal text-[14px] uppercase font-share text-text-dim leading-relaxed">
@@ -899,7 +899,7 @@ export default function ToolDatabase() {
               /* Carried by the platform, not yet written up. Says so plainly
                  rather than inventing an explanation that might be wrong. */
               <div className="p-4 bg-amber-alert/[0.04] border-l-2 border-amber-alert/70 border-y border-r border-border-hairline/10 w-full space-y-2">
-                <h4 className="font-orbitron text-[14px] font-black tracking-widest text-amber-alert uppercase flex items-center">
+                <h4 className="font-display text-[14px] font-black tracking-widest text-amber-alert uppercase flex items-center">
                   <Info className="w-3.5 h-3.5 mr-1.5" />
                   <span>Field entry pending transcription</span>
                 </h4>
@@ -942,7 +942,7 @@ export default function ToolDatabase() {
             {/* Technical Forensic Vulnerability Info */}
             {activeToolDoc.forensicValue && (
               <div className="p-3 bg-red-threat/5 border border-red-threat/20 w-full">
-                <h4 className="font-orbitron text-[14px] font-black tracking-widest text-red-threat uppercase mb-1 flex items-center">
+                <h4 className="font-display text-[14px] font-black tracking-widest text-red-threat uppercase mb-1 flex items-center">
                   <Terminal className="w-3.5 h-3.5 text-red-threat mr-1.5 animate-hex-pulse-flicker" />
                   <span>Forensic Intelligence Vulnerability Report</span>
                 </h4>

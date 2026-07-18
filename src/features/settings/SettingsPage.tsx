@@ -78,7 +78,7 @@ export default function SettingsPage() {
       
       {/* Settings Module Title Block */}
       <div className="w-full text-left">
-        <h2 className="font-orbitron text-base font-black tracking-widest text-cyan-text flex items-center">
+        <h2 className="font-display text-base font-black tracking-widest text-cyan-text flex items-center">
           <span className="w-1.5 h-3.5 bg-cyan-primary mr-2.5 transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
           TELEMETRY & COMMAND SETTINGS
         </h2>
@@ -155,7 +155,7 @@ export default function SettingsPage() {
           <GlassPanel className="panel-console p-6 space-y-6 flex-1" clipSize="md">
             
             <div className="border-b border-border-hairline/25 pb-2.5">
-              <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+              <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                 <Volume2 className="w-4 h-4 mr-2 text-cyan-primary" />
                 Audio Synthesis Matrix
               </h3>
@@ -259,7 +259,7 @@ export default function SettingsPage() {
           <GlassPanel className="panel-console p-6 space-y-6 flex-1" clipSize="md">
             
             <div className="border-b border-border-hairline/25 pb-2.5">
-              <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+              <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                 <ShieldAlert className="w-4 h-4 mr-2 text-cyan-primary" />
                 SYSTEM OPERATIONS
               </h3>
@@ -290,7 +290,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleResetLogs}
                 onMouseEnter={() => playHoverBlip()}
-                className={`hud-target ${resetConfirm ? "hud-target-amber" : "hud-target-threat"} w-full font-orbitron font-black text-[13px] uppercase tracking-widest py-2 px-3 border transition-colors flex items-center justify-center space-x-1.5 ${
+                className={`hud-target ${resetConfirm ? "hud-target-amber" : "hud-target-threat"} w-full font-display font-black text-[13px] uppercase tracking-widest py-2 px-3 border transition-colors flex items-center justify-center space-x-1.5 ${
                   resetConfirm
                     ? "bg-amber-alert/15 border-amber-alert/40 text-amber-alert hover:bg-amber-alert hover:text-bg-void"
                     : "bg-red-threat/10 border-red-threat/30 text-red-threat hover:bg-red-threat hover:text-bg-void"

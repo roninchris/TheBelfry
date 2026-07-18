@@ -125,7 +125,7 @@ function CaseHologramRadar({
         ) : (
           <g className="animate-hex-pulse-flicker">
             <rect x="75" y="95" width="50" height="30" fill="currentColor" fillOpacity="0.05" stroke="currentColor" strokeWidth="0.5" strokeDasharray="3 3" />
-            <text x="100" y="113" textAnchor="middle" className="font-orbitron text-[12px] fill-current opacity-60">EMPTY DATABASE</text>
+            <text x="100" y="113" textAnchor="middle" className="font-display text-[12px] fill-current opacity-60">EMPTY DATABASE</text>
           </g>
         )}
       </svg>
@@ -296,7 +296,7 @@ export default function DossierPage() {
           {/* Header */}
           <div className="border-b border-border-hairline/25 pb-2 mb-4 flex justify-between items-center">
             <div>
-              <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center">
+              <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center">
                 <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                 <ShinyText text="SECURE CASE ARCHIVE" speed={4} />
               </h3>
@@ -371,7 +371,7 @@ export default function DossierPage() {
                           playReticleLock();
                         }}
                       >
-                        <span className="font-orbitron text-[13px] font-extrabold tracking-widest text-cyan-text truncate uppercase block mb-1">
+                        <span className="font-display text-[13px] font-extrabold tracking-widest text-cyan-text truncate uppercase block mb-1">
                           {c.title}
                         </span>
                         <p className="font-share text-[12px] leading-relaxed text-text-dim line-clamp-2 italic">
@@ -435,7 +435,7 @@ export default function DossierPage() {
         {!activeCase ? (
           <GlassPanel className="flex-1 flex flex-col items-center justify-center p-6 text-center" clipSize="md" showScanlines={true}>
             <Brain className="w-16 h-16 text-cyan-dim opacity-40 animate-hex-pulse-flicker mb-3" />
-            <h3 className="font-orbitron text-sm font-black text-cyan-text tracking-widest uppercase">
+            <h3 className="font-display text-sm font-black text-cyan-text tracking-widest uppercase">
               NO DOSSIER FOCUS CONTEXT
             </h3>
             <p className="text-[13px] font-share text-text-dim max-w-sm mt-1 leading-normal uppercase">
@@ -455,7 +455,7 @@ export default function DossierPage() {
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                   className="absolute inset-0 z-50 pointer-events-none bg-cyan-primary/10 backdrop-blur-[2px] flex items-center justify-center"
                 >
-                  <div className="border border-cyan-primary p-4 bg-bg-void/90 font-orbitron text-xs tracking-[0.2em] text-cyan-primary shadow-[0_0_30px_rgb(var(--rgb-accent) / 0.2)]">
+                  <div className="border border-cyan-primary p-4 bg-bg-void/90 font-display text-xs tracking-[0.2em] text-cyan-primary shadow-[0_0_30px_rgb(var(--rgb-accent) / 0.2)]">
                     VERIFYING ACCESS...
                   </div>
                 </motion.div>
@@ -504,7 +504,7 @@ export default function DossierPage() {
 
                   {/* Case titles */}
                   <div className="space-y-1">
-                    <h2 className="font-orbitron text-lg font-black text-text-primary uppercase tracking-widest cyan-glow truncate max-w-sm">
+                    <h2 className="font-display text-lg font-black text-text-primary uppercase tracking-widest cyan-glow truncate max-w-sm">
                       <BlurText text={activeCase.title} delay={0.05} />
                     </h2>
                     <p className="font-share text-[13px] text-cyan-dim font-bold tracking-widest uppercase border-b border-border-hairline/25 pb-2.5">
@@ -650,7 +650,7 @@ export default function DossierPage() {
         <div className="fixed inset-0 bg-bg-void/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <GlassPanel className="p-4 max-w-sm w-full" clipSize="md" showCornerTicks={true}>
             <div className="flex justify-between items-center border-b border-border-hairline/25 pb-2 mb-3">
-              <h3 className="font-orbitron text-[14px] font-black tracking-widest text-cyan-text flex items-center uppercase">
+              <h3 className="font-display text-[14px] font-black tracking-widest text-cyan-text flex items-center uppercase">
                 {editingCaseId ? "AMEND INVESTIGATION DOSSIER" : "BOOT NEW INVESTIGATION DOSSIER"}
               </h3>
               <button onClick={() => setShowCreateModal(false)} className="text-text-dim hover:text-text-primary">
@@ -748,7 +748,7 @@ export default function DossierPage() {
         <div className="fixed inset-0 bg-bg-void/85 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <GlassPanel className="p-4 max-w-sm w-full border-red-threat/50 shadow-[0_0_15px_rgb(var(--rgb-threat) / 0.25)]" clipSize="md" showCornerTicks={true}>
             <div className="flex justify-between items-center border-b border-red-threat/25 pb-2 mb-3 text-red-threat">
-              <h3 className="font-orbitron text-xs font-black tracking-widest flex items-center uppercase">
+              <h3 className="font-display text-xs font-black tracking-widest flex items-center uppercase">
                 <AlertTriangle className="w-4 h-4 mr-2 animate-hex-pulse-flicker" />
                 DESTRUCTION THREAT CONFIRMATION
               </h3>

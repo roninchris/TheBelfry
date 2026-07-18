@@ -126,7 +126,7 @@ export default function Sidebar() {
         </button>
         {!isMinimized && (
           <div className="overflow-hidden whitespace-nowrap">
-            <h1 className="font-orbitron text-sm font-black tracking-widest text-text-primary uppercase cyan-glow leading-tight">
+            <h1 className="font-display text-sm font-black tracking-widest text-text-primary uppercase cyan-glow leading-tight">
               THE BELFRY
             </h1>
           </div>
@@ -138,7 +138,7 @@ export default function Sidebar() {
         {sections.map((sec, secIdx) => (
           <div key={secIdx} className="space-y-2">
             {!isMinimized && (
-              <h2 className="text-xs font-bold text-text-dim font-orbitron tracking-widest pl-1 opacity-70 flex items-center whitespace-nowrap">
+              <h2 className="text-xs font-bold text-text-dim font-display tracking-widest pl-1 opacity-70 flex items-center whitespace-nowrap">
                 <span className="w-1.5 h-1.5 bg-cyan-primary/40 mr-1.5 inline-block shrink-0" />
                 {sec.title}
               </h2>

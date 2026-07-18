@@ -365,7 +365,7 @@ export default function EncodingLab() {
         <GlassPanel className="p-4 flex flex-col min-h-[190px]" clipSize="md" showCornerTicks={true}>
           <div className="border-b border-border-hairline/25 pb-2 mb-3 flex justify-between items-center">
             <div>
-              <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+              <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                 <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                 ENCODING BUFFER INPUT
               </h3>
@@ -409,7 +409,7 @@ export default function EncodingLab() {
         <GlassPanel className="p-4 flex-1 flex flex-col" clipSize="md" showCornerTicks={true}>
           <div className="border-b border-border-hairline/25 pb-1 mb-3.5 flex justify-between items-end">
             <div>
-              <h3 className="font-orbitron text-[13px] font-black tracking-widest text-cyan-text flex items-center uppercase">
+              <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-text flex items-center uppercase">
                 <span className="w-1.5 h-3 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_var(--color-accent-primary)]" />
                 LOGIC ANALYZER // BYTE-BIT MONITOR
               </h3>
@@ -512,7 +512,7 @@ export default function EncodingLab() {
         <GlassPanel className="p-4 flex-1 flex flex-col" clipSize="md" showCornerTicks={true}>
           <div className="border-b border-border-hairline/25 pb-2 mb-3.5 flex justify-between items-center">
             <div>
-              <h3 className="font-orbitron text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+              <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                 <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                 BREAKOUT ROUTING CHANNELS
               </h3>
@@ -759,7 +759,7 @@ export default function EncodingLab() {
                   <Layers className="w-3 h-3 text-cyan-primary/45" />
                   <span className="font-mono text-[12px] tracking-widest uppercase">AUXILIARY PROCESSOR</span>
                 </div>
-                <h3 className="font-orbitron text-[13px] font-black tracking-widest text-text-primary flex items-center mt-1">
+                <h3 className="font-display text-[13px] font-black tracking-widest text-text-primary flex items-center mt-1">
                   CASCADE PIPELINE CODER
                 </h3>
                 <p className="text-[12px] font-share text-text-dim/80 tracking-wide uppercase mt-0.5">
@@ -870,7 +870,7 @@ export default function EncodingLab() {
                   <Cpu className="w-3 h-3 text-cyan-primary/45" />
                   <span className="font-mono text-[12px] tracking-widest uppercase">PRECISION NUMERICS</span>
                 </div>
-                <h3 className="font-orbitron text-[13px] font-black tracking-widest text-text-primary flex items-center mt-1">
+                <h3 className="font-display text-[13px] font-black tracking-widest text-text-primary flex items-center mt-1">
                   BIGINT CODER
                 </h3>
                 <p className="text-[12px] font-share text-text-dim/80 tracking-wide uppercase mt-0.5">
@@ -984,7 +984,7 @@ export default function EncodingLab() {
                   <Search className="w-3 h-3 text-cyan-primary/30" />
                   <span className="font-mono text-[12px] tracking-widest uppercase">DICTIONARY LOOKUP</span>
                 </div>
-                <h3 className="font-orbitron text-[12px] font-black tracking-widest text-text-primary mt-0.5">
+                <h3 className="font-display text-[12px] font-black tracking-widest text-text-primary mt-0.5">
                   ENCODING REFERENCER
                 </h3>
               </div>

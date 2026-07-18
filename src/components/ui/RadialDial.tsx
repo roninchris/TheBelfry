@@ -181,7 +181,7 @@ export default function RadialDial({
                 transition={{ duration: 0.2 }}
                 className="flex flex-col items-center justify-center"
               >
-                <span className="font-orbitron text-[12px] font-black text-cyan-primary tracking-widest uppercase">
+                <span className="font-display text-[12px] font-black text-cyan-primary tracking-widest uppercase">
                   ACTIVE
                 </span>
                 <span className="font-chakra text-[13px] font-extrabold text-text-primary tracking-wider uppercase truncate max-w-[85px] leading-tight my-0.5">

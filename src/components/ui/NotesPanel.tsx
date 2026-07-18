@@ -92,7 +92,7 @@ export default function NotesPanel() {
                     <button
                       onClick={() => handleSendToBoard(note.id)}
                       disabled={!activeCaseId || !note.text.trim() || justPinned[note.id]}
-                      className={`flex items-center space-x-1 px-2 py-0.5 text-[12px] font-orbitron font-bold uppercase tracking-wider border transition-colors disabled:cursor-not-allowed ${
+                      className={`flex items-center space-x-1 px-2 py-0.5 text-[12px] font-display font-bold uppercase tracking-wider border transition-colors disabled:cursor-not-allowed ${
                         justPinned[note.id]
                           ? "text-accent-primary border-accent-primary/60 bg-accent-primary/10 opacity-100 shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.25)]"
                           : "text-cyan-text border-cyan-primary/30 hover:text-bg-void hover:bg-cyan-primary disabled:opacity-30"

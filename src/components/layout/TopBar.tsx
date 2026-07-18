@@ -53,7 +53,7 @@ export default function TopBar() {
           knight badge was clipped off the right edge. */}
       <div className="flex items-center shrink-0">
         <div className="flex items-baseline space-x-2 whitespace-nowrap">
-          <span className="font-orbitron text-xs font-black tracking-widest text-text-primary uppercase flex items-center animate-hologram-flicker">
+          <span className="font-display text-xs font-black tracking-widest text-text-primary uppercase flex items-center animate-hologram-flicker">
             <span className="w-1.5 h-3 bg-cyan-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_8px_var(--color-accent-primary)]" />
             BATCOMPUTER
           </span>
@@ -65,7 +65,7 @@ export default function TopBar() {
 
       {/* Center: Module Focus Title. Flex-1 + truncate so it yields space and
           clips cleanly rather than overlapping the flanking blocks. */}
-      <div className="hidden xl:flex flex-1 min-w-0 items-center justify-center space-x-2 px-4 font-orbitron font-extrabold tracking-widest text-sm text-cyan-text cyan-glow">
+      <div className="hidden xl:flex flex-1 min-w-0 items-center justify-center space-x-2 px-4 font-display font-extrabold tracking-widest text-sm text-cyan-text cyan-glow">
         <span className="text-xs text-text-dim opacity-70 shrink-0">//</span>
         <h2 key={currentModule} className="animate-data-assemble truncate">{getModuleTitle()}</h2>
         <span className="text-xs text-text-dim opacity-70 shrink-0">//</span>

@@ -31,19 +31,19 @@ export default function HeroStat({
       </span>
       <div className="flex items-baseline leading-none">
         {!isStringOrNumber ? (
-          <div className={`font-orbitron font-black text-2xl text-text-primary tracking-wide leading-none ${valueClassName}`}>
+          <div className={`font-display font-black text-2xl text-text-primary tracking-wide leading-none ${valueClassName}`}>
             {value}
           </div>
         ) : disabledShine ? (
           <span
-            className={`font-orbitron font-black text-2xl text-text-primary tracking-wide leading-none ${valueClassName}`}
+            className={`font-display font-black text-2xl text-text-primary tracking-wide leading-none ${valueClassName}`}
           >
             {valueStr}
           </span>
         ) : (
           <ShinyText
             text={valueStr}
-            className={`font-orbitron font-black text-2xl text-text-primary tracking-wide leading-none ${valueClassName}`}
+            className={`font-display font-black text-2xl text-text-primary tracking-wide leading-none ${valueClassName}`}
             speed={4}
           />
         )}

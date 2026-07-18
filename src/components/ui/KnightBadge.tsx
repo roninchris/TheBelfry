@@ -65,7 +65,7 @@ export default function KnightBadge() {
 
       <span className="hidden xl:flex flex-col items-start leading-tight">
         <span
-          className="font-orbitron text-[12px] font-black tracking-[0.18em] uppercase transition-colors"
+          className="font-display text-[12px] font-black tracking-[0.18em] uppercase transition-colors"
           style={{ color: accent }}
         >
           {label}
