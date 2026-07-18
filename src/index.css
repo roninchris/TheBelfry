@@ -490,15 +490,24 @@ html, body, #root {
 
 /* Micro-interactions: brief glow-intensify on hover for buttons rather than instant state swap */
 button, .btn-interactive {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Named properties, not `all`. `all` transitions every animatable property
+     including layout-affecting ones, which is needless work on every hover. */
+  transition: color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              text-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Label glow only. This rule used to add a box-shadow to EVERY button in the
+   app, which drew a rectangular halo around each one's full bounding box —
+   on composite buttons like KnightBadge (a round sigil plus a text label) that
+   halo traced the whole 158x43 rectangle and read as a stray "ghost" outline
+   floating off the icon. Buttons that want a glow opt in via .hud-target,
+   .tablet-btn or .engine-btn, all of which shape it to the control. */
 button:hover, .btn-interactive:hover {
-  text-shadow: 
-    0 0 4px rgb(var(--rgb-primary) / 0.5), 
+  text-shadow:
+    0 0 4px rgb(var(--rgb-primary) / 0.5),
     0 0 10px rgba(255, 255, 255, 0.35);
-  box-shadow: 
-    0 0 6px rgb(var(--rgb-primary) / 0.25), 
-    0 0 14px rgba(255, 255, 255, 0.12);
 }
 
 /* Sidebar glow-pulse animations */

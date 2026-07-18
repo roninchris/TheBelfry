@@ -83,9 +83,20 @@ export default function DashboardPage() {
     const secs = (totalSecs % 60).toString().padStart(2, "0");
     return `${hrs}:${mins}:${secs}`;
   };
+  // The dashboard dossier list is a working list: only cases still open.
+  // Solved and archived records live in Case Files.
+  const activeCases = React.useMemo(
+    () => cases.filter((c) => c.status === "ACTIVE" || c.status === "STALLED"),
+    [cases],
+  );
+
 
   // Get active case file details
-  const activeCase = cases.find(c => c.id === activeCaseId) || cases[0];
+  // Fall back to an open case, not just the first record in storage — with
+  // nothing selected this surfaced whichever case happened to be stored first,
+  // which could be archived.
+  const activeCase =
+    cases.find((c) => c.id === activeCaseId) || activeCases[0] || cases[0];
 
   const handleScanTrigger = () => {
     if (!textInput.trim()) {
@@ -239,7 +250,7 @@ export default function DashboardPage() {
 
           {/* List of Dossiers */}
           <div className="space-y-1.5 flex-1 overflow-y-auto max-h-[180px] xl:max-h-none scrollbar-thin scrollbar-thumb-cyan-dim/20 pr-1">
-            {cases.length === 0 ? (
+            {activeCases.length === 0 ? (
               <button
                 onClick={() => setModule("case-files")}
                 onMouseEnter={() => playHoverBlip()}
@@ -254,19 +265,19 @@ export default function DashboardPage() {
                 </div>
                 <Database className="w-6 h-6 text-cyan-dim/60 group-hover:text-cyan-primary transition-colors relative z-10" />
                 <span className="font-display text-[13px] font-black tracking-widest text-text-dim uppercase relative z-10">
-                  NO DOSSIERS ON FILE
+                  NO ACTIVE DOSSIERS
                 </span>
                 <span className="font-share text-[12px] text-text-dim/60 tracking-wide uppercase relative z-10 leading-relaxed">
-                  Archive standing by — open Case Files to register the first record
+                  No open cases — register or reopen one in Case Files
                 </span>
                 <span className="font-share text-[12px] text-cyan-primary/70 tracking-[0.2em] uppercase mt-1 relative z-10 group-hover:text-cyan-primary transition-colors">
                   › INITIALIZE ARCHIVE
                 </span>
               </button>
             ) : (
-              cases.map((c) => {
+              activeCases.map((c) => {
                 const isSelected = c.id === activeCaseId;
-                const dotColor = c.status === "ACTIVE" ? "bg-red-threat" : c.status === "SOLVED" ? "bg-green-verified" : "bg-cyan-primary";
+                const dotColor = c.status === "ACTIVE" ? "bg-green-active" : c.status === "STALLED" ? "bg-amber-alert" : "bg-cyan-primary";
                 return (
                   <button
                     key={c.id}

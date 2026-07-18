@@ -442,9 +442,16 @@ export const useAppStore = create<AppState>()(
 
           const activeCaseId = get().activeCaseId;
           const stillExists = snapshot.cases.some((c) => c.id === activeCaseId);
+          // With no valid selection, open on a case that is still open. Falling
+          // back to cases[0] surfaced whichever record storage happened to
+          // return first, which could be solved or archived.
+          const firstOpen =
+            snapshot.cases.find((c) => c.status === "ACTIVE") ??
+            snapshot.cases.find((c) => c.status === "STALLED") ??
+            snapshot.cases[0];
           set({
             ...snapshot,
-            activeCaseId: stillExists ? activeCaseId : snapshot.cases[0]?.id ?? null,
+            activeCaseId: stillExists ? activeCaseId : firstOpen?.id ?? null,
             boardStatus: "ready",
           });
         } catch (err) {

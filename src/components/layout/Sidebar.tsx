@@ -94,7 +94,7 @@ export default function Sidebar() {
           wasAutoCollapsedRef.current = false;
           playNavTick(); 
         }}
-        className="absolute -right-3 top-12 w-6 h-12 bg-bg-void border border-cyan-primary/30 rounded-r-md flex items-center justify-center text-cyan-primary hover:bg-cyan-primary/20 z-20"
+        className="absolute -right-3 top-[104px] w-6 h-12 bg-bg-void border border-cyan-primary/30 rounded-r-md flex items-center justify-center text-cyan-primary hover:bg-cyan-primary/20 z-30"
         style={{ clipPath: "polygon(0 0, 100% 10%, 100% 90%, 0 100%)" }}
       >
         {isMinimized ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
