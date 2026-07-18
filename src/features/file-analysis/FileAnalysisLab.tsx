@@ -65,6 +65,12 @@ const TACTICAL_BINARY_PRESETS: BinaryPreset[] = [];
  */
 const MAX_CARRIER_BYTES = 10 * 1024 * 1024;
 
+// Sector sweep geometry. Offsets read left-to-right, top-to-bottom, so the map
+// is laid out the same way the hex dump below it is.
+const SECTOR_COLS = 24;
+const SECTOR_ROWS = 9;
+const SECTOR_TOTAL = SECTOR_COLS * SECTOR_ROWS;
+
 interface CarrierRejection {
   code: "OVERSIZE" | "EMPTY" | "UNREADABLE";
   headline: string;
@@ -97,6 +103,10 @@ export default function FileAnalysisLab() {
   // Real byte-frequency histogram of the loaded carrier, kept for the entropy
   // strip so that readout is driven by the file rather than decorated.
   const [byteHistogram, setByteHistogram] = useState<number[] | null>(null);
+  // Live sector sweep. Each entry is one sector's normalised entropy, appended
+  // as the inspector actually reaches and measures it.
+  const [sectorMap, setSectorMap] = useState<number[]>([]);
+  const carrierBytesRef = useRef<Uint8Array | null>(null);
   const scanSoundRef = useRef<{ stop: () => void } | null>(null);
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -185,6 +195,8 @@ export default function FileAnalysisLab() {
     setCustomMetadata(null);
     setByteHistogram(null);
     setCarvedFiles([]);
+    setSectorMap([]);
+    carrierBytesRef.current = null;
     setScanComplete(false);
     addLog(`CARRIER REJECTED (${code}): ${headline}`, "warning", "SYS");
   };
@@ -410,6 +422,10 @@ export default function FileAnalysisLab() {
           : `FILE IS VALIDATED: Parsed character envelopes and hexadecimal structures match the claimed '${extension}' extension signature.`
       });
 
+      // Kept so the inspector sweep has real bytes to walk — it computes
+      // per-sector entropy live rather than animating a counter.
+      carrierBytesRef.current = fullBytes;
+
       addLog(`PARSED HEX HEADERS FOR UPLOADED CARRIER: ${file.name.toUpperCase()}`, "info", "SYS");
       
       // Initial carving
@@ -419,11 +435,24 @@ export default function FileAnalysisLab() {
     reader.readAsArrayBuffer(file);
   };
 
-  // Launch analysis scanning
+  /**
+   * Launch the inspector sweep.
+   *
+   * This used to tick a counter from 0 to 100 and then flip scanComplete — the
+   * bar was pure theatre, unrelated to any work. It now walks the carrier in
+   * SECTOR_TOTAL slices and computes each slice's Shannon entropy as it
+   * arrives, so the head position, the progress figure and the sector map are
+   * all the same real measurement. Every sector the sweep lights up is a
+   * sector it actually just measured.
+   */
   const triggerForensicScan = () => {
+    const bytes = carrierBytesRef.current;
+    if (!bytes) return;
+
     setIsScanning(true);
     setScanProgress(0);
     setScanComplete(false);
+    setSectorMap([]);
     playFileAnalysisScanner();
 
     if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
@@ -436,17 +465,55 @@ export default function FileAnalysisLab() {
       "MAPPING signature extension indices..."
     ];
 
-    let step = 0;
-    let progress = 0;
-    scanIntervalRef.current = setInterval(() => {
-      progress += 5;
-      if (progress % 20 === 0 && step < messages.length - 1) {
-        step++;
-      }
-      setScanProgress(progress);
-      setScanMessage(messages[step]);
+    const sectorLen = Math.max(1, Math.ceil(bytes.length / SECTOR_TOTAL));
 
-      if (progress >= 100) {
+    /**
+     * Ceiling to normalise each sector against.
+     *
+     * The naive choice is log2(256) = 8 bits, but a sector only holds a few
+     * hundred bytes, and a few hundred samples spread over 256 bins cannot
+     * reach 8 bits however random they are — measured, genuinely random
+     * sectors topped out around 0.92 and the "packed" tier never fired at all.
+     * Subtracting the finite-sample bias, (K-1)/(2N ln2), gives the entropy a
+     * uniform stream of this size would actually be expected to show, so
+     * saturation stays comparable across carriers of different sizes.
+     */
+    const bins = Math.min(256, sectorLen);
+    const ceiling = Math.max(
+      0.5,
+      Math.log2(bins) - (bins - 1) / (2 * sectorLen * Math.LN2),
+    );
+
+    const sectorEntropy = (start: number) => {
+      const end = Math.min(start + sectorLen, bytes.length);
+      const counts = new Uint32Array(256);
+      for (let i = start; i < end; i++) counts[bytes[i]]++;
+      const len = end - start;
+      if (len <= 0) return 0;
+      let e = 0;
+      for (let j = 0; j < 256; j++) {
+        if (counts[j] > 0) {
+          const p = counts[j] / len;
+          e -= p * Math.log2(p);
+        }
+      }
+      return Math.min(1, e / ceiling);
+    };
+
+    let sector = 0;
+    const PER_TICK = 6;
+    scanIntervalRef.current = setInterval(() => {
+      const batch: number[] = [];
+      for (let n = 0; n < PER_TICK && sector < SECTOR_TOTAL; n++, sector++) {
+        batch.push(sectorEntropy(sector * sectorLen));
+      }
+      setSectorMap((prev) => [...prev, ...batch]);
+
+      const progress = Math.round((sector / SECTOR_TOTAL) * 100);
+      setScanProgress(progress);
+      setScanMessage(messages[Math.min(messages.length - 1, Math.floor((progress / 100) * messages.length))]);
+
+      if (sector >= SECTOR_TOTAL) {
         if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
         setIsScanning(false);
         setScanComplete(true);
@@ -455,7 +522,7 @@ export default function FileAnalysisLab() {
         // at trigger time, and flushing the buffer mid-scan would null it.
         addLog(`COMPLETED DEEP BINARY INSPECTION ON ${currentData?.name ?? "CARRIER"}`, "success", "SYS");
       }
-    }, 100);
+    }, 55);
   };
 
   // Add findings to dossier
@@ -502,6 +569,11 @@ ${currentData.threatSummary}`;
     setModule("detective-board");
   };
 
+  // State-derived, not carrierBytesRef — a ref write does not re-render, so the
+  // sector map would miss the transition out of its idle field. byteHistogram
+  // is set and cleared at exactly the same points as the byte buffer.
+  const carrierMounted = byteHistogram !== null;
+
   const clearFileBuffer = () => {
     playPinClick();
     setActiveFile(null);
@@ -511,6 +583,8 @@ ${currentData.threatSummary}`;
     setRejection(null);
     setByteHistogram(null);
     setCarvedFiles([]);
+    setSectorMap([]);
+    carrierBytesRef.current = null;
     if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
     setIsScanning(false);
   };
@@ -806,6 +880,108 @@ ${currentData.threatSummary}`;
                 </button>
               </div>
 
+            </div>
+          )}
+        </GlassPanel>
+
+        {/* ================= CARRIER SECTOR MAP =================
+            Fills the dead space under the buffer port, and doubles as the
+            inspector's readout: during a sweep each cell lights as its sector
+            is actually measured, so the animation is the work rather than a
+            decoration laid over it. With no carrier mounted it idles as an
+            ambient field. */}
+        <GlassPanel className="p-4 flex flex-col" clipSize="sm">
+          <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
+            <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
+              <Compass className={`w-3.5 h-3.5 mr-2 text-cyan-primary ${isScanning ? "animate-radar-sweep" : ""}`} />
+              CARRIER SECTOR MAP
+            </h3>
+            <span className="font-mono text-[12px] text-text-dim tracking-widest tabular-nums">
+              {carrierMounted                ? `${sectorMap.length}/${SECTOR_TOTAL}`
+                : "IDLE"}
+            </span>
+          </div>
+
+          <div
+            className="grid gap-px bg-bg-void/60 border border-border-hairline/10 p-1.5"
+            style={{ gridTemplateColumns: `repeat(${SECTOR_COLS}, minmax(0, 1fr))` }}
+          >
+            {Array.from({ length: SECTOR_TOTAL }, (_, idx) => {
+              const measured = idx < sectorMap.length;
+              const isHead = isScanning && idx === sectorMap.length - 1;
+              const entropy = measured ? sectorMap[idx] : 0;
+
+              // No carrier: ambient field. The stagger runs on the diagonal so
+              // the flicker drifts across the grid instead of pulsing as one
+              // block.
+              if (!carrierMounted) {
+                const row = Math.floor(idx / SECTOR_COLS);
+                const col = idx % SECTOR_COLS;
+                return (
+                  <div
+                    key={idx}
+                    className="aspect-square bg-cyan-primary/20 animate-hex-pulse-flicker"
+                    style={{ animationDelay: `${((row + col) % 12) * 0.35}s` }}
+                  />
+                );
+              }
+
+              return (
+                <div
+                  key={idx}
+                  title={
+                    measured
+                      ? `SECTOR ${idx} — ${(entropy * 100).toFixed(0)}% saturation`
+                      : `SECTOR ${idx} — unmeasured`
+                  }
+                  className={`aspect-square transition-all duration-300 ${
+                    isHead
+                      ? "bg-white shadow-[0_0_8px_var(--color-accent-primary)] scale-125 relative z-10"
+                      : measured
+                        ? entropy > 0.92
+                          ? "bg-amber-alert"
+                          : "bg-cyan-primary"
+                        : "bg-border-hairline/15"
+                  }`}
+                  style={
+                    measured && !isHead
+                      ? { opacity: 0.22 + entropy * 0.78 }
+                      : undefined
+                  }
+                />
+              );
+            })}
+          </div>
+
+          <div className="flex justify-between items-center text-[12px] text-text-dim/60 font-mono tracking-widest mt-1.5">
+            <span>0x00000000</span>
+            <span className="uppercase">
+              {isScanning
+                ? "SWEEPING"
+                : scanComplete
+                  ? "SWEEP COMPLETE"
+                  : carrierMounted
+                    ? "AWAITING SWEEP"
+                    : "NO CARRIER"}
+            </span>
+            <span>EOF</span>
+          </div>
+
+          {/* Legend only earns its space once there is something to read. */}
+          {sectorMap.length > 0 && (
+            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border-hairline/10 text-[12px] font-mono text-text-dim/70 uppercase tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-cyan-primary" style={{ opacity: 0.3 }} />
+                Low
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-cyan-primary" />
+                Dense
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-amber-alert" />
+                Packed / encrypted
+              </span>
             </div>
           )}
         </GlassPanel>
@@ -1111,3 +1287,4 @@ ${currentData.threatSummary}`;
     </div>
   );
 }
+
