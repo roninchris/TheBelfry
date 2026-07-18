@@ -381,7 +381,7 @@ export default function EncodingLab() {
   }, [inputText]);
 
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra select-none">
+    <div className="h-full w-full p-4 grid grid-cols-12 content-start gap-4 overflow-y-auto font-chakra select-none">
       
       {/* ================= LEFT COLUMN: CENTRAL SIGNAL SOURCE (INPUT & SYSTEM MONITOR) ================= */}
       <div className="col-span-12 xl:col-span-4 flex flex-col space-y-4 min-h-0">

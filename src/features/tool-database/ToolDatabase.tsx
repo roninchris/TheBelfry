@@ -548,8 +548,12 @@ export default function ToolDatabase() {
     return <DocIcon className={className} />;
   };
 
+  // Explicit rows + content-start. With auto rows and a grid taller than its
+  // content, align-content stretches every row — so on a large display the
+  // header row inflated far past its ~104px of content and left a wide band of
+  // nothing between the ribbon and the catalogue.
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra text-text-primary animate-fade-in" id="tool-database-root">
+    <div className="h-full w-full p-4 grid grid-cols-12 lg:grid-rows-[auto_minmax(0,1fr)] content-start gap-4 overflow-hidden font-chakra text-text-primary animate-fade-in" id="tool-database-root">
       
       {/* ================= HEADER SECTION (SPAN 12) ================= */}
       <div className="col-span-12 flex flex-col space-y-3">
@@ -579,7 +583,7 @@ export default function ToolDatabase() {
       </div>
 
       {/* ================= LEFT COLUMN: SEARCH & STYLIZED NODE GRID (SPAN 6) ================= */}
-      <div className="col-span-12 lg:col-span-6 flex flex-col space-y-4">
+      <div className="col-span-12 lg:col-span-6 flex flex-col space-y-4 min-h-0">
         
         {/* Search & Category Filter Ribbon */}
         <GlassPanel className="p-3" clipSize="sm">
@@ -809,7 +813,7 @@ export default function ToolDatabase() {
       </div>
 
       {/* ================= RIGHT COLUMN: DETAIL DOSSIER VIEW (SPAN 6) ================= */}
-      <div className="col-span-12 lg:col-span-6 flex flex-col space-y-4">
+      <div className="col-span-12 lg:col-span-6 flex flex-col space-y-4 min-h-0">
         
         {/* Core Detail Panel */}
         <AnimatePresence mode="wait">

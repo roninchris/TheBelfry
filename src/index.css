@@ -15,10 +15,13 @@ html {
   color-scheme: dark;
 }
 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(var(--rgb-primary) / 0.3) var(--color-bg-void);
-}
+/* Deliberately NOT setting scrollbar-width/scrollbar-color globally.
+   In Chrome, giving either a non-auto value switches the element to the
+   standard scrollbar renderer and every ::-webkit-scrollbar rule below is
+   ignored — which is why the app's custom 5px HUD scrollbars never actually
+   rendered and everything drew a 10px system "thin" bar instead. The webkit
+   pseudo-elements give the finer control this UI wants; Firefox falls back to
+   its own thin scrollbar via the .scrollbar-thin rule. */
 
 /* Custom text selection highlights to preserve the cyber/dark theme */
 ::selection {
@@ -427,6 +430,60 @@ html, body, #root {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgb(var(--rgb-primary) / 0.6);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--color-bg-void);
+}
+
+/* ---- Scroller utilities ----
+   .scrollbar-thin and .scrollbar-none were used in ~70 places across the app
+   but never existed: there is no Tailwind scrollbar plugin here and nothing
+   defined them, so every one of those scrollers silently fell back to the 5px
+   default and .scrollbar-none never hid anything. Both are real now. */
+/* scrollbar-width is reset to auto on purpose.
+   .scrollbar-thin is a Tailwind v4 core utility that sets scrollbar-width:thin,
+   and in Chrome any non-auto scrollbar-width switches the element to the
+   standard scrollbar renderer — which both ignores every ::-webkit-scrollbar
+   rule and draws a 10px bar, wider than this app's own 5px default. So the ~70
+   elements marked "thin" were the chunkiest scrollers in the UI. Reverting to
+   auto puts them back on the webkit path styled below. This rule is unlayered,
+   so it outranks Tailwind's utilities layer. */
+.scrollbar-thin {
+  scrollbar-width: auto;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgb(var(--rgb-primary) / 0.04);
+  border: 0;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(var(--rgb-primary) / 0.28);
+  border-radius: 0;
+  /* Inset so the thumb reads as a tick in a channel rather than a fat bar. */
+  border: 1px solid transparent;
+  background-clip: content-box;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--rgb-accent) / 0.55);
+  background-clip: content-box;
+  box-shadow: 0 0 8px rgb(var(--rgb-accent) / 0.35);
+}
+.scrollbar-thin::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 /* Custom Clip-Path Angular Panels */

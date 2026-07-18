@@ -87,7 +87,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-12 content-start gap-6 w-full">
         
         {/* ================= DISPLAY PROFILE (THEME) ================= */}
         <div className="col-span-1 md:col-span-12">

@@ -153,8 +153,11 @@ export default function DashboardPage() {
     }
   };
 
+  // content-start: auto grid rows get stretched by align-content whenever the
+  // grid is taller than its content, which on a large display padded every row
+  // out and left bands of nothing between the panels.
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto overflow-x-hidden select-none relative pb-20">
+    <div className="h-full w-full p-4 grid grid-cols-12 content-start gap-4 overflow-y-auto overflow-x-hidden select-none relative pb-20">
       
       {/* Immersive background idle data-flow/grid pulse treatment scoped to Dashboard */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-20">
