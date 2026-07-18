@@ -764,7 +764,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 <div className="relative z-10 flex-1 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
                   
                   {/* GATE 1: INPUT VESSEL CARD */}
-                  <div className="w-[250px] shrink-0 flex items-stretch">
+                  <div className="flex-1 min-w-[250px] flex items-stretch">
                     <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
@@ -796,18 +796,27 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="flex items-center shrink-0 self-center px-1">
                         <PipelineConnector orientation="horizontal" active={false} className="w-8" />
                       </div>
-                      <div className="w-[250px] shrink-0 flex items-stretch">
-                        <div className="w-full flex flex-col items-center justify-center text-center p-6 border border-dashed border-border-hairline/25 bg-bg-void/25">
+                      <div className="flex-1 min-w-[250px] flex items-stretch">
+                        {/* A slot in the chain, so it gets the same panel material
+                            as the vessels either side of it. It was a bare dashed
+                            block, which read as an unstyled gap rather than a
+                            placeholder for a stage. */}
+                        <GlassPanel
+                          className="p-6 w-full h-full border-dashed"
+                          contentClassName="flex flex-col items-center justify-center text-center"
+                          clipSize="sm"
+                          showCornerTicks={false}
+                        >
                           <Terminal className="w-9 h-9 text-cyan-primary/25 animate-hex-pulse-flicker mb-2.5" />
                           <h4 className="font-display text-sm font-extrabold tracking-[0.18em] text-white uppercase">
                             No operations yet
                           </h4>
-                          <p className="text-[12px] text-text-dim/80 font-share tracking-wide mt-1.5 leading-relaxed">
+                          <p className="text-[12px] text-text-dim/80 font-share tracking-wide mt-1.5 leading-relaxed max-w-[24ch]">
                             Pick an operation from the registry on the right. Each one you
                             add becomes a stage here, and the text above flows through them
                             left to right into the output.
                           </p>
-                        </div>
+                        </GlassPanel>
                       </div>
                     </>
                   )}
@@ -968,7 +977,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   </div>
 
                   {/* GATE 4: OUTPUT VESSEL CARD */}
-                  <div className="w-[250px] shrink-0 flex items-stretch">
+                  <div className="flex-1 min-w-[250px] flex items-stretch">
                     <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
@@ -1087,7 +1096,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               <div className="flex-1 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
                 
                 {/* GATE 1: INTELLIGENCE STREAM SOURCE & CONFIG */}
-                <div className="w-[250px] shrink-0 flex items-stretch">
+                <div className="flex-1 min-w-[250px] flex items-stretch">
                   <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
@@ -1205,7 +1214,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 </div>
 
                 {/* GATE 2: SWEEP & DECRYPTION MATRIX CORE */}
-                <div className="w-[250px] shrink-0 flex items-stretch">
+                <div className="flex-1 min-w-[250px] flex items-stretch">
                   <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
@@ -1254,10 +1263,14 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                         </div>
                       </div>
                     ) : (
-                      <div className="flex-1 flex flex-col justify-between">
+                      // Grouped, not justify-between: spreading three items down a
+                      // ~700px card left the trigger stranded in the middle with a
+                      // void above and below it. The brief and its button belong
+                      // together, and the heuristics note reads as a footer.
+                      <div className="flex-1 flex flex-col min-h-0">
                         <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider block leading-relaxed mb-2">
-                          {bruteSubMode === "sweep" 
-                            ? `Sweeping ${sweepCipher.toUpperCase()} configurations to isolate plain english output vectors.` 
+                          {bruteSubMode === "sweep"
+                            ? `Sweeping ${sweepCipher.toUpperCase()} configurations to isolate plain english output vectors.`
                             : `Testing raw intercepts against forensic plugins simultaneously.`}
                         </span>
 
@@ -1271,8 +1284,9 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                           <span>INITIATE CRACK</span>
                         </button>
 
-                        {/* Heuristic tip */}
-                        <div className="mt-2.5 p-1.5 border border-border-hairline/10 bg-bg-void/40 text-left font-share uppercase tracking-wider text-[12px] text-text-dim/80 leading-normal">
+                        {/* Heuristic tip — mt-auto parks it at the bottom as a
+                            footer instead of it floating mid-card. */}
+                        <div className="mt-auto pt-2.5 p-1.5 border border-border-hairline/10 bg-bg-void/40 text-left font-share uppercase tracking-wider text-[12px] text-text-dim/80 leading-normal">
                           <span className="font-mono text-amber-alert font-bold block mb-0.5">HEURISTICS SEALED</span>
                           Evaluates whitespace, vowels, and core vocabulary frequencies.
                         </div>
@@ -1291,7 +1305,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 </div>
 
                 {/* GATE 3: TOP MATCH PLAUSIBILITY TERMINATION */}
-                <div className="w-[250px] shrink-0 flex items-stretch">
+                <div className="flex-1 min-w-[250px] flex items-stretch">
                   <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
