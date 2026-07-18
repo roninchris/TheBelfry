@@ -49,16 +49,28 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
     return () => clearInterval(interval);
   }, [hasStarted]);
 
+  // Completion is one-way: once the sequence hands off, a later re-render (or a
+  // stray click landing in the same tick) must not fire onComplete again.
+  const hasCompletedRef = useRef(false);
+
   const handleSkip = () => {
     if (!hasStarted) return; // Prevent skipping before start
+    if (hasCompletedRef.current) return;
+    hasCompletedRef.current = true;
     if (bootSoundRef.current) bootSoundRef.current.stop();
     getAudioContext(); // Initialize audio
     onComplete();
   };
 
-  if (isDone) {
-    setTimeout(handleSkip, 200);
-  }
+  // The hand-off used to be a bare `if (isDone) setTimeout(handleSkip, 200)` in
+  // the render body — a side effect during render, so every re-render while
+  // isDone was true queued another onComplete, and nothing cancelled the timer
+  // if the user clicked to skip in that 200ms window.
+  useEffect(() => {
+    if (!isDone) return;
+    const timer = setTimeout(handleSkip, 200);
+    return () => clearTimeout(timer);
+  }, [isDone]);
 
   if (!hasStarted) {
     return (
