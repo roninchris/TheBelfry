@@ -548,8 +548,12 @@ export default function ToolDatabase() {
     return <DocIcon className={className} />;
   };
 
+  // Explicit rows + content-start. With auto rows and a grid taller than its
+  // content, align-content stretches every row — so on a large display the
+  // header row inflated far past its ~104px of content and left a wide band of
+  // nothing between the ribbon and the catalogue.
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra text-text-primary animate-fade-in" id="tool-database-root">
+    <div className="h-full w-full p-4 grid grid-cols-12 lg:grid-rows-[auto_minmax(0,1fr)] content-start gap-4 overflow-hidden font-chakra text-text-primary animate-fade-in" id="tool-database-root">
       
       {/* ================= HEADER SECTION (SPAN 12) ================= */}
       <div className="col-span-12 flex flex-col space-y-3">
@@ -579,7 +583,7 @@ export default function ToolDatabase() {
       </div>
 
       {/* ================= LEFT COLUMN: SEARCH & STYLIZED NODE GRID (SPAN 6) ================= */}
-      <div className="col-span-12 lg:col-span-6 flex flex-col space-y-4">
+      <div className="col-span-12 lg:col-span-6 flex flex-col space-y-4 min-h-0">
         
         {/* Search & Category Filter Ribbon */}
         <GlassPanel className="p-3" clipSize="sm">
@@ -665,7 +669,7 @@ export default function ToolDatabase() {
         </GlassPanel>
 
         {/* Dynamic Nodes Grid (Bento/Hex Theme matching Belfry Upgrade Grid) */}
-        <GlassPanel className="panel-console p-4 flex-1 flex flex-col justify-between min-h-[460px]" clipSize="md">
+        <GlassPanel className="panel-console p-4 flex-1 flex flex-col justify-between min-h-[460px]" contentClassName="flex flex-col min-h-0" clipSize="md">
           <div className="border-b border-border-hairline/20 pb-2 mb-4 flex justify-between items-center">
             <h3 className="font-display text-xs font-black tracking-widest text-cyan-text uppercase flex items-center space-x-2">
               <Layers className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
@@ -698,7 +702,7 @@ export default function ToolDatabase() {
             </div>
           ) : (
             /* Hexagonal-inspired grid view of nodes */
-            <div className="flex-1 overflow-y-auto max-h-[400px] pr-1 grid grid-cols-2 sm:grid-cols-3 gap-3.5 select-none hud-scrollbar relative">
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 gap-3.5 select-none hud-scrollbar relative content-start">
               {/* Archive Search Scanline */}
               {searchQuery && (
                 <motion.div 
@@ -809,7 +813,7 @@ export default function ToolDatabase() {
       </div>
 
       {/* ================= RIGHT COLUMN: DETAIL DOSSIER VIEW (SPAN 6) ================= */}
-      <div className="col-span-12 lg:col-span-6 flex flex-col space-y-4">
+      <div className="col-span-12 lg:col-span-6 flex flex-col space-y-4 min-h-0">
         
         {/* Core Detail Panel */}
         <AnimatePresence mode="wait">
@@ -819,9 +823,9 @@ export default function ToolDatabase() {
             animate={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)", opacity: 1 }}
             exit={{ clipPath: "polygon(100% 0, 100% 0, 100% 100%, 100% 100%)", opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col h-fit"
+            className="flex flex-col min-h-0 flex-1"
           >
-            <GlassPanel className="p-4 flex flex-col" clipSize="md">
+            <GlassPanel className="p-4 flex flex-col flex-1 min-h-0" contentClassName="flex flex-col min-h-0" clipSize="md">
           
           {/* Header metadata dossier */}
           <div className="border-b border-border-hairline/25 pb-3 mb-4 flex justify-between items-start flex-wrap gap-2">
@@ -850,7 +854,7 @@ export default function ToolDatabase() {
           </div>
 
           {/* Dossier Tabs Container (Scrollable) */}
-          <div className="flex-1 overflow-y-auto max-h-[420px] space-y-4 pr-1 scrollbar-thin select-text">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 scrollbar-thin select-text">
             
             {activeToolDoc.documented ? (
               <>

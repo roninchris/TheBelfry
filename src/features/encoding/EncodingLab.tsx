@@ -381,7 +381,7 @@ export default function EncodingLab() {
   }, [inputText]);
 
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra select-none">
+    <div className="h-full w-full p-4 grid grid-cols-12 content-start gap-4 overflow-y-auto font-chakra select-none">
       
       {/* ================= LEFT COLUMN: CENTRAL SIGNAL SOURCE (INPUT & SYSTEM MONITOR) ================= */}
       <div className="col-span-12 xl:col-span-4 flex flex-col space-y-4 min-h-0">
@@ -609,6 +609,17 @@ export default function EncodingLab() {
                   value: base64Val,
                   badge: "B64",
                   description: isDecodeMode ? "Decode rad-64 index stream to text" : "Standard rad-64 index representation"
+                },
+                {
+                  // Base32 was computed into base32Val and detected by the
+                  // source-signature panel, but never had a channel — so the
+                  // deck would report the buffer as BASE32 and then offer no
+                  // way to decode it.
+                  key: "base32",
+                  label: isDecodeMode ? "BASE32 CHARACTER DECODER (RFC 4648)" : "BASE32 CHARACTER BRANCH (RFC 4648)",
+                  value: base32Val,
+                  badge: "B32",
+                  description: isDecodeMode ? "Decode rad-32 index stream to text" : "Case-insensitive rad-32 index representation"
                 },
                 {
                   key: "binary",
