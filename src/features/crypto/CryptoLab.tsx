@@ -898,7 +898,7 @@ export default function CryptoLab() {
       <div className="col-span-12 xl:col-span-4 flex flex-col space-y-4">
         
         {/* Frequency distribution Recharts */}
-        <GlassPanel className="p-4 flex-1 flex flex-col" clipSize="md" showCornerTicks={true}>
+        <GlassPanel className="p-4 shrink-0 flex flex-col" clipSize="md" showCornerTicks={true}>
           <div className="border-b border-border-hairline/25 pb-2 mb-3">
             <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center">
               <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
@@ -909,7 +909,7 @@ export default function CryptoLab() {
             </p>
           </div>
 
-          <div className="flex-1 min-h-[160px] xl:min-h-none relative">
+          <div className="h-[230px] shrink-0 relative">
             {!inputText.trim() && (
               <div className="absolute inset-0 bg-bg-void/35 backdrop-blur-[1px] flex flex-col justify-center items-center z-10 space-y-1.5 pointer-events-none">
                 <span className="font-mono text-[12px] text-cyan-primary/50 tracking-wider font-bold uppercase animate-pulse">
@@ -938,7 +938,7 @@ export default function CryptoLab() {
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#05090c",
+                    backgroundColor: "var(--color-bg-void)",
                     borderColor: "rgba(77, 217, 232, 0.3)",
                     color: "var(--color-cyan-text)",
                     fontFamily: "JetBrains Mono, monospace",

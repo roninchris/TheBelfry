@@ -1523,3 +1523,16 @@ button:hover, .btn-interactive:hover {
 @media (prefers-reduced-motion: reduce) {
   .data-wall-row { animation: none !important; }
 }
+
+/* Scrollable region with no visible scrollbar. The wheel and trackpad still
+   work; only the chrome is hidden. Used where a visible bar would cut into a
+   panel's own framing (the case archive list). */
+.hud-scroll-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hud-scroll-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}

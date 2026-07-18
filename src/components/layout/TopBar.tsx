@@ -44,7 +44,7 @@ export default function TopBar() {
   };
 
   return (
-    <header className="h-14 border-b border-border-hairline/20 bg-bg-void/90 flex items-center justify-between px-6 font-chakra relative z-10 select-none">
+    <header className="h-20 border-b border-border-hairline/20 bg-bg-void/90 flex items-center justify-between px-7 pt-1.5 font-chakra relative z-10 select-none">
       {/* Edge vignette line */}
       <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-primary/20 to-transparent pointer-events-none" />
 
@@ -62,10 +62,10 @@ export default function TopBar() {
           aria-hidden="true"
         />
         <span className="flex flex-col items-start leading-tight whitespace-nowrap">
-          <span className="font-display text-sm font-extrabold tracking-[0.22em] text-white uppercase">
+          <span className="font-display text-lg font-extrabold tracking-[0.2em] text-white uppercase leading-none">
             Batcomputer
           </span>
-          <span className="hidden 2xl:inline font-share text-[12px] text-cyan-dim/70 tracking-[0.16em] uppercase">
+          <span className="hidden 2xl:inline font-share text-[13px] text-cyan-dim/80 tracking-[0.14em] uppercase mt-1">
             Belfry Systems &middot; Forensic Platform
           </span>
         </span>
@@ -73,14 +73,14 @@ export default function TopBar() {
 
       {/* Center: Module Focus Title. Flex-1 + truncate so it yields space and
           clips cleanly rather than overlapping the flanking blocks. */}
-      <div className="hidden xl:flex flex-1 min-w-0 items-center justify-center space-x-2 px-4 font-display font-extrabold tracking-widest text-sm text-cyan-text cyan-glow">
+      <div className="hidden xl:flex flex-1 min-w-0 items-center justify-center space-x-2.5 px-4 font-display font-extrabold tracking-[0.16em] text-base text-cyan-text cyan-glow">
         <span className="text-xs text-text-dim opacity-70 shrink-0">//</span>
         <h2 key={currentModule} className="animate-data-assemble truncate">{getModuleTitle()}</h2>
         <span className="text-xs text-text-dim opacity-70 shrink-0">//</span>
       </div>
 
       {/* Right: Telemetry metrics, date, encrypted state */}
-      <div className="flex items-center space-x-3 2xl:space-x-5 shrink-0 font-share text-xs text-text-dim tracking-wider uppercase">
+      <div className="flex items-center space-x-3.5 2xl:space-x-5 shrink-0 font-share text-[13px] text-text-dim tracking-wider uppercase">
         {/* Connection status. The word drops on tighter screens; the icon and
             signal bars stay as a compact live indicator. */}
         <div className="flex items-center space-x-1.5 border border-cyan-primary/25 bg-cyan-primary/[0.03] px-2 py-0.5 shrink-0"
@@ -95,7 +95,7 @@ export default function TopBar() {
         </div>
 
         {/* Tactical status details — only where there is width to spare. */}
-        <div className="hidden 2xl:flex items-center space-x-3 text-xs shrink-0">
+        <div className="hidden 2xl:flex items-center space-x-3.5 text-[13px] shrink-0">
           <span className="flex items-center">
             <Shield className="w-4 h-4 mr-1 text-green-verified" /> SECURE
           </span>

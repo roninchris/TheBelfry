@@ -37,16 +37,18 @@ export default function KnightBadge() {
           that hardcoded accent and spun a dashed ring, so e.g. Red Hood's
           saturated red rotated against cyan chrome and read as a foreign
           element rather than part of the console. */}
-      {/* No .tablet-frame here: its corner brackets grow 10px -> 16px on hover,
-          which on a 40px box means each bracket swells to nearly half the
-          width — it read as the badge breaking apart rather than lighting up.
-          At this size a border and glow shift is the whole effect. */}
-      <span className="relative w-10 h-10 shrink-0 flex items-center justify-center border border-border-hairline/30 bg-bg-void/60 transition-[border-color,box-shadow] duration-200 group-hover:border-accent-primary/60 group-hover:shadow-[0_0_10px_-2px_var(--color-accent-primary)]">
+      {/* Round, not square. The sigil artwork is a circular emblem, so a square
+          bordered box put a second outline around it that could never line up
+          with the circle inside — it read as the badge being misaligned rather
+          than as a frame. Matching the art's shape makes the hover a clean ring.
+          (.tablet-frame is also wrong here: its brackets grow 10px -> 16px,
+          which on a 40px box is nearly half the width.) */}
+      <span className="relative w-10 h-10 shrink-0 flex items-center justify-center rounded-full border border-border-hairline/30 bg-bg-void/60 transition-[border-color,box-shadow] duration-200 group-hover:border-accent-primary/60 group-hover:shadow-[0_0_12px_-2px_var(--color-accent-primary)]">
         {/* A slow inner glow replaces the rotating ring: still alive, but it
             does not draw the eye away from the module content. */}
         {!reduce && (
           <span
-            className="absolute inset-[3px] animate-hex-pulse-flicker pointer-events-none"
+            className="absolute inset-[3px] rounded-full animate-hex-pulse-flicker pointer-events-none"
             style={{ backgroundColor: `${accent}14` }}
           />
         )}
@@ -66,12 +68,12 @@ export default function KnightBadge() {
 
       <span className="hidden xl:flex flex-col items-start leading-tight">
         <span
-          className="font-display text-[12px] font-black tracking-[0.18em] uppercase transition-colors"
+          className="font-display text-[13px] font-black tracking-[0.16em] uppercase transition-colors"
           style={{ color: accent }}
         >
           {label}
         </span>
-        <span className="font-share text-[12px] tracking-[0.14em] text-cyan-dim/70 uppercase">
+        <span className="font-share text-[12px] tracking-[0.12em] text-cyan-dim/70 uppercase mt-0.5">
           Oracle link
         </span>
       </span>

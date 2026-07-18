@@ -190,11 +190,27 @@ export default function DossierPage() {
 
   // Get active case file details
   const activeCase = cases.find((c) => c.id === activeCaseId);
+  // Archive ordering is fixed: open work first, then closed, then shelved.
+  // Storage returns creation order, which buried active cases under solved ones.
+  const STATUS_RANK: Record<Case["status"], number> = {
+    ACTIVE: 0,
+    STALLED: 1,
+    SOLVED: 2,
+    ARCHIVED: 3,
+  };
+  const orderedCases = React.useMemo(
+    () =>
+      [...cases].sort(
+        (a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9),
+      ),
+    [cases],
+  );
+
 
   const getStatusBadgeVariant = (status: Case["status"]) => {
     switch (status) {
-      case "ACTIVE": return "cyan";
-      case "SOLVED": return "green";
+      case "ACTIVE": return "green";
+      case "SOLVED": return "cyan";
       case "ARCHIVED": return "dim";
       case "STALLED": return "amber";
       default: return "cyan";
@@ -287,7 +303,7 @@ export default function DossierPage() {
   };
 
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra" id="dossier-root">
+    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-hidden font-chakra" id="dossier-root">
       
       {/* ================= LEFT SECTION: ARG CASES INDEX ================= */}
       <div className="col-span-12 lg:col-span-4 flex flex-col space-y-4">
@@ -326,7 +342,7 @@ export default function DossierPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-2 flex-1 overflow-y-auto pr-1 relative">
+            <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 relative hud-scroll-hidden">
               {/* Archive Indexing Sweep Animation */}
               <motion.div 
                 initial={{ top: "-10%" }}
@@ -336,7 +352,7 @@ export default function DossierPage() {
               />
 
               <AnimatePresence mode="popLayout">
-                {cases.map((c, index) => {
+                {orderedCases.map((c, index) => {
                   const isSelected = c.id === activeCaseId;
                   const caseNodes = evidenceNodes.filter(n => n.caseId === c.id);
                   const caseConns = evidenceConnections.filter(conn => conn.caseId === c.id);
