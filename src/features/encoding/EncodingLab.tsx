@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import GlassPanel from "../../components/ui/GlassPanel";
+import DataWall from "../../components/ui/DataWall";
 import Badge from "../../components/ui/Badge";
 import { useAppStore } from "../../store/appStore";
 import ShinyText from "../../components/react-bits/ShinyText";
@@ -123,6 +124,68 @@ function BreakoutLine({ index, total, isActive }: BreakoutLineProps) {
 }
 
 
+
+/** Character-class composition of the buffer, used by the source signature. */
+function analyseSource(text: string) {
+  const len = text.length;
+  if (!len) return null;
+
+  let hexish = 0, b64ish = 0, digits = 0, letters = 0, ws = 0, other = 0;
+  const freq = new Map<string, number>();
+
+  for (const ch of text) {
+    freq.set(ch, (freq.get(ch) ?? 0) + 1);
+    if (/\s/.test(ch)) { ws++; continue; }
+    if (/[0-9]/.test(ch)) digits++;
+    else if (/[a-zA-Z]/.test(ch)) letters++;
+    else other++;
+    if (/[0-9a-fA-F]/.test(ch)) hexish++;
+    if (/[A-Za-z0-9+/=]/.test(ch)) b64ish++;
+  }
+
+  // Shannon entropy over the observed symbol distribution.
+  let entropy = 0;
+  for (const n of freq.values()) {
+    const pr = n / len;
+    entropy -= pr * Math.log2(pr);
+  }
+
+  const body = len - ws || 1;
+  const stripped = text.replace(/\s/g, "");
+
+  // Format plausibility. These are the same shape checks a solver does by eye:
+  // does the alphabet fit, and is the length consistent with the encoding.
+  // Interior whitespace between word-like runs. Base64 and Base32 payloads are
+  // not normally split this way, so this is what stops ordinary prose — whose
+  // letters happen to fit the alphabet and whose length happens to divide by
+  // four — from being reported as Base64.
+  const looksSpaced = /\S\s+\S/.test(text.trim()) && /[a-z]{2,}\s+[a-z]{2,}/i.test(text);
+
+  const hints: string[] = [];
+  // Ordered most specific first: a run of 0s and 1s is also valid hex and valid
+  // decimal, so binary has to lead or the useful answer is buried.
+  if (stripped.length > 3 && /^[01]+$/.test(stripped) && stripped.length % 8 === 0) hints.push("BINARY");
+  if (stripped.length > 1 && /^[0-9a-fA-F]+$/.test(stripped) && stripped.length % 2 === 0) hints.push("HEX");
+  if (!looksSpaced && stripped.length > 3 && /^[A-Za-z0-9+/]+={0,2}$/.test(stripped) && stripped.length % 4 === 0) hints.push("BASE64");
+  if (!looksSpaced && stripped.length > 3 && /^[A-Z2-7]+=*$/.test(stripped)) hints.push("BASE32");
+  if (stripped.length > 1 && /^[0-9\s]+$/.test(text.trim())) hints.push("DECIMAL");
+  if (/^[.\-\s/]+$/.test(text.trim())) hints.push("MORSE");
+
+  return {
+    len,
+    unique: freq.size,
+    entropy: +entropy.toFixed(2),
+    hints,
+    bars: [
+      { key: "letters", label: "Alpha", pct: (letters / body) * 100 },
+      { key: "digits", label: "Numeric", pct: (digits / body) * 100 },
+      { key: "other", label: "Symbol", pct: (other / body) * 100 },
+    ],
+    hexPct: (hexish / body) * 100,
+    b64Pct: (b64ish / body) * 100,
+  };
+}
+
 export default function EncodingLab() {
   const [inputText, setInputText] = useState<string>("");
   const [isDecodeMode, setIsDecodeMode] = useState<boolean>(true);
@@ -141,6 +204,7 @@ export default function EncodingLab() {
    */
   const [highlightedRow, setHighlightedRow] = useState<string | null>(null);
   const [showAllPorts, setShowAllPorts] = useState(false);
+  const sourceStats = useMemo(() => analyseSource(inputText), [inputText]);
 
   useEffect(() => {
     if (!pendingToolId) return;
@@ -314,7 +378,7 @@ export default function EncodingLab() {
       <div className="col-span-12 xl:col-span-4 flex flex-col space-y-4 min-h-0">
         
         {/* Input buffer block */}
-        <GlassPanel className="p-4 flex flex-col min-h-[190px]" clipSize="md" showCornerTicks={true}>
+        <GlassPanel className="p-4 flex flex-col shrink-0 min-h-[190px]" clipSize="md" showCornerTicks={true}>
           <div className="border-b border-border-hairline/25 pb-2 mb-3 flex justify-between items-center">
             <div>
               <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
@@ -354,12 +418,126 @@ export default function EncodingLab() {
           </div>
         </GlassPanel>
 
-        {/* The 8-bit bus monitor / logic analyzer that sat here has been cut.
-            It rendered an 8-row LED register readout of only the first eight
-            bytes of the buffer — a fixed, near-static display that dominated
-            this column while telling you nothing an ARG puzzle needs. The
-            breakout channels are the point of this module; they now get the
-            room. */}
+        {/* SOURCE SIGNATURE — replaces the 8-bit bus monitor that used to sit
+            here. That showed an LED register readout of the first eight bytes
+            only: fixed, near-static, and useless for deciding what a payload
+            is. This reads the whole buffer and answers the question a solver
+            actually has on arrival — what does this look like, and which
+            formats are even plausible — before they scan sixteen channels. */}
+        <GlassPanel className="p-4 flex-1 flex flex-col min-h-0 relative overflow-hidden" clipSize="md" showCornerTicks={true}>
+          <DataWall cell={18} intensity={0.07} />
+
+          <div className="relative z-10 flex flex-col min-h-0 h-full">
+            <div className="border-b border-border-hairline/25 pb-2 mb-3">
+              <h3 className="font-display text-sm font-extrabold tracking-[0.18em] text-white flex items-center uppercase">
+                <span className="w-1.5 h-3 bg-accent-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
+                Source signature
+              </h3>
+              <p className="text-[12px] font-share text-text-dim uppercase tracking-wider mt-0.5">
+                Composition of the live buffer
+              </p>
+            </div>
+
+            {!sourceStats ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 py-8">
+                <span className="font-display text-sm font-extrabold tracking-[0.16em] text-white/60 uppercase">
+                  Buffer empty
+                </span>
+                <span className="font-share text-[12px] tracking-wide text-text-dim/60 uppercase max-w-xs leading-relaxed">
+                  Paste a payload and its shape will be read here
+                </span>
+              </div>
+            ) : (
+              <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto hud-scroll-hidden">
+                {/* Headline figures */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    ["Bytes", String(sourceStats.len)],
+                    ["Symbols", String(sourceStats.unique)],
+                    ["Entropy", sourceStats.entropy.toFixed(2)],
+                  ].map(([label, value]) => (
+                    <div key={label} className="bg-bg-void/50 border border-border-hairline/15 p-2">
+                      <div className="font-share text-[12px] tracking-widest text-text-dim/60 uppercase">
+                        {label}
+                      </div>
+                      <div className="font-display text-xl font-extrabold text-white leading-none mt-1 tracking-tight">
+                        {value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Character-class composition */}
+                <div className="space-y-1.5">
+                  <div className="font-share text-[12px] tracking-widest text-text-dim/60 uppercase">
+                    Composition
+                  </div>
+                  {sourceStats.bars.map((b) => (
+                    <div key={b.key} className="flex items-center gap-2">
+                      <span className="font-share text-[12px] uppercase tracking-wide text-cyan-text/70 w-16 shrink-0">
+                        {b.label}
+                      </span>
+                      <span className="relative flex-1 h-[6px] bg-bg-void/70 border border-border-hairline/20 overflow-hidden">
+                        <span
+                          className="absolute inset-y-0 left-0 bg-accent-primary/70 transition-[width] duration-500 ease-out"
+                          style={{ width: `${Math.min(100, b.pct)}%` }}
+                        />
+                      </span>
+                      <span className="font-mono text-[12px] text-cyan-text/80 w-10 text-right tabular-nums shrink-0">
+                        {Math.round(b.pct)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Alphabet fit — how much of the payload each alphabet covers */}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    ["Hex alphabet", sourceStats.hexPct],
+                    ["Base64 alphabet", sourceStats.b64Pct],
+                  ].map(([label, pct]) => (
+                    <div key={label as string} className="bg-bg-void/40 border border-border-hairline/15 p-2">
+                      <div className="font-share text-[12px] tracking-widest text-text-dim/60 uppercase truncate">
+                        {label}
+                      </div>
+                      <div
+                        className={`font-mono text-sm mt-0.5 ${
+                          (pct as number) === 100 ? "text-green-active" : "text-cyan-text/80"
+                        }`}
+                      >
+                        {Math.round(pct as number)}% fit
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Plausible formats */}
+                <div>
+                  <div className="font-share text-[12px] tracking-widest text-text-dim/60 uppercase mb-1.5">
+                    Shape matches
+                  </div>
+                  {sourceStats.hints.length === 0 ? (
+                    <p className="font-share text-[12px] tracking-wide text-text-dim/50 uppercase">
+                      No format matches this alphabet and length cleanly — likely
+                      plaintext, a cipher, or a mixed payload.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {sourceStats.hints.map((h) => (
+                        <span
+                          key={h}
+                          className="font-display text-[12px] font-extrabold tracking-[0.14em] uppercase px-2 py-1 border border-green-active/50 text-green-active bg-green-active/10"
+                        >
+                          {h}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </GlassPanel>
 
       </div>
 
