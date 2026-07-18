@@ -1360,65 +1360,207 @@ button:hover, .btn-interactive:hover {
   .hud-target { transition: none; }
 }
 
-/* ---- Forensic scan overlay ----
-   Sized in % / em so the readout fits any panel; the old version centred a
-   fixed 306px ring stack and got sliced by narrower containers. */
-@keyframes scan-sweep-bar {
-  0%   { transform: translateX(-120%); }
-  100% { transform: translateX(400%); }
+/* ---- Forensic scan overlay: byte lattice ----
+   A grid of nibbles churning and then locking behind a travelling resolve
+   front. Modular by construction, so it fits any panel at any aspect ratio —
+   unlike the fixed 306px ring stack this replaced, which got sliced by narrower
+   containers. */
+@keyframes byte-resolve-front {
+  0%   { transform: translateX(-120%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(660%); opacity: 0; }
 }
-.scan-sweep-bar {
+.byte-resolve-front {
   background: linear-gradient(
     90deg,
     transparent,
-    rgb(var(--rgb-accent) / 0.18) 45%,
-    rgb(var(--rgb-accent) / 0.32) 50%,
-    rgb(var(--rgb-accent) / 0.18) 55%,
+    rgb(var(--rgb-accent) / 0.10) 40%,
+    rgb(var(--rgb-accent) / 0.30) 50%,
+    rgb(var(--rgb-accent) / 0.10) 60%,
     transparent
   );
-  animation: scan-sweep-bar 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: byte-resolve-front 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-/* Register rows resolve one after another, then hold. */
-@keyframes scan-register-tick {
-  0%, 40%   { background-color: transparent; box-shadow: none; }
-  55%, 100% {
-    background-color: var(--color-accent-primary);
-    box-shadow: 0 0 6px var(--color-accent-primary);
+.byte-lattice {
+  display: grid;
+  gap: 2px;
+  font-family: "Share Tech Mono", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Each cell rides from unresolved (dim, churning) to locked (bright, steady).
+   The stagger comes from an inline animation-delay keyed to the column. */
+@keyframes byte-cell-lock {
+  0%, 45% {
+    color: var(--color-cyan-dim);
+    background-color: rgb(var(--rgb-primary) / 0.06);
+    box-shadow: none;
+  }
+  55% {
+    color: #ffffff;
+    background-color: rgb(var(--rgb-accent) / 0.35);
+    box-shadow: 0 0 8px rgb(var(--rgb-accent) / 0.5);
+  }
+  100% {
+    color: var(--color-cyan-text);
+    background-color: rgb(var(--rgb-accent) / 0.10);
+    box-shadow: none;
   }
 }
-.scan-register-tick {
-  animation: scan-register-tick 2.8s ease-out infinite;
-}
-
-@keyframes scan-register-fill {
-  0%        { width: 0; }
-  55%, 100% { width: var(--fill, 70%); }
-}
-.scan-register-fill {
-  width: 0;
-  animation: scan-register-fill 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-}
-
-@keyframes scan-register-state {
-  0%, 60%   { opacity: 0; }
-  70%, 100% { opacity: 1; }
-}
-.scan-register-state {
-  opacity: 0;
-  animation: scan-register-state 2.8s ease-out infinite;
+.byte-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  min-height: 12px;
+  color: var(--color-cyan-dim);
+  animation: byte-cell-lock 3.2s ease-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scan-sweep-bar { animation: none; opacity: 0.25; }
-  .scan-register-tick,
-  .scan-register-fill,
-  .scan-register-state {
+  .byte-resolve-front { animation: none; opacity: 0.2; }
+  .byte-cell {
     animation: none;
-    opacity: 1;
-    width: var(--fill, 70%);
-    background-color: var(--color-accent-primary);
+    color: var(--color-cyan-text);
+    background-color: rgb(var(--rgb-accent) / 0.10);
   }
+}
+
+/* ---- Hex lattice click ripple ---- */
+@keyframes hex-lattice-ripple {
+  from { r: 4px; opacity: 0.75; }
+  to   { r: 96px; opacity: 0; }
+}
+.hex-lattice-ripple {
+  animation: hex-lattice-ripple 620ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hex-lattice-ripple { animation-duration: 1ms; }
+}
+
+/* =====================================================================
+   THEMES
+   Every colour utility in this app compiles to var(--color-*), so
+   overriding those variables on the root element retints the entire UI at
+   runtime with no rebuild and no per-component work.
+
+   The --rgb-* channel triplets exist for the many inline rgba()/shadow
+   values in TSX: those cannot consume a hex token and keep an alpha, so
+   they use rgb(var(--rgb-accent) / 0.4) instead.
+
+   Adding a theme = one more block here plus an entry in THEMES in
+   src/lib/themes.ts. Nothing else should need to change.
+   ===================================================================== */
+
+:root,
+:root[data-theme="cyan"] {
+  --color-bg-void: #020912;
+  --color-bg-panel: rgba(18, 32, 38, 0.45);
+  --color-cyan-primary: #70a2a8;
+  --color-cyan-dim: #456c70;
+  --color-cyan-text: #b3e2e6;
+  --color-accent-primary: #00f3ff;
+  --color-amber-alert: #ff9d2e;
+  --color-red-threat: #ff3b4e;
+  /* A real green. This was #70a2a8 (the cyan), which is why nothing in the
+     app ever read as "go" — every verified/active state rendered cyan. */
+  --color-green-verified: #2fffa8;
+  --color-green-active: #2fffa8;
+  /* Pale blue, the counterpart to green in the reference: used for the
+     inverse/secondary action where green marks the primary one. */
+  --color-blue-pale: #b3e2e6;
+  --color-text-primary: #f5f8f9;
+  --color-text-dim: #f5f8f9;
+  --color-border-hairline: rgba(112, 162, 168, 0.15);
+
+  --rgb-accent: 0 243 255;
+  --rgb-primary: 112 162 168;
+  --rgb-threat: 255 59 78;
+  --rgb-amber: 255 157 46;
+  --rgb-green: 47 255 168;
+  --rgb-blue-pale: 179 226 230;
+  --rgb-waveform: 232 244 248;
+}
+
+/* WayneTech red — the Gotham Knights console. Near-black chassis, signal
+   red as the working colour, white reserved for primary readouts. */
+:root[data-theme="crimson"] {
+  --color-bg-void: #0b0406;
+  --color-bg-panel: rgba(42, 20, 24, 0.45);
+  --color-cyan-primary: #a4838a;
+  --color-cyan-dim: #6b4a52;
+  --color-cyan-text: #ffe4e7;
+  --color-accent-primary: #ff1f36;
+  --color-amber-alert: #ffa02e;
+  --color-red-threat: #ff5c5c;
+  /* Slightly desaturated so it sits against the red chassis without vibrating. */
+  --color-green-verified: #34e08c;
+  --color-green-active: #3ee08a;
+  --color-blue-pale: #9fc7d4;
+  --color-waveform: #ffecee;
+  --color-text-primary: #fdf4f5;
+  --color-text-dim: #fdf4f5;
+  --color-border-hairline: rgba(164, 131, 138, 0.20);
+
+  --rgb-accent: 255 31 54;
+  --rgb-primary: 164 131 138;
+  --rgb-threat: 255 92 92;
+  --rgb-amber: 255 160 46;
+  --rgb-green: 62 224 138;
+  --rgb-blue-pale: 159 199 212;
+  --rgb-waveform: 255 236 238;
+}
+
+/* Deep violet — the Gotham Knights menu palette. Cooler and softer than the
+   other two; accent leans magenta so it stays legible on the blue base. */
+:root[data-theme="violet"] {
+  --color-bg-void: #05031a;
+  --color-bg-panel: rgba(28, 22, 62, 0.45);
+  --color-cyan-primary: #737b9e;
+  --color-cyan-dim: #47508a;
+  --color-cyan-text: #e2e0ff;
+  --color-accent-primary: #d633ff;
+  --color-amber-alert: #ffb347;
+  --color-red-threat: #ff4d7d;
+  --color-green-verified: #5cf2b0;
+  --color-green-active: #5cf2b0;
+  --color-blue-pale: #b9c8ff;
+  --color-waveform: #eeecff;
+  --color-text-primary: #f4f1ff;
+  --color-text-dim: #f4f1ff;
+  --color-border-hairline: rgba(115, 123, 158, 0.20);
+
+  --rgb-accent: 214 51 255;
+  --rgb-primary: 115 123 158;
+  --rgb-threat: 255 77 125;
+  --rgb-amber: 255 179 71;
+  --rgb-green: 92 242 176;
+  --rgb-blue-pale: 185 200 255;
+  --rgb-waveform: 238 236 255;
+}
+
+/* ---- hud-target: bracketed corner accents on hover/focus ----
+   Applied here rather than on 151 individual buttons: every interactive
+   element that already opted into .hud-target inherits the Arkham-tablet
+   framing, and per-button state colours stay untouched. The reticle uses
+   ::before/::after, so these brackets use box-shadow on a wrapper-free
+   pseudo-free approach — outline plus inset shadow — to avoid colliding. */
+.hud-target {
+  transition: box-shadow 0.18s ease, background-color 0.18s ease;
+}
+.hud-target:hover:not(:disabled),
+.hud-target:focus-visible:not(:disabled) {
+  box-shadow:
+    inset 2px 2px 0 -1px var(--reticle-color),
+    inset -2px -2px 0 -1px var(--reticle-color),
+    0 0 12px -4px var(--reticle-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-target { transition: none; }
 }
 
 /* ---- Engine action button ----

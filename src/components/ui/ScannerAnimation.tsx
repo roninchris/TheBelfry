@@ -6,34 +6,27 @@ interface ScannerAnimationProps {
   scanLabel?: string;
 }
 
-/** Register rows, modelled on the WayneTech port-scan readout. */
-const REGISTERS = [
-  "OPTICAL SENSOR",
-  "INDEX PROCESSOR",
-  "ENTROPY SWEEP",
-  "SIGNATURE MATCH",
-  "HTX DRIVER",
-  "CARRIER DECODE",
-];
+const GLYPHS = "0123456789ABCDEF";
 
 /**
- * Forensic scan overlay.
+ * Forensic scan overlay — a byte lattice resolving under analysis.
  *
- * Rebuilt to be panel-shaped. The previous version centred a fixed 306px
- * (w-72) stack of concentric rings inside an overflow-hidden box, so in any
- * panel narrower than that — which is most of them — the rings were sliced off
- * by the container edges and the whole thing read as trapped in its div.
+ * A grid of cells churns through random nibbles and then locks, column band by
+ * column band, behind a travelling resolve front. It is the shape of the work
+ * the scan is actually doing (raw bytes going from noise to identified) rather
+ * than a generic progress list or radar, and it is modular by construction, so
+ * it fills any panel at any aspect ratio.
  *
- * Everything here is sized in percentages and `em`, so it fills whatever box it
- * is given at any aspect ratio without clipping. The structure follows the
- * WayneTech console: a sweep crossing the full width, a register list resolving
- * top to bottom, and process bars filling underneath.
+ * Cells are driven by CSS custom properties and a single interval that writes
+ * textContent directly — no per-cell React state, no rAF loop, and the churn
+ * stops entirely while the tab is hidden.
  */
 export default function ScannerAnimation({
   active = true,
   scanLabel = "SCANNING EVIDENCE STREAM",
 }: ScannerAnimationProps) {
   const scanSoundRef = useRef<{ stop: () => void } | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (active) {
@@ -50,13 +43,37 @@ export default function ScannerAnimation({
     };
   }, [active]);
 
-  // Staggered timings, stable across re-renders so rows do not resync.
-  const rows = useMemo(
+  // Churn the unlocked cells. Direct textContent writes: this ticks fast, and
+  // as React state it would re-render ~140 nodes several times a second.
+  useEffect(() => {
+    if (!active) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
+
+    let timer = 0;
+    const tick = () => {
+      if (!document.hidden && gridRef.current) {
+        const cells = gridRef.current.querySelectorAll<HTMLElement>("[data-churn]");
+        for (const c of cells) {
+          // Skip most cells each pass so the field shimmers unevenly rather
+          // than repainting as one solid block.
+          if (Math.random() > 0.35) continue;
+          c.textContent = GLYPHS[(Math.random() * 16) | 0];
+        }
+      }
+      timer = window.setTimeout(tick, 90);
+    };
+    timer = window.setTimeout(tick, 90);
+    return () => clearTimeout(timer);
+  }, [active]);
+
+  const cells = useMemo(
     () =>
-      REGISTERS.map((label, i) => ({
-        label,
-        delay: i * 0.42,
-        fill: 55 + ((i * 37) % 45),
+      Array.from({ length: 168 }).map((_, i) => ({
+        col: i % 24,
+        seed: GLYPHS[(Math.random() * 16) | 0],
+        // Lock order follows the column, with jitter so the front is ragged.
+        delay: (i % 24) * 0.09 + Math.random() * 0.12,
       })),
     [],
   );
@@ -65,68 +82,45 @@ export default function ScannerAnimation({
 
   return (
     <div className="absolute inset-0 z-20 pointer-events-none select-none overflow-hidden">
-      {/* Dim the panel underneath so the readout carries the eye. */}
-      <div className="absolute inset-0 bg-bg-void/70 backdrop-blur-[1px]" />
+      <div className="absolute inset-0 bg-bg-void/80 backdrop-blur-[1px]" />
 
-      {/* Full-width sweep. Crosses the whole box rather than orbiting inside it. */}
+      {/* Resolve front sweeping across the lattice. */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="scan-sweep-bar absolute inset-y-0 w-[35%]" />
+        <div className="byte-resolve-front absolute inset-y-0 w-[18%]" />
       </div>
 
-      {/* Corner brackets, scaled to the box. */}
-      <div className="absolute inset-2 pointer-events-none">
-        {[
-          "top-0 left-0 border-t-2 border-l-2",
-          "top-0 right-0 border-t-2 border-r-2",
-          "bottom-0 left-0 border-b-2 border-l-2",
-          "bottom-0 right-0 border-b-2 border-r-2",
-        ].map((c) => (
-          <span
-            key={c}
-            className={`absolute w-[1.4em] h-[1.4em] border-accent-primary/70 ${c}`}
-          />
-        ))}
-      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-[5%] py-[4%] gap-[0.8em]">
+        <div className="w-full max-w-[520px] flex items-baseline justify-between">
+          <span className="font-display text-[13px] font-extrabold tracking-[0.2em] text-white uppercase truncate">
+            {scanLabel}
+          </span>
+          <span className="font-share text-[12px] tracking-widest text-accent-primary shrink-0 ml-3 animate-hex-pulse-flicker">
+            RESOLVING
+          </span>
+        </div>
 
-      {/* Register readout. max-w keeps it centred and readable in wide panels;
-          percentage width keeps it inside narrow ones. */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-[6%]">
-        <div className="w-full max-w-[340px] space-y-[0.45em]">
-          <div className="flex items-baseline justify-between mb-[0.6em]">
-            <span className="font-display text-[12px] font-extrabold tracking-[0.2em] text-white uppercase">
-              {scanLabel}
+        {/* The lattice. grid-cols-24 via inline style so it does not depend on
+            a Tailwind arbitrary-column class existing. */}
+        <div
+          ref={gridRef}
+          className="byte-lattice w-full max-w-[520px]"
+          style={{ gridTemplateColumns: "repeat(24, minmax(0, 1fr))" }}
+        >
+          {cells.map((c, i) => (
+            <span
+              key={i}
+              data-churn=""
+              className="byte-cell"
+              style={{ animationDelay: `${c.delay}s` }}
+            >
+              {c.seed}
             </span>
-            <span className="font-share text-[12px] tracking-widest text-accent-primary animate-hex-pulse-flicker">
-              ACTIVE
-            </span>
-          </div>
-
-          {rows.map((r) => (
-            <div key={r.label} className="flex items-center gap-[0.6em]">
-              <span
-                className="scan-register-tick w-[0.5em] h-[0.5em] shrink-0 border border-accent-primary/60"
-                style={{ animationDelay: `${r.delay}s` }}
-              />
-              <span className="font-share text-[12px] tracking-[0.14em] text-cyan-text/80 uppercase w-[9em] shrink-0 truncate">
-                {r.label}
-              </span>
-              <span className="relative flex-1 h-[0.45em] bg-bg-void/80 border border-border-hairline/25 overflow-hidden">
-                <span
-                  className="scan-register-fill absolute inset-y-0 left-0 bg-accent-primary/70"
-                  style={{
-                    animationDelay: `${r.delay}s`,
-                    ["--fill" as string]: `${r.fill}%`,
-                  }}
-                />
-              </span>
-              <span
-                className="scan-register-state font-share text-[12px] tracking-widest text-green-active w-[4.5em] text-right shrink-0"
-                style={{ animationDelay: `${r.delay}s` }}
-              >
-                OK
-              </span>
-            </div>
           ))}
+        </div>
+
+        <div className="w-full max-w-[520px] flex items-center justify-between font-share text-[12px] tracking-widest text-cyan-text/60 uppercase">
+          <span>Byte lattice</span>
+          <span className="byte-readout text-accent-primary" />
         </div>
       </div>
     </div>
