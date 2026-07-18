@@ -41,6 +41,7 @@ import {
 import { useAppStore } from "../../store/appStore";
 import { detectMorse, detectDTMF, applySpectralSubtraction } from "../../lib/audioAnalysis";
 import { parseMidiFile, noteNumberToName } from "../../lib/tools/audio-analysis/midiDecoder";
+import { themeColor, themeRgba } from "../../lib/themeColors";
 
 interface AudioSample {
   id: string;
@@ -678,11 +679,11 @@ export default function AudioForensicsLab() {
 
     const draw = () => {
       // Background clean
-      ctx.fillStyle = "var(--color-bg-void)";
+      ctx.fillStyle = themeColor("--color-bg-void");
       ctx.fillRect(0, 0, width, height);
 
       // Grid Lines
-      ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.04)";
+      ctx.strokeStyle = themeRgba("--rgb-accent", 0.04);
       ctx.lineWidth = 1;
       for (let x = 0; x < width; x += 30) {
         ctx.beginPath();
@@ -699,7 +700,7 @@ export default function AudioForensicsLab() {
 
       if (!currentSample) {
         // Flatline
-        ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.15)";
+        ctx.strokeStyle = themeRgba("--rgb-accent", 0.15);
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(0, height / 2);
@@ -712,7 +713,7 @@ export default function AudioForensicsLab() {
       if (activeTab === "waveform") {
         if (decodedBuffer && waveformPeaks) {
           // Draw real decoded waveform
-          ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.75)";
+          ctx.strokeStyle = themeRgba("--rgb-accent", 0.75);
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           
@@ -729,12 +730,12 @@ export default function AudioForensicsLab() {
             ctx.lineTo(i, height / 2 - amp);
           }
           ctx.closePath();
-          ctx.fillStyle = "rgb(var(--rgb-accent) / 0.2)";
+          ctx.fillStyle = themeRgba("--rgb-accent", 0.2);
           ctx.fill();
           ctx.stroke();
 
           // Mirror / shadow bottom fill using RMS peaks
-          ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.25)";
+          ctx.strokeStyle = themeRgba("--rgb-accent", 0.25);
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(0, height / 2);
@@ -747,14 +748,14 @@ export default function AudioForensicsLab() {
             ctx.lineTo(i, height / 2 + amp);
           }
           ctx.closePath();
-          ctx.fillStyle = "rgb(var(--rgb-accent) / 0.05)";
+          ctx.fillStyle = themeRgba("--rgb-accent", 0.05);
           ctx.fill();
           ctx.stroke();
 
           // Playhead indicator
           const progressRatio = currentTime / currentSample.duration;
           const playheadX = progressRatio * width;
-          ctx.strokeStyle = "var(--color-red-threat)";
+          ctx.strokeStyle = themeColor("--color-red-threat");
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(playheadX, 0);
@@ -762,7 +763,7 @@ export default function AudioForensicsLab() {
           ctx.stroke();
 
           // Playhead cap/handle
-          ctx.fillStyle = "var(--color-red-threat)";
+          ctx.fillStyle = themeColor("--color-red-threat");
           ctx.beginPath();
           ctx.moveTo(playheadX - 4, 0);
           ctx.lineTo(playheadX + 4, 0);
@@ -771,7 +772,7 @@ export default function AudioForensicsLab() {
           ctx.fill();
         } else {
           // Draw Preset Waveform
-          ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.65)";
+          ctx.strokeStyle = themeRgba("--rgb-accent", 0.65);
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(0, height / 2);
@@ -812,7 +813,7 @@ export default function AudioForensicsLab() {
           ctx.stroke();
 
           // Mirror / shadow bottom fill
-          ctx.strokeStyle = "rgb(var(--rgb-accent) / 0.15)";
+          ctx.strokeStyle = themeRgba("--rgb-accent", 0.15);
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(0, height / 2);
@@ -833,7 +834,7 @@ export default function AudioForensicsLab() {
 
           // Playhead indicator
           const playheadX = progressRatio * width;
-          ctx.strokeStyle = "var(--color-red-threat)";
+          ctx.strokeStyle = themeColor("--color-red-threat");
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(playheadX, 0);
@@ -841,7 +842,7 @@ export default function AudioForensicsLab() {
           ctx.stroke();
 
           // Playhead cap/handle
-          ctx.fillStyle = "var(--color-red-threat)";
+          ctx.fillStyle = themeColor("--color-red-threat");
           ctx.beginPath();
           ctx.moveTo(playheadX - 4, 0);
           ctx.lineTo(playheadX + 4, 0);
@@ -909,7 +910,7 @@ export default function AudioForensicsLab() {
           }
 
           // Overlay horizontal frequency guide tags
-          ctx.fillStyle = "rgb(var(--rgb-accent) / 0.6)";
+          ctx.fillStyle = themeRgba("--rgb-accent", 0.6);
           ctx.font = "10px monospace";
           const maxFreq = decodedBuffer.sampleRate / 2;
           ctx.fillText(`${(maxFreq / 1000 * 0.9).toFixed(1)} kHz`, 5, 14);
@@ -917,7 +918,7 @@ export default function AudioForensicsLab() {
           ctx.fillText("0 Hz", 5, height - 6);
 
           // Playhead/scanline overlay
-          ctx.strokeStyle = "var(--color-red-threat)";
+          ctx.strokeStyle = themeColor("--color-red-threat");
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(scanLineX, 0);
@@ -953,17 +954,17 @@ export default function AudioForensicsLab() {
             const grad = ctx.createLinearGradient(x, height, x, 0);
             if (intensity > 0.7) {
               grad.addColorStop(0, "rgba(2, 9, 18, 0.8)");
-              grad.addColorStop(0.4, "rgb(var(--rgb-accent) / 0.4)");
-              grad.addColorStop(0.7, "rgb(var(--rgb-threat) / 0.85)");
+              grad.addColorStop(0.4, themeRgba("--rgb-accent", 0.4));
+              grad.addColorStop(0.7, themeRgba("--rgb-threat", 0.85));
               grad.addColorStop(1, "rgba(255, 230, 100, 0.9)");
             } else if (intensity > 0.3) {
               grad.addColorStop(0, "rgba(2, 9, 18, 0.8)");
-              grad.addColorStop(0.5, "rgb(var(--rgb-accent) / 0.15)");
-              grad.addColorStop(0.9, "rgb(var(--rgb-accent) / 0.75)");
-              grad.addColorStop(1, "rgb(var(--rgb-threat) / 0.3)");
+              grad.addColorStop(0.5, themeRgba("--rgb-accent", 0.15));
+              grad.addColorStop(0.9, themeRgba("--rgb-accent", 0.75));
+              grad.addColorStop(1, themeRgba("--rgb-threat", 0.3));
             } else {
               grad.addColorStop(0, "rgba(2, 9, 18, 0.9)");
-              grad.addColorStop(1, "rgb(var(--rgb-accent) / 0.12)");
+              grad.addColorStop(1, themeRgba("--rgb-accent", 0.12));
             }
 
             ctx.fillStyle = grad;
@@ -971,7 +972,7 @@ export default function AudioForensicsLab() {
           }
 
           // Overlay horizontal frequency guide tags
-          ctx.fillStyle = "rgb(var(--rgb-accent) / 0.35)";
+          ctx.fillStyle = themeRgba("--rgb-accent", 0.35);
           ctx.font = "7px monospace";
           ctx.fillText("3.0 kHz", 5, 12);
           ctx.fillText("1.5 kHz", 5, height / 2);
@@ -979,7 +980,7 @@ export default function AudioForensicsLab() {
 
           // Highlight spectral hotspots in red
           if (currentSample.type === "dtmf") {
-            ctx.strokeStyle = "rgb(var(--rgb-threat) / 0.4)";
+            ctx.strokeStyle = themeRgba("--rgb-threat", 0.4);
             ctx.lineWidth = 1;
             ctx.setLineDash([3, 3]);
             ctx.beginPath();
@@ -992,7 +993,7 @@ export default function AudioForensicsLab() {
           }
 
           // Playhead/scanline overlay
-          ctx.strokeStyle = "var(--color-red-threat)";
+          ctx.strokeStyle = themeColor("--color-red-threat");
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(scanLineX, 0);
