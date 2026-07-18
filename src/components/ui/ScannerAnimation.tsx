@@ -93,10 +93,10 @@ export default function ScannerAnimation({
       <div className="absolute inset-0 flex flex-col items-center justify-center px-[6%]">
         <div className="w-full max-w-[340px] space-y-[0.45em]">
           <div className="flex items-baseline justify-between mb-[0.6em]">
-            <span className="font-display text-[11px] font-extrabold tracking-[0.2em] text-white uppercase">
+            <span className="font-display text-[12px] font-extrabold tracking-[0.2em] text-white uppercase">
               {scanLabel}
             </span>
-            <span className="font-share text-[10px] tracking-widest text-accent-primary animate-hex-pulse-flicker">
+            <span className="font-share text-[12px] tracking-widest text-accent-primary animate-hex-pulse-flicker">
               ACTIVE
             </span>
           </div>
@@ -107,7 +107,7 @@ export default function ScannerAnimation({
                 className="scan-register-tick w-[0.5em] h-[0.5em] shrink-0 border border-accent-primary/60"
                 style={{ animationDelay: `${r.delay}s` }}
               />
-              <span className="font-share text-[10px] tracking-[0.14em] text-cyan-text/80 uppercase w-[9em] shrink-0 truncate">
+              <span className="font-share text-[12px] tracking-[0.14em] text-cyan-text/80 uppercase w-[9em] shrink-0 truncate">
                 {r.label}
               </span>
               <span className="relative flex-1 h-[0.45em] bg-bg-void/80 border border-border-hairline/25 overflow-hidden">
@@ -120,7 +120,7 @@ export default function ScannerAnimation({
                 />
               </span>
               <span
-                className="scan-register-state font-share text-[9px] tracking-widest text-green-active w-[4.5em] text-right shrink-0"
+                className="scan-register-state font-share text-[12px] tracking-widest text-green-active w-[4.5em] text-right shrink-0"
                 style={{ animationDelay: `${r.delay}s` }}
               >
                 OK

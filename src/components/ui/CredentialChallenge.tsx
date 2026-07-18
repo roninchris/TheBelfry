@@ -272,7 +272,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
                 </button>
               </form>
 
-              <p className="mt-6 pt-4 border-t border-border-hairline/40 text-center font-share text-[11px] tracking-[0.15em] text-cyan-dim/60 uppercase">
+              <p className="mt-6 pt-4 border-t border-border-hairline/40 text-center font-share text-[12px] tracking-[0.15em] text-cyan-dim/60 uppercase">
                 Dismiss to continue on the local cache
               </p>
             </>
@@ -313,7 +313,7 @@ function SessionPanel({
         <h2 className="font-display text-sm font-black tracking-[0.25em] text-accent-primary uppercase">
           {knight.label}
         </h2>
-        <p className="font-share text-[11px] tracking-[0.18em] text-cyan-dim/80 uppercase pt-1">
+        <p className="font-share text-[12px] tracking-[0.18em] text-cyan-dim/80 uppercase pt-1">
           Oracle link active // Board shared
         </p>
       </div>
@@ -328,7 +328,7 @@ function SessionPanel({
       >
         Terminate session
       </button>
-      <p className="font-share text-[11px] tracking-[0.15em] text-cyan-dim/60 uppercase">
+      <p className="font-share text-[12px] tracking-[0.15em] text-cyan-dim/60 uppercase">
         Reverts this browser to the local cache
       </p>
     </div>
@@ -397,7 +397,7 @@ function GrantedPanel({ label, sigil, reduce }: { label: string; sigil: string |
         <h2 className="font-display text-base font-black tracking-[0.25em] text-accent-primary uppercase">
           <DecryptText text={label} duration={700} silent />
         </h2>
-        <p className="font-share text-[11px] tracking-[0.18em] text-cyan-dim/80 uppercase pt-1">
+        <p className="font-share text-[12px] tracking-[0.18em] text-cyan-dim/80 uppercase pt-1">
           Oracle link established // Board synchronizing
         </p>
       </div>

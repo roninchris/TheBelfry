@@ -65,7 +65,7 @@ export default function TopBar() {
           <span className="font-display text-sm font-extrabold tracking-[0.22em] text-white uppercase">
             Batcomputer
           </span>
-          <span className="hidden 2xl:inline font-share text-[10px] text-cyan-dim/70 tracking-[0.16em] uppercase">
+          <span className="hidden 2xl:inline font-share text-[12px] text-cyan-dim/70 tracking-[0.16em] uppercase">
             Belfry Systems &middot; Forensic Platform
           </span>
         </span>

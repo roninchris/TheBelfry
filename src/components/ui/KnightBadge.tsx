@@ -70,7 +70,7 @@ export default function KnightBadge() {
         >
           {label}
         </span>
-        <span className="font-share text-[11px] tracking-[0.14em] text-cyan-dim/70 uppercase">
+        <span className="font-share text-[12px] tracking-[0.14em] text-cyan-dim/70 uppercase">
           Oracle link
         </span>
       </span>

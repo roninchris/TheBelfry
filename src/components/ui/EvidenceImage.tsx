@@ -51,7 +51,7 @@ export default function EvidenceImage({ refValue, alt = "", className = "" }: Ev
     return (
       <div className={`flex flex-col items-center justify-center gap-1 text-center ${className}`}>
         <ImageOff className="w-5 h-5 text-red-threat/60" />
-        <span className="font-mono text-[10px] text-red-threat/60 uppercase tracking-wider px-1">
+        <span className="font-mono text-[12px] text-red-threat/60 uppercase tracking-wider px-1">
           Image unavailable
         </span>
       </div>

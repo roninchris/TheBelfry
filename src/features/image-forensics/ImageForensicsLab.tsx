@@ -140,10 +140,10 @@ function CarrierSignatureStrip({
   return (
     <div className="mt-3 border-t border-border-hairline/15 pt-3">
       <div className="flex items-baseline justify-between mb-2">
-        <span className="font-display text-[11px] font-black tracking-widest text-cyan-text uppercase">
+        <span className="font-display text-[12px] font-black tracking-widest text-cyan-text uppercase">
           Carrier Signature
         </span>
-        <span className="font-share text-[11px] tracking-widest text-text-dim/60 uppercase">
+        <span className="font-share text-[12px] tracking-widest text-text-dim/60 uppercase">
           Shannon entropy · bits per channel
         </span>
       </div>
@@ -160,7 +160,7 @@ function CarrierSignatureStrip({
               return (
                 <div key={c.key} className="flex items-center gap-2">
                   <span
-                    className="font-display text-[11px] font-black w-3 shrink-0"
+                    className="font-display text-[12px] font-black w-3 shrink-0"
                     style={{ color: c.tint }}
                   >
                     {c.label}
@@ -178,7 +178,7 @@ function CarrierSignatureStrip({
                       }}
                     />
                   </div>
-                  <span className="font-mono text-[11px] text-cyan-text/80 w-10 text-right tabular-nums shrink-0">
+                  <span className="font-mono text-[12px] text-cyan-text/80 w-10 text-right tabular-nums shrink-0">
                     {v.toFixed(2)}
                   </span>
                 </div>
@@ -194,7 +194,7 @@ function CarrierSignatureStrip({
               ["Δ Spread", spread !== null ? `${spread.toFixed(2)}` : "—"],
             ].map(([label, value]) => (
               <div key={label as string}>
-                <div className="font-share text-[10px] tracking-widest text-text-dim/50 uppercase">
+                <div className="font-share text-[12px] tracking-widest text-text-dim/50 uppercase">
                   {label}
                 </div>
                 <div className="font-mono text-[12px] text-cyan-text/90 truncate">{value}</div>

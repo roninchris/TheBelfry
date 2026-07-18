@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
 interface HexagonProps {
@@ -48,21 +48,42 @@ export default function HexagonBackground() {
   const shouldReduceMotion = useReducedMotion();
   const hackingChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*<>[]{}|;:,./?";
   
-  const [cornerText, setCornerText] = useState<string[]>(["", "", "", ""]);
+  // Written straight to the DOM rather than held in state. This ticked every
+  // 100ms; as setState that re-rendered this whole component — the hex frames,
+  // the giant ambient hexes, every decorative SVG — ten times a second, for
+  // four 15-character strings that nothing else depends on.
+  const cornerRefs = [
+    useRef<HTMLDivElement>(null),
+    useRef<HTMLDivElement>(null),
+    useRef<HTMLDivElement>(null),
+    useRef<HTMLDivElement>(null),
+  ];
 
   useEffect(() => {
-    const generate = () => Array.from({ length: 4 }).map(() => 
-      Array.from({ length: 15 }).map(() => hackingChars[Math.floor(Math.random() * hackingChars.length)]).join("")
-    );
-    
-    setCornerText(generate());
+    const roll = () =>
+      Array.from({ length: 15 })
+        .map(() => hackingChars[Math.floor(Math.random() * hackingChars.length)])
+        .join("");
+
+    const paint = () => {
+      for (const ref of cornerRefs) {
+        if (ref.current) ref.current.textContent = roll();
+      }
+    };
+
+    paint();
     if (shouldReduceMotion) return;
 
-    const interval = setInterval(() => {
-      setCornerText(generate());
-    }, 100);
+    let timer = 0;
+    const tick = () => {
+      // Skipped while the tab is hidden — there is nobody to see it, and the
+      // timer otherwise keeps firing in the background.
+      if (!document.hidden) paint();
+      timer = window.setTimeout(tick, 100);
+    };
+    timer = window.setTimeout(tick, 100);
 
-    return () => clearInterval(interval);
+    return () => clearTimeout(timer);
   }, [shouldReduceMotion]);
 
   return (
@@ -149,20 +170,20 @@ export default function HexagonBackground() {
 
       {/* Corner Telemetry / Hacking Chars */}
       <div className="absolute top-8 left-8 font-mono text-[12px] text-cyan-primary/40 space-y-1">
-        <div className="animate-hex-pulse-flicker">{cornerText[0]}</div>
+        <div ref={cornerRefs[0]} className="animate-hex-pulse-flicker" />
         <div className="text-cyan-dim/50 tracking-widest">SYS_CORE: ONLINE [0xFA3]</div>
       </div>
       <div className="absolute top-8 right-8 font-mono text-[12px] text-cyan-primary/40 text-right space-y-1">
-        <div className="animate-hex-pulse-flicker">{cornerText[1]}</div>
+        <div ref={cornerRefs[1]} className="animate-hex-pulse-flicker" />
         <div className="text-cyan-dim/50 tracking-widest">UPLINK_STATUS: SECURE</div>
       </div>
       <div className="absolute bottom-8 left-8 font-mono text-[12px] text-cyan-primary/40 space-y-1">
         <div className="text-cyan-dim/50 tracking-widest">TRACE_ROUTE: MASKED</div>
-        <div className="animate-hex-pulse-flicker">{cornerText[2]}</div>
+        <div ref={cornerRefs[2]} className="animate-hex-pulse-flicker" />
       </div>
       <div className="absolute bottom-8 right-8 font-mono text-[12px] text-cyan-primary/40 text-right space-y-1">
         <div className="text-cyan-dim/50 tracking-widest">OS_VER: BELFRY 2.8.4</div>
-        <div className="animate-hex-pulse-flicker">{cornerText[3]}</div>
+        <div ref={cornerRefs[3]} className="animate-hex-pulse-flicker" />
       </div>
     </div>
   );

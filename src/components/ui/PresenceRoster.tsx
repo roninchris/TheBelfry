@@ -24,7 +24,7 @@ export default function PresenceRoster() {
       className="flex items-center gap-1.5 border-l border-border-hairline/20 pl-4"
       title={`Also on the board: ${others.map((id) => getKnight(id)?.label).join(", ")}`}
     >
-      <span className="font-share text-[11px] tracking-[0.16em] text-cyan-dim/70 uppercase hidden xl:inline">
+      <span className="font-share text-[12px] tracking-[0.16em] text-cyan-dim/70 uppercase hidden xl:inline">
         On board
       </span>
       <div className="flex items-center -space-x-1">

@@ -523,7 +523,7 @@ export default function CryptoLab() {
                     playPinClick();
                   }}
                   onMouseEnter={() => playHoverEvidence()}
-                  className={`hud-target flex items-center gap-1 px-1.5 py-1 text-[11px] font-share font-bold tracking-widest uppercase border transition-all duration-200 ${
+                  className={`hud-target flex items-center gap-1 px-1.5 py-1 text-[12px] font-share font-bold tracking-widest uppercase border transition-all duration-200 ${
                     isActive
                       ? "bg-cyan-primary/15 border-cyan-primary text-cyan-text shadow-[0_0_6px_rgb(var(--rgb-accent) / 0.2)]"
                       : "bg-bg-void/40 border-border-hairline/15 text-text-dim/70 hover:border-cyan-primary/40 hover:text-cyan-text"
@@ -566,10 +566,10 @@ export default function CryptoLab() {
                   <div key={section.group.id} className="space-y-1.5">
                     <div className="flex items-center gap-2 pt-1.5 pb-1 sticky top-0 bg-bg-panel/95 backdrop-blur-sm z-20">
                       <span className="w-1 h-2.5 bg-cyan-primary/70 transform -skew-x-12 shadow-[0_0_4px_var(--color-accent-primary)]" />
-                      <span className="font-display text-[11px] font-black tracking-[0.2em] text-cyan-primary/90 uppercase">
+                      <span className="font-display text-[12px] font-black tracking-[0.2em] text-cyan-primary/90 uppercase">
                         {section.group.label}
                       </span>
-                      <span className="font-mono text-[11px] text-text-dim/50">{section.tools.length}</span>
+                      <span className="font-mono text-[12px] text-text-dim/50">{section.tools.length}</span>
                       <div className="flex-1 h-[1px] bg-gradient-to-r from-cyan-primary/20 to-transparent" />
                     </div>
                     {section.tools.map(renderCipherRow)}
@@ -798,9 +798,10 @@ export default function CryptoLab() {
             <button
               onClick={handleDecrypt}
               onMouseEnter={() => playHoverEvidence()}
-              className="hud-target flex-1 font-display font-black text-xs uppercase tracking-widest py-4 border-2 border-green-active bg-green-active text-bg-void shadow-[0_0_18px_-2px_rgb(var(--rgb-green)_/_0.55)] hover:shadow-[0_0_30px_0_rgb(var(--rgb-green)_/_0.85)] transition-all cursor-pointer flex items-center justify-center space-x-2"
+              className="engine-btn hud-target flex-1 text-sm py-4 cursor-pointer flex items-center justify-center space-x-2"
               style={{
                 clipPath: "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)",
+                "--engine-color": "var(--color-green-active)",
                 "--reticle-color": "var(--color-green-active)"
               } as React.CSSProperties}
             >
@@ -810,9 +811,10 @@ export default function CryptoLab() {
             <button
               onClick={handleEncrypt}
               onMouseEnter={() => playHoverEvidence()}
-              className="hud-target flex-1 font-display font-black text-xs uppercase tracking-widest py-4 border-2 border-blue-pale bg-blue-pale text-bg-void shadow-[0_0_18px_-2px_rgb(var(--rgb-blue-pale)_/_0.45)] hover:shadow-[0_0_30px_0_rgb(var(--rgb-blue-pale)_/_0.7)] transition-all cursor-pointer flex items-center justify-center space-x-2"
+              className="engine-btn hud-target flex-1 text-sm py-4 cursor-pointer flex items-center justify-center space-x-2"
               style={{
                 clipPath: "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)",
+                "--engine-color": "var(--color-blue-pale)",
                 "--reticle-color": "var(--color-blue-pale)"
               } as React.CSSProperties}
             >

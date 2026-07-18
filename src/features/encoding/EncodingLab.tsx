@@ -814,7 +814,7 @@ export default function EncodingLab() {
                 <div className="grid grid-cols-2 gap-1.5">
                   {[0, 1].map((stageIdx) => (
                     <label key={stageIdx} className="flex flex-col gap-0.5">
-                      <span className="text-text-dim/50 text-[11px] uppercase tracking-widest">STAGE {stageIdx + 1}</span>
+                      <span className="text-text-dim/50 text-[12px] uppercase tracking-widest">STAGE {stageIdx + 1}</span>
                       <select
                         value={pipelineLayers[stageIdx] || ""}
                         onChange={(e) => {

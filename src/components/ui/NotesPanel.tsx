@@ -49,7 +49,7 @@ export default function NotesPanel() {
       >
         {isOpen ? <X className="w-5 h-5" /> : <NotebookPen className="w-5 h-5" />}
         {!isOpen && notes.length > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-amber-text text-bg-void text-[11px] font-black flex items-center justify-center">
+          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-amber-text text-bg-void text-[12px] font-black flex items-center justify-center">
             {notes.length}
           </span>
         )}

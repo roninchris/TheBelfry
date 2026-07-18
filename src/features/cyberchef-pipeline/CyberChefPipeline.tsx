@@ -706,7 +706,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     const nodes: React.ReactNode[] = [];
                     const inState = inputText.trim() ? "done" : "idle";
                     nodes.push(
-                      <div key="in" className={`shrink-0 flex items-center justify-center w-8 h-8 border font-mono text-[11px] font-black tracking-wider transition-all duration-300 ${nodeCls(inState)}`} style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }} title="Input stream">IN</div>
+                      <div key="in" className={`shrink-0 flex items-center justify-center w-8 h-8 border font-mono text-[12px] font-black tracking-wider transition-all duration-300 ${nodeCls(inState)}`} style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }} title="Input stream">IN</div>
                     );
                     pipelineSteps.forEach((step, i) => {
                       const state =
@@ -716,7 +716,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       nodes.push(
                         <div
                           key={step.id}
-                          className={`shrink-0 flex flex-col items-center justify-center w-9 h-8 border font-mono text-[11px] font-black tracking-wider transition-all duration-300 ${nodeCls(state)}`}
+                          className={`shrink-0 flex flex-col items-center justify-center w-9 h-8 border font-mono text-[12px] font-black tracking-wider transition-all duration-300 ${nodeCls(state)}`}
                           style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }}
                           title={getTool(step.toolId)?.label || step.toolId}
                         >
@@ -727,12 +727,12 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     const outState = outputText ? (bakeSuccess ? "done" : "done") : "idle";
                     nodes.push(<div key="cout" className={conn(!!outputText)} />);
                     nodes.push(
-                      <div key="out" className={`shrink-0 flex items-center justify-center w-8 h-8 border font-mono text-[11px] font-black tracking-wider transition-all duration-300 ${nodeCls(outState, !bakeSuccess && !!outputText)}`} style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }} title="Output">OUT</div>
+                      <div key="out" className={`shrink-0 flex items-center justify-center w-8 h-8 border font-mono text-[12px] font-black tracking-wider transition-all duration-300 ${nodeCls(outState, !bakeSuccess && !!outputText)}`} style={{ clipPath: "polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)" }} title="Output">OUT</div>
                     );
                     return (
                       <>
                         {nodes}
-                        <span className="ml-auto pl-3 font-share text-[11px] tracking-widest uppercase text-text-dim/70 shrink-0">
+                        <span className="ml-auto pl-3 font-share text-[12px] tracking-widest uppercase text-text-dim/70 shrink-0">
                           {isBaking ? (
                             <span className="text-cyan-text animate-pulse">EXECUTING {activeStepIndex !== null ? `L${activeStepIndex + 1}` : "…"}</span>
                           ) : outputText ? (

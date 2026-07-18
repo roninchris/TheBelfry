@@ -570,7 +570,7 @@ export default function DashboardPage() {
                 <div className="col-span-2">
                   <span className="text-text-dim block uppercase">DIAGNOSTIC EXTRAPOLATION:</span>
                   <p className="text-text-primary/95 leading-normal mt-0.5">
-                    <DecryptText text={scannedEvidence.notes} trigger={scannedEvidence?.id} duration={1200} />
+                    <DecryptText text={scannedEvidence.notes} trigger={scannedEvidence?.id} duration={1200} silent />
                   </p>
                 </div>
               </div>
@@ -672,7 +672,7 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-start relative z-10">
                     <span className="font-chakra text-[13px] font-extrabold tracking-wider text-text-primary uppercase flex items-center">
                       <Hash className="w-3.5 h-3.5 mr-1 text-cyan-dim" />
-                      <DecryptText text={result.name} trigger={scannedEvidence?.id} />
+                      <DecryptText text={result.name} trigger={scannedEvidence?.id} silent />
                     </span>
                     <div className="flex items-center space-x-1">
                       {result.isMatch && (
@@ -689,7 +689,7 @@ export default function DashboardPage() {
                   </div>
 
                   <p className="text-[13px] leading-relaxed text-text-dim mt-1.5 font-share italic relative z-10">
-                    "<DecryptText text={result.details} trigger={scannedEvidence?.id} duration={1000} />"
+                    "<DecryptText text={result.details} trigger={scannedEvidence?.id} duration={1000} silent />"
                   </p>
                 </div>
               ))
@@ -742,7 +742,7 @@ export default function DashboardPage() {
               <span className="w-1 h-2 bg-accent-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_var(--color-accent-primary)]" />
               Neural Activity
             </h3>
-            <span className="font-share text-[10px] tracking-widest text-text-dim/45 uppercase">
+            <span className="font-share text-[12px] tracking-widest text-text-dim/45 uppercase">
               Inference field
             </span>
           </div>

@@ -140,7 +140,7 @@ export default function SettingsPage() {
                       ))}
                     </span>
 
-                    <span className="font-share text-[11px] tracking-wide uppercase opacity-70 normal-case">
+                    <span className="font-share text-[12px] tracking-wide uppercase opacity-70 normal-case">
                       {t.description}
                     </span>
                   </button>
