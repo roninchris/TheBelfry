@@ -7,7 +7,6 @@ import {
   Database,
   Search,
   Plus,
-  Compass,
   Trash2,
   Check,
   ShieldCheck,
@@ -24,6 +23,7 @@ import CorrelationNetwork from "../../components/ui/CorrelationNetwork";
 import DataStream from "../../components/react-bits/DataStream";
 import TreeGrowth from "../../components/react-bits/TreeGrowth";
 import BinaryRain from "../../components/react-bits/BinaryRain";
+import HolographicProjector from "../../components/ui/HolographicProjector";
 import {
   playSuccessChime,
   playPinClick,
@@ -32,7 +32,8 @@ import {
   playFileAnalysisComplete,
   playFileAnalysisScanner,
   playScanOpen,
-  playBinaryScanLoop
+  playBinaryScanLoop,
+  playBakeFailure
 } from "../../lib/soundEngine";
 import { useAppStore } from "../../store/appStore";
 import { carveEmbeddedFiles, CarvedFile } from "../../lib/tools/fileCarving";
@@ -56,6 +57,43 @@ interface BinaryPreset {
 
 const TACTICAL_BINARY_PRESETS: BinaryPreset[] = [];
 
+/**
+ * The dropzone has always advertised "MAX 10MB" but nothing enforced it. A
+ * larger file walked the whole buffer byte-by-byte in extractStringsAsync,
+ * which yields to the UI thread only every 100KB — a 500MB drop locked the tab
+ * for minutes with no way to cancel and no indication anything was wrong.
+ */
+const MAX_CARRIER_BYTES = 10 * 1024 * 1024;
+
+/**
+ * How much of the carrier the hex dump renders. This was 256 bytes — 16 rows,
+ * which could not fill the viewer at any window height, so the panel always
+ * bottomed out in empty space. 4KB gives 256 rows: enough to scroll and
+ * actually read structure, while staying cheap to build and render.
+ */
+const HEX_PREVIEW_BYTES = 4096;
+
+/**
+ * Scramble helpers for rows the read head has not reached yet. Both preserve
+ * the source string's length and spacing exactly, so nothing shifts when a row
+ * resolves — only the glyphs change.
+ */
+const HEX_GLYPHS = "0123456789ABCDEF";
+const ASCII_GLYPHS = "@#%&$?/\\<>[]{}=+*abcdefGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+const scrambleHex = (s: string) =>
+  s.replace(/[0-9A-F]/g, () => HEX_GLYPHS[(Math.random() * 16) | 0]);
+
+const scrambleAscii = (s: string) =>
+  s.replace(/\S/g, () => ASCII_GLYPHS[(Math.random() * ASCII_GLYPHS.length) | 0]);
+
+
+interface CarrierRejection {
+  code: "OVERSIZE" | "EMPTY" | "UNREADABLE";
+  headline: string;
+  detail: string;
+}
+
 export default function FileAnalysisLab() {
   const cases = useAppStore((state) => state.cases);
   const activeCaseId = useAppStore((state) => state.activeCaseId);
@@ -78,20 +116,25 @@ export default function FileAnalysisLab() {
   // Custom dynamically loaded file analysis states
   const [customMetadata, setCustomMetadata] = useState<any | null>(null);
   const [carvedFiles, setCarvedFiles] = useState<CarvedFile[]>([]);
-  const scanSoundRef = useRef<{ stop: () => void } | null>(null);
+  const [rejection, setRejection] = useState<CarrierRejection | null>(null);
+  // Real byte-frequency histogram of the loaded carrier, kept for the entropy
+  // strip so that readout is driven by the file rather than decorated.
+  const [byteHistogram, setByteHistogram] = useState<number[] | null>(null);
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hexScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Sound lifecycle for scanning
+  /**
+   * Scan audio. This briefly lived inside BinaryScanner while the module used
+   * that overlay; now the scan is rendered in the dump itself, the lab owns the
+   * loop again. Only one of the two may drive it — running both stacks it.
+   */
+  const scanSoundRef = useRef<{ stop: () => void } | null>(null);
   useEffect(() => {
-    if (isScanning) {
-      if (!scanSoundRef.current) {
-        scanSoundRef.current = playBinaryScanLoop();
-      }
-    } else {
-      if (scanSoundRef.current) {
-        scanSoundRef.current.stop();
-        scanSoundRef.current = null;
-      }
+    if (isScanning && !scanSoundRef.current) {
+      scanSoundRef.current = playBinaryScanLoop();
+    } else if (!isScanning && scanSoundRef.current) {
+      scanSoundRef.current.stop();
+      scanSoundRef.current = null;
     }
     return () => {
       if (scanSoundRef.current) {
@@ -131,6 +174,30 @@ export default function FileAnalysisLab() {
     return null;
   }, [selectedPresetId, customMetadata, activeFile]);
 
+  // Row the read head has reached. Derived from progress rather than stored, so
+  // it can never drift out of step with the rail in the left column.
+  const frontierRow = ((scanProgress / 100) * (currentData?.hexData?.length ?? 0));
+
+  /**
+   * Follow the read head down the dump while it decodes, then return to the top
+   * on completion — the magic-byte row is the payoff and it lives at offset 0,
+   * so leaving the viewer parked at the end would bury it.
+   */
+  useEffect(() => {
+    const el = hexScrollRef.current;
+    if (!el) return;
+    if (isScanning) {
+      const max = el.scrollHeight - el.clientHeight;
+      if (max > 0) el.scrollTop = (scanProgress / 100) * max;
+    } else if (scanComplete) {
+      // Direct assignment, not scrollTo({behavior:"smooth"}): smooth scrolling is
+      // driven by rAF, so it silently does nothing whenever the tab is not
+      // foregrounded and the viewer would stay parked at the end of the dump,
+      // burying the magic-byte row that is the whole payoff.
+      el.scrollTop = 0;
+    }
+  }, [scanProgress, isScanning, scanComplete]);
+
   // Handle Drag Events (page-wide: attached to lab root, not just the upload box)
   const dragCounterRef = useRef(0);
   const handleDrag = (e: React.DragEvent) => {
@@ -159,18 +226,55 @@ export default function FileAnalysisLab() {
   };
 
   // Convert custom uploaded file into real binary sector simulation
+  const rejectCarrier = (code: CarrierRejection["code"], headline: string, detail: string) => {
+    playBakeFailure();
+    setRejection({ code, headline, detail });
+    setActiveFile(null);
+    setCustomMetadata(null);
+    setByteHistogram(null);
+    setCarvedFiles([]);
+    setScanComplete(false);
+    addLog(`CARRIER REJECTED (${code}): ${headline}`, "warning", "SYS");
+  };
+
   const loadCustomFile = (file: File) => {
+    if (file.size === 0) {
+      rejectCarrier(
+        "EMPTY",
+        "CARRIER HOLDS NO BYTES",
+        `'${file.name}' reports a length of zero. There is no stream to parse — the container is empty or the source truncated it in transit.`,
+      );
+      return;
+    }
+    if (file.size > MAX_CARRIER_BYTES) {
+      rejectCarrier(
+        "OVERSIZE",
+        "CARRIER EXCEEDS BUFFER CEILING",
+        `'${file.name}' is ${(file.size / 1024 / 1024).toFixed(1)} MB. The buffer port accepts up to ${MAX_CARRIER_BYTES / 1024 / 1024} MB — string extraction walks every byte, and a stream this size would stall the console.`,
+      );
+      return;
+    }
+
     playScanOpen();
+    setRejection(null);
     setActiveFile(file);
     setSelectedPresetId(null);
     setScanComplete(false);
     setScanProgress(0);
+    setByteHistogram(null);
 
     const reader = new FileReader();
+    reader.onerror = () => {
+      rejectCarrier(
+        "UNREADABLE",
+        "STREAM READ FAILED",
+        `The host denied or aborted the read on '${file.name}'. The file may have been moved, locked by another process, or revoked mid-transfer.`,
+      );
+    };
     reader.onload = async (event) => {
       const buffer = event.target?.result as ArrayBuffer;
       const fullBytes = new Uint8Array(buffer);
-      const bytes = new Uint8Array(buffer.slice(0, 256)); // Grab first 256 bytes
+      const bytes = new Uint8Array(buffer.slice(0, HEX_PREVIEW_BYTES));
 
       // Format true magic bytes hex string
       const hexStrings: string[] = [];
@@ -240,10 +344,13 @@ export default function FileAnalysisLab() {
       }
 
       // Calculate real Shannon entropy of full file
+      // Returns the histogram alongside the score — the entropy strip renders
+      // the same distribution the number is derived from, so the visual can
+      // never drift from the readout.
       const calculateFileEntropy = (arr: Uint8Array) => {
         const counts = new Uint32Array(256);
         const len = arr.length;
-        if (len === 0) return 0;
+        if (len === 0) return { entropy: 0, counts };
         for (let i = 0; i < len; i++) {
           counts[arr[i]]++;
         }
@@ -254,9 +361,10 @@ export default function FileAnalysisLab() {
             entropy -= p * Math.log2(p);
           }
         }
-        return +entropy.toFixed(2);
+        return { entropy: +entropy.toFixed(2), counts };
       };
-      const realEntropy = calculateFileEntropy(fullBytes);
+      const { entropy: realEntropy, counts: byteCounts } = calculateFileEntropy(fullBytes);
+      setByteHistogram(Array.from(byteCounts));
 
       // Generate simulated hex dump rows from the actual loaded file bytes
       const generatedHexRows: any[] = [];
@@ -350,6 +458,7 @@ export default function FileAnalysisLab() {
           : `FILE IS VALIDATED: Parsed character envelopes and hexadecimal structures match the claimed '${extension}' extension signature.`
       });
 
+
       addLog(`PARSED HEX HEADERS FOR UPLOADED CARRIER: ${file.name.toUpperCase()}`, "info", "SYS");
       
       // Initial carving
@@ -359,7 +468,15 @@ export default function FileAnalysisLab() {
     reader.readAsArrayBuffer(file);
   };
 
-  // Launch analysis scanning
+  /**
+   * Launch the inspector sweep.
+   *
+   * Note this paces a review of results the parser already produced at drop
+   * time — it is presentation, not measurement. An earlier revision walked the
+   * buffer computing per-sector entropy to drive this honestly, but that only
+   * existed to feed a sector map that has since been cut, so the work went
+   * with it rather than being left computing values nothing reads.
+   */
   const triggerForensicScan = () => {
     setIsScanning(true);
     setScanProgress(0);
@@ -372,28 +489,26 @@ export default function FileAnalysisLab() {
       "SNIFFING header magic bytes...",
       "RECONSTRUCTING sector block offsets...",
       "PARSING printable ASCII character loops...",
-      "COMPUTING Shannon Shannon Byte Entropy...",
+      "COMPUTING Shannon byte entropy...",
       "MAPPING signature extension indices..."
     ];
 
-    let step = 0;
     let progress = 0;
     scanIntervalRef.current = setInterval(() => {
-      progress += 5;
-      if (progress % 20 === 0 && step < messages.length - 1) {
-        step++;
-      }
+      progress = Math.min(100, progress + 4);
       setScanProgress(progress);
-      setScanMessage(messages[step]);
+      setScanMessage(messages[Math.min(messages.length - 1, Math.floor((progress / 100) * messages.length))]);
 
       if (progress >= 100) {
         if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
         setIsScanning(false);
         setScanComplete(true);
         playFileAnalysisComplete();
-        addLog(`COMPLETED DEEP BINARY INSPECTION ON ${currentData.name}`, "success", "SYS");
+        // Read through the ref-free closure carefully: currentData is captured
+        // at trigger time, and flushing the buffer mid-scan would null it.
+        addLog(`COMPLETED DEEP BINARY INSPECTION ON ${currentData?.name ?? "CARRIER"}`, "success", "SYS");
       }
-    }, 100);
+    }, 55);
   };
 
   // Add findings to dossier
@@ -440,17 +555,32 @@ ${currentData.threatSummary}`;
     setModule("detective-board");
   };
 
+  // State-derived, not carrierBytesRef — a ref write does not re-render, so the
+  // sector map would miss the transition out of its idle field. byteHistogram
+  // is set and cleared at exactly the same points as the byte buffer.
+  const carrierMounted = byteHistogram !== null;
+
   const clearFileBuffer = () => {
     playPinClick();
     setActiveFile(null);
     setSelectedPresetId(null);
     setScanComplete(false);
     setCustomMetadata(null);
+    setRejection(null);
+    setByteHistogram(null);
+    setCarvedFiles([]);
+    if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+    setIsScanning(false);
   };
 
   return (
     <div
-      className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra select-none text-text-primary relative"
+      /* overflow-hidden, not overflow-y-auto. With the dump now rendering 256
+         rows, an auto-height grid row let the hex panel grow to ~7000px and
+         pushed the scroll onto the page instead of the viewer. Bounding the
+         grid here is what lets the columns below claim exactly the viewport and
+         scroll internally. */
+      className="h-full w-full p-4 grid grid-cols-12 xl:grid-rows-[minmax(0,1fr)] gap-4 overflow-hidden font-chakra select-none text-text-primary relative"
       id="file-analysis-root"
       onDragEnter={handleDrag}
       onDragOver={handleDrag}
@@ -473,7 +603,7 @@ ${currentData.threatSummary}`;
       )}
       
       {/* ================= LEFT COLUMN: BINARY UPLOADER ================= */}
-      <div className="col-span-12 xl:col-span-3 flex flex-col space-y-4 min-h-0">
+      <div className="col-span-12 xl:col-span-3 flex flex-col space-y-4 min-h-0 overflow-y-auto scrollbar-thin">
         
         {/* Header Block */}
         <GlassPanel className="p-4 flex flex-col justify-between" clipSize="sm" showCornerTicks={true}>
@@ -513,12 +643,6 @@ ${currentData.threatSummary}`;
           onDrop={handleDrop}
           clipSize="md"
         >
-          {/* Scanner Overlay */}
-          {isScanning && (
-            <div className="absolute inset-0 bg-cyan-primary/[0.02] border border-cyan-primary/20 pointer-events-none overflow-hidden z-20">
-              <div className="absolute inset-x-0 h-0.5 bg-cyan-primary/40 shadow-[0_0_8px_var(--color-accent-primary)] animate-scanline-vertical" />
-            </div>
-          )}
 
           <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
             <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
@@ -536,7 +660,34 @@ ${currentData.threatSummary}`;
             )}
           </div>
 
-          {!activeFile && !selectedPresetId ? (
+          {rejection ? (
+            /* Carrier refused at the port — an in-fiction alert, not a form error. */
+            <div className="flex-1 flex flex-col items-center justify-center text-center border border-amber-alert/40 bg-amber-alert/[0.04] p-6 relative overflow-hidden animate-fade-in">
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-amber-alert/50 shadow-[0_0_8px_var(--color-alert)] animate-scanline-vertical pointer-events-none" />
+              <div className="w-14 h-14 border border-amber-alert/40 flex items-center justify-center mb-3 bg-bg-void relative">
+                <AlertTriangle className="w-6 h-6 text-amber-alert animate-hex-pulse-flicker" />
+              </div>
+              <span className="font-display text-xs font-black tracking-widest text-amber-alert uppercase">
+                {rejection.headline}
+              </span>
+              <span className="font-mono text-[12px] text-amber-alert/60 uppercase tracking-widest mt-1">
+                PORT CODE {rejection.code}
+              </span>
+              <p className="text-[13px] text-text-dim font-share tracking-wider mt-3 leading-relaxed max-w-xs">
+                {rejection.detail}
+              </p>
+              <button
+                onClick={() => {
+                  playPinClick();
+                  setRejection(null);
+                }}
+                className="hud-target mt-5 px-5 py-2 border border-amber-alert/40 text-amber-alert hover:bg-amber-alert hover:text-bg-void transition-all duration-200 text-[13px] font-black tracking-widest font-display uppercase"
+                style={{ clipPath: "polygon(0 0, 100% 0, 94% 100%, 0 100%)" }}
+              >
+                CLEAR PORT
+              </button>
+            </div>
+          ) : !activeFile && !selectedPresetId ? (
             // Upload Dropzone
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -631,19 +782,89 @@ ${currentData.threatSummary}`;
                       {currentData.entropy} bits/byte
                     </span>
                   </div>
+
+                  {/* Byte-distribution strip — the actual histogram the entropy
+                      score above is computed from, bucketed to 64 bins and log
+                      scaled so a flat encrypted/compressed stream reads as an
+                      even wall while structured text stays visibly spiky. */}
+                  {byteHistogram && (
+                    <div className="pt-1.5">
+                      <div className="flex items-end gap-px h-8 bg-bg-void/60 border border-border-hairline/10 px-1 pt-1">
+                        {(() => {
+                          const bins = Array.from({ length: 64 }, (_, b) =>
+                            byteHistogram
+                              .slice(b * 4, b * 4 + 4)
+                              .reduce((sum, n) => sum + n, 0),
+                          );
+                          const peak = Math.max(...bins, 1);
+                          return bins.map((count, b) => {
+                            const ratio = count === 0 ? 0 : Math.log2(count + 1) / Math.log2(peak + 1);
+                            return (
+                              <div
+                                key={b}
+                                className={`flex-1 min-w-0 transition-all duration-500 ${
+                                  count === 0 ? "bg-border-hairline/20" : "bg-cyan-primary"
+                                }`}
+                                style={{
+                                  height: `${Math.max(ratio * 100, count === 0 ? 4 : 8)}%`,
+                                  opacity: count === 0 ? 1 : 0.35 + ratio * 0.65,
+                                }}
+                                title={`0x${(b * 4).toString(16).toUpperCase().padStart(2, "0")}–0x${(b * 4 + 3).toString(16).toUpperCase().padStart(2, "0")}: ${count}`}
+                              />
+                            );
+                          });
+                        })()}
+                      </div>
+                      <div className="flex justify-between text-[12px] text-text-dim/60 tracking-widest mt-1">
+                        <span>0x00</span>
+                        <span>BYTE VALUE DISTRIBUTION</span>
+                        <span>0xFF</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
               </div>
+
+              {/* Inspection progress rail. The scan already tracked progress and
+                  stage narration in state, but neither was ever rendered — the
+                  only sign the console was working was the button label. */}
+              {isScanning && (
+                <div className="mt-3 border border-cyan-primary/25 bg-cyan-primary/[0.03] p-2.5 relative overflow-hidden">
+                  <div className="flex justify-between items-center font-mono text-[12px] tracking-widest mb-1.5">
+                    <span className="text-cyan-primary uppercase flex items-center">
+                      <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />
+                      INSPECTING SECTORS
+                    </span>
+                    <span className="text-cyan-text tabular-nums">{scanProgress}%</span>
+                  </div>
+                  <div className="h-1 bg-bg-void border border-border-hairline/10 relative overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-cyan-primary shadow-[0_0_8px_var(--color-accent-primary)] transition-[width] duration-100 ease-linear"
+                      style={{ width: `${scanProgress}%` }}
+                    />
+                  </div>
+                  <div className="font-share text-[12px] text-text-dim uppercase tracking-wider mt-1.5 truncate">
+                    {scanMessage}
+                  </div>
+                </div>
+              )}
 
               {/* Decrypter Action Trigger */}
               <div className="mt-auto pt-4 border-t border-border-hairline/10">
                 <button
                   disabled={isScanning}
                   onClick={triggerForensicScan}
-                  className="hud-target w-full py-3 bg-cyan-primary text-bg-void hover:bg-white hover:shadow-[0_0_20px_rgb(var(--rgb-accent) / 0.6)] active:scale-[0.98] transition-all duration-200 text-xs font-black tracking-widest font-display uppercase disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center space-x-2 relative z-10"
-                  style={{ clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)" }}
+                  onMouseEnter={() => playHoverEvidence()}
+                  className="engine-btn hud-target w-full text-sm py-4 cursor-pointer flex items-center justify-center space-x-2 relative z-10 disabled:pointer-events-none"
+                  style={{
+                    clipPath:
+                      "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)",
+                    "--engine-color": "var(--color-accent-primary)",
+                    "--reticle-color": "var(--color-accent-primary)",
+                  } as React.CSSProperties}
                 >
-                  <Cpu className={`w-4 h-4 text-bg-void ${isScanning ? 'animate-radar-sweep' : ''}`} />
+                  <Cpu className={`w-5 h-5 ${isScanning ? 'animate-radar-sweep' : ''}`} />
                   <span>{isScanning ? 'INSPECTING...' : 'LAUNCH HEURISTIC FILE INSPECTOR'}</span>
                 </button>
               </div>
@@ -652,10 +873,32 @@ ${currentData.threatSummary}`;
           )}
         </GlassPanel>
 
+        {/* ================= HOLOGRAPHIC PROJECTION =================
+            Purely ambient — it projects nothing real, reports nothing, and is
+            not interactive. It exists to stop the column dead-ending below the
+            buffer port and to keep the console feeling powered while it waits. */}
+        <GlassPanel className="p-4 flex-1 flex flex-col min-h-[200px] relative overflow-hidden" clipSize="sm">
+          <div className="absolute inset-0 bg-grid-pattern opacity-[0.04] pointer-events-none" />
+
+          <div className="flex items-center justify-between border-b border-border-hairline/20 pb-2 mb-2">
+            <span className="font-display text-[13px] font-black tracking-widest text-cyan-text/70 uppercase flex items-center">
+              <span className="w-1.5 h-1.5 bg-cyan-primary mr-2 inline-block animate-ping-cyan" />
+              PROJECTION FIELD
+            </span>
+            <span className="font-mono text-[12px] text-text-dim/50 tracking-widest uppercase">
+              Stable
+            </span>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center relative min-h-0 pointer-events-none">
+            <HolographicProjector />
+          </div>
+        </GlassPanel>
+
       </div>
 
       {/* ================= RIGHT COLUMN: HEX DUMP & DETECTED STRINGS ================= */}
-      <div className="col-span-12 xl:col-span-9 flex flex-col space-y-4">
+      <div className="col-span-12 xl:col-span-9 flex flex-col space-y-4 min-h-0">
         
         {!currentData ? (
           /* Getting Started State */
@@ -677,7 +920,11 @@ ${currentData.threatSummary}`;
           /* Analysis Active Views */
           <>
             {/* Hex Dump Viewer Panel */}
-            <GlassPanel className="p-4 flex flex-col min-h-[300px] flex-1" clipSize="md">
+            <GlassPanel
+              className="p-4 flex flex-col min-h-[300px] flex-1 relative overflow-hidden"
+              contentClassName="flex flex-col"
+              clipSize="md"
+            >
               <div className="border-b border-border-hairline/20 pb-2 mb-3.5 flex justify-between items-center">
                 <div className="flex items-center space-x-2">
                   <span className="w-1.5 h-3.5 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
@@ -704,38 +951,79 @@ ${currentData.threatSummary}`;
                 </div>
               ) : (
                 // The Scrollable Hex Dump Viewport (shown during scanning or after completion)
-                <div className="flex-1 flex flex-col justify-between font-share">
-                  
+                <div className="flex-1 flex flex-col min-h-0 font-share">
+
                   {/* Header headers for offsets */}
-                  <div className="bg-bg-void border-b border-border-hairline/20 p-2 font-share text-[12px] text-cyan-text/75 grid grid-cols-12 gap-1 tracking-widest select-none">
+                  <div className="shrink-0 bg-bg-void border-b border-border-hairline/20 p-2 font-share text-[12px] text-cyan-text/75 grid grid-cols-12 gap-1 tracking-widest select-none">
                     <div className="col-span-2">OFFSET</div>
                     <div className="col-span-7 text-center">00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F</div>
                     <div className="col-span-3 text-right">ASCII_DECODE</div>
                   </div>
 
                   {/* Actual rows using strict font-share alignment */}
-                  <div className="flex-1 overflow-y-auto max-h-[220px] font-share text-[13px] text-text-dim bg-bg-void/70 border border-border-hairline/10 p-2 divide-y divide-border-hairline/5 space-y-1 select-text scrollbar-thin relative overflow-hidden">
+                  {/* Fills the panel. This was flex-1 with max-h-[220px], so the
+                      dump stayed 220px tall however much room the panel had and
+                      the rest bottomed out empty. It also carried overflow-y-auto
+                      and overflow-hidden together, which fought over the scroll
+                      axis; the x/y split is explicit now. min-h-0 is what lets a
+                      flex child actually scroll instead of growing its parent. */}
+                  <div
+                    ref={hexScrollRef}
+                    className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden font-share text-[13px] text-text-dim bg-bg-void/70 border border-border-hairline/10 p-2 divide-y divide-border-hairline/5 space-y-1 select-text scrollbar-thin relative"
+                  >
                     {scanComplete && (
                       <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent via-cyan-primary/20 to-cyan-primary/50 border-b border-cyan-primary animate-scanline-sweep pointer-events-none z-10 mix-blend-screen" />
                     )}
-                    {isScanning && (
-                      <div className="absolute inset-0 pointer-events-none z-10 mix-blend-screen bg-cyan-primary/[0.01]">
-                        <div className="absolute inset-x-0 h-0.5 bg-cyan-primary/40 shadow-[0_0_8px_var(--color-accent-primary)] animate-scanline-vertical" />
-                      </div>
-                    )}
-                    {currentData.hexData.map((row, idx) => {
+                    {currentData.hexData.map((row: any, idx: number) => {
                       const isRelevant = idx === 0; // First row contains the magic bytes signature
+
+                      /**
+                       * The scan resolves the dump in place rather than hiding
+                       * it behind an overlay. Rows below the read head are
+                       * still scrambled, the head row is lit, and everything
+                       * above it has settled into real bytes — so the motion
+                       * is the file being read, and the content stays legible
+                       * throughout instead of being covered up.
+                       */
+                      const resolved = !isScanning || idx < frontierRow;
+                      const isHead = isScanning && idx >= frontierRow && idx < frontierRow + 2;
+
                       return (
-                      <div key={idx} className={`grid grid-cols-12 gap-1 py-1 hover:bg-cyan-primary/[0.03] transition-colors leading-none relative z-20 ${scanComplete && isRelevant ? 'bg-cyan-primary/[0.05]' : ''}`}>
-                        <div className="col-span-2 text-cyan-text font-bold tracking-wider">{row.offset}</div>
-                        
-                        {/* Strict monospace spacing with font-share */}
-                        <div className={`col-span-7 text-text-primary text-center tracking-wider font-medium font-share ${scanComplete && isRelevant ? 'animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_var(--color-accent-primary)]' : ''}`}>
-                          {row.hex}
+                      <div
+                        key={idx}
+                        className={`grid grid-cols-12 gap-1 py-1 hover:bg-cyan-primary/[0.03] transition-colors leading-none relative z-20 ${
+                          isHead
+                            ? "bg-cyan-primary/[0.10] shadow-[0_0_12px_-2px_var(--color-accent-primary)]"
+                            : scanComplete && isRelevant
+                              ? "bg-cyan-primary/[0.05]"
+                              : ""
+                        }`}
+                      >
+                        <div className={`col-span-2 font-bold tracking-wider ${resolved ? "text-cyan-text" : "text-cyan-dim/40"}`}>
+                          {row.offset}
                         </div>
-                        
-                        <div className={`col-span-3 text-right font-bold truncate font-share ${scanComplete && isRelevant ? 'animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_var(--color-accent-primary)]' : 'text-cyan-primary/80'}`}>
-                          {row.ascii}
+
+                        {/* Strict monospace spacing with font-share */}
+                        <div className={`col-span-7 text-center tracking-wider font-medium font-share ${
+                          !resolved
+                            ? "text-cyan-dim/45"
+                            : isHead
+                              ? "text-white"
+                              : scanComplete && isRelevant
+                                ? "animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_var(--color-accent-primary)]"
+                                : "text-text-primary"
+                        }`}>
+                          {resolved ? row.hex : scrambleHex(row.hex)}
+                        </div>
+
+                        <div className={`col-span-3 text-right font-bold truncate font-share ${
+                          !resolved
+                            ? "text-cyan-dim/35"
+                            : scanComplete && isRelevant
+                              ? "animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_var(--color-accent-primary)]"
+                              : "text-cyan-primary/80"
+                        }`}>
+                          {resolved ? row.ascii : scrambleAscii(row.ascii)}
                         </div>
                       </div>
                     )})}
@@ -743,7 +1031,7 @@ ${currentData.threatSummary}`;
 
                   {/* Warning anomaly box if signature mismatch */}
                   {scanComplete && (
-                    <div className={`power-sweep mt-3 p-3 border font-mono text-[13px] flex items-start space-x-2 relative overflow-hidden ${
+                    <div className={`power-sweep shrink-0 mt-3 p-3 border font-mono text-[13px] flex items-start space-x-2 relative overflow-hidden ${
                       currentData.isMismatch
                         ? "bg-red-threat/10 border-red-threat/30 text-red-threat"
                         : "bg-bg-void/40 border-border-hairline/10 text-text-dim"
@@ -766,7 +1054,7 @@ ${currentData.threatSummary}`;
             </GlassPanel>
 
             {/* Lower row: strings extraction and dossier integration */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="shrink-0 grid grid-cols-1 md:grid-cols-12 gap-4">
               
               {/* ASCII Strings Extraction list */}
               <div className="md:col-span-12 xl:col-span-4">
@@ -781,8 +1069,28 @@ ${currentData.threatSummary}`;
 
                     {!scanComplete ? (
                       isScanning ? (
+                        /**
+                         * This used to stream a hardcoded string of invented
+                         * malware findings ("KEYLOG_SYS_HOOK",
+                         * "TROJAN_VESSEL_DETECTED") over whatever the user had
+                         * actually loaded — fabricated results presented as if
+                         * they came off their file. It now streams the real
+                         * extracted strings, which is both honest and better
+                         * atmosphere: the buffer genuinely scrolls past.
+                         */
                         <div className="py-5 font-mono text-[12px] text-cyan-primary">
-                          <DataStream text="STREAMING DETECTED STRINGS IN MEMORY BUFFER: 0x0A4F... KEYLOG_SYS_HOOK... SYSTEM_RECOVERY_DECRYPT... TROJAN_VESSEL_DETECTED... MEMORY_FLUSH_COMPLETE... INTERCEPT_SUCCESS" speed={12} active={true} />
+                          <DataStream
+                            text={
+                              currentData.detectedStrings.length > 0
+                                ? currentData.detectedStrings
+                                    .slice(0, 24)
+                                    .map((s: any) => `${s.offset}  ${s.stringVal}`)
+                                    .join("     ")
+                                : "WALKING CARRIER STREAM FOR PRINTABLE SEQUENCES..."
+                            }
+                            speed={12}
+                            active={true}
+                          />
                         </div>
                       ) : (
                         <div className="py-6 text-center text-[13px] text-text-dim uppercase font-mono">
@@ -933,3 +1241,4 @@ ${currentData.threatSummary}`;
     </div>
   );
 }
+

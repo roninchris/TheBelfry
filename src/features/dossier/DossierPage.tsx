@@ -303,7 +303,7 @@ export default function DossierPage() {
   };
 
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-hidden font-chakra" id="dossier-root">
+    <div className="h-full w-full p-4 grid grid-cols-12 content-start gap-4 overflow-hidden font-chakra" id="dossier-root">
       
       {/* ================= LEFT SECTION: ARG CASES INDEX ================= */}
       <div className="col-span-12 lg:col-span-4 flex flex-col space-y-4">

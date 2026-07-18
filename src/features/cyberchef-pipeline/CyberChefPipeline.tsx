@@ -26,9 +26,11 @@ import {
   Radio,
   Cpu,
   SearchCode,
-  Award
+  Award,
+  Info
 } from "lucide-react";
 import GlassPanel from "../../components/ui/GlassPanel";
+import KeyspaceTunnel from "../../components/ui/KeyspaceTunnel";
 import Checkbox from "../../components/ui/Checkbox";
 import Badge from "../../components/ui/Badge";
 import DecryptText from "../../components/ui/DecryptText";
@@ -93,7 +95,7 @@ export default function CyberChefPipeline() {
   const [intermediateResults, setIntermediateResults] = useState<string[]>([]);
   const [autoRun, setAutoRun] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [activeCategory, setActiveCategory] = useState<"all" | "cipher" | "encoding">("all");
+  const [activeCategory, setActiveCategory] = useState<"all" | "cipher" | "encoding" | "utility">("all");
   
   // Drag and drop sorting state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -119,6 +121,20 @@ export default function CyberChefPipeline() {
   const [bruteFailedCount, setBruteFailedCount] = useState<number>(0);
   // Candidate registry uses progressive disclosure instead of a cramped inner scroller.
   const [showAllCandidates, setShowAllCandidates] = useState<boolean>(false);
+  const CONFIDENCE_THRESHOLD = 40;
+  const CANDIDATE_PREVIEW = 6;
+  /**
+   * Derived once at component scope rather than inside the workspace render.
+   * The candidate registry now lives in the right-hand column while the gates
+   * that produce it stay on the left, so both halves have to read the same
+   * numbers — deriving them in either branch would guarantee they drift.
+   */
+  const topMatch = bruteResults.length > 0 ? bruteResults.find((r, idx) => idx === 0 && r.score > 40) : null;
+  const alternativeMatches = topMatch ? bruteResults.slice(1) : bruteResults;
+  const feasibleCount = bruteResults.filter(r => r.score > CONFIDENCE_THRESHOLD).length;
+  const visibleAlternatives = showAllCandidates
+    ? alternativeMatches
+    : alternativeMatches.slice(0, CANDIDATE_PREVIEW);
   const [bruteWordlist, setBruteWordlist] = useState<string[]>(DEFAULT_WORDLIST);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanProgress, setScanProgress] = useState<number>(0);
@@ -146,6 +162,13 @@ export default function CyberChefPipeline() {
 
   const filteredEncodings = useMemo(() => {
     return filteredTools.filter(t => t.category === "encoding");
+  }, [filteredTools]);
+
+  // Anything that is neither a cipher nor an encoding — RSA Factorizer, Hash
+  // Lab. Written as an exclusion rather than `=== "utility"` so a future
+  // category cannot silently vanish from this panel the way utility did.
+  const filteredUtilities = useMemo(() => {
+    return filteredTools.filter(t => t.category !== "cipher" && t.category !== "encoding");
   }, [filteredTools]);
 
   // Execute the entire chain of recipes (Manual mode)
@@ -570,8 +593,13 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
     </button>
   );
 
+  // Row sizing is explicit. Auto rows in a grid taller than its content get
+  // stretched by align-content, which silently inflated the header row from its
+  // natural 104px to 240px — 136px of dead space above the mode switcher, and
+  // the same again around the workspace. The header now takes what it needs and
+  // the workspace claims the rest.
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra text-text-primary animate-fade-in" id="cyberchef-pipeline-root">
+    <div className="h-full w-full p-4 grid grid-cols-12 lg:grid-rows-[auto_minmax(0,1fr)_auto] content-start gap-4 overflow-hidden font-chakra text-text-primary animate-fade-in" id="cyberchef-pipeline-root">
       
       {/* ================= HEADER SECTION (SPAN 12) ================= */}
       <div className="col-span-12 flex flex-col space-y-3">
@@ -586,11 +614,6 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   FORENSIC DECRYPTION CORES
                 </h1>
               </div>
-              <p className="text-[13px] text-text-dim uppercase tracking-wider font-share mt-1 leading-relaxed">
-                Chain operations together to peel apart data that has been encoded or
-                encrypted more than once. Paste your text, add operations in order, and
-                each one feeds the next &mdash; or switch to auto-crack to try many keys at once.
-              </p>
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant={mode === "manual" ? "cyan" : "amber"} size="xs" className="animate-hex-pulse-flicker">
@@ -603,7 +626,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
       </div>
 
       {/* ================= LEFT SECTION: ACTIVE TOOL / WORKSPACE ================= */}
-      <div className="col-span-12 lg:col-span-8 flex flex-col space-y-4">
+      <div className="col-span-12 lg:col-span-8 flex flex-col space-y-4 min-h-0">
         
         {/* Unified conveyor layout replaces former separate input rows */}
         {/* Mode switcher, directly above the workspace it controls. It used to
@@ -636,7 +659,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
         {/* MANUAL WORKSPACE LAYOUT (Steps List) */}
         {mode === "manual" && (
-          <GlassPanel className="p-4 flex-1 flex flex-col min-h-0" clipSize="md">
+          <GlassPanel className="p-4 flex-1 flex flex-col min-h-0" contentClassName="flex flex-col" clipSize="md">
             <div className="border-b border-border-hairline/20 pb-2 mb-4 flex justify-between items-center flex-wrap gap-2">
               <div className="flex items-center space-x-2">
                 <Sliders className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
@@ -745,11 +768,15 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   })()}
                 </div>
 
-                <div className="relative z-10 flex-1 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
-                  
+                {/* The rail is a band, not a column. Letting it take the whole
+                    panel stretched three sparse cards into ~660px towers; a
+                    chain reads left-to-right, so it gets a fixed comfortable
+                    height and the trace below uses the rest. */}
+                <div className="relative z-10 h-[380px] shrink-0 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
+
                   {/* GATE 1: INPUT VESSEL CARD */}
-                  <div className="w-[250px] shrink-0 flex items-stretch">
-                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" clipSize="sm" showCornerTicks={true}>
+                  <div className="flex-1 min-w-[250px] flex items-stretch">
+                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="w-1.5 h-3 bg-cyan-primary inline-block transform -skew-x-12" />
@@ -780,18 +807,27 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                       <div className="flex items-center shrink-0 self-center px-1">
                         <PipelineConnector orientation="horizontal" active={false} className="w-8" />
                       </div>
-                      <div className="w-[250px] shrink-0 flex items-stretch">
-                        <div className="w-full flex flex-col items-center justify-center text-center p-6 border border-dashed border-border-hairline/25 bg-bg-void/25">
+                      <div className="flex-1 min-w-[250px] flex items-stretch">
+                        {/* A slot in the chain, so it gets the same panel material
+                            as the vessels either side of it. It was a bare dashed
+                            block, which read as an unstyled gap rather than a
+                            placeholder for a stage. */}
+                        <GlassPanel
+                          className="p-6 w-full h-full border-dashed"
+                          contentClassName="flex flex-col items-center justify-center text-center"
+                          clipSize="sm"
+                          showCornerTicks={false}
+                        >
                           <Terminal className="w-9 h-9 text-cyan-primary/25 animate-hex-pulse-flicker mb-2.5" />
                           <h4 className="font-display text-sm font-extrabold tracking-[0.18em] text-white uppercase">
                             No operations yet
                           </h4>
-                          <p className="text-[12px] text-text-dim/80 font-share tracking-wide mt-1.5 leading-relaxed">
+                          <p className="text-[12px] text-text-dim/80 font-share tracking-wide mt-1.5 leading-relaxed max-w-[24ch]">
                             Pick an operation from the registry on the right. Each one you
                             add becomes a stage here, and the text above flows through them
                             left to right into the output.
                           </p>
-                        </div>
+                        </GlassPanel>
                       </div>
                     </>
                   )}
@@ -952,8 +988,8 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   </div>
 
                   {/* GATE 4: OUTPUT VESSEL CARD */}
-                  <div className="w-[250px] shrink-0 flex items-stretch">
-                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" clipSize="sm" showCornerTicks={true}>
+                  <div className="flex-1 min-w-[250px] flex items-stretch">
+                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
@@ -1000,8 +1036,72 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                 </div>
 
+                {/* ===== STAGE TRACE =====
+                    What the text actually looks like after each operation. The
+                    per-stage results were already computed for the step cards
+                    but only ever shown as a clipped two-line preview inside
+                    them, so following a chain meant reading across cards. Here
+                    the whole cascade reads down one column. */}
+                <div className="flex-1 min-h-0 flex flex-col border border-border-hairline/15 bg-bg-void/30">
+                  <div className="shrink-0 flex items-center justify-between px-2.5 py-1.5 border-b border-border-hairline/15">
+                    <span className="font-display text-[12px] font-black tracking-widest text-cyan-text/80 uppercase flex items-center">
+                      <Activity className="w-3 h-3 mr-1.5 text-cyan-primary/70" />
+                      STAGE TRACE
+                    </span>
+                    <span className="font-mono text-[12px] text-text-dim/60 tracking-widest uppercase">
+                      {pipelineSteps.length === 0
+                        ? "NO STAGES"
+                        : `${pipelineSteps.length} STAGE${pipelineSteps.length === 1 ? "" : "S"}`}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin font-mono text-[12px] divide-y divide-border-hairline/10">
+                    {/* Stage 0 is the raw buffer, so the trace starts where the
+                        operator's text starts rather than after the first op. */}
+                    <div className="flex items-start gap-2.5 px-2.5 py-1.5">
+                      <span className="text-text-dim/50 shrink-0 w-6">00</span>
+                      <span className="text-cyan-text/80 shrink-0 w-24 truncate uppercase">input</span>
+                      <span className="text-text-primary/90 truncate select-text">
+                        {inputText || <span className="text-text-dim/40">empty buffer</span>}
+                      </span>
+                    </div>
+
+                    {pipelineSteps.map((step, idx) => {
+                      const tool = getTool(step.toolId);
+                      const value = intermediateResults[idx];
+                      const isActive = activeStepIndex === idx;
+                      return (
+                        <div
+                          key={step.id}
+                          className={`flex items-start gap-2.5 px-2.5 py-1.5 transition-colors ${
+                            isActive ? "bg-cyan-primary/[0.07]" : "hover:bg-cyan-primary/[0.02]"
+                          }`}
+                        >
+                          <span className="text-text-dim/50 shrink-0 w-6">
+                            {String(idx + 1).padStart(2, "0")}
+                          </span>
+                          <span className="text-cyan-text/80 shrink-0 w-24 truncate uppercase">
+                            {tool?.label ?? step.toolId}
+                          </span>
+                          <span className="text-text-primary/90 truncate select-text">
+                            {value !== undefined && value !== ""
+                              ? value
+                              : <span className="text-text-dim/40">not baked yet</span>}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {pipelineSteps.length === 0 && (
+                      <div className="px-2.5 py-3 text-text-dim/50 uppercase tracking-wider">
+                        Add an operation and each stage's output will appear here in order.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Dossier database reporting row */}
-                <div className="mt-4 pt-3 border-t border-border-hairline/15 flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+                <div className="shrink-0 mt-3 pt-3 border-t border-border-hairline/15 flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
                   <span className="text-[12px] text-text-dim font-share uppercase tracking-widest flex items-center">
                     <Activity className="w-3.5 h-3.5 mr-1 text-cyan-primary animate-hex-pulse-flicker" />
                     FLOW MONITOR: {bakeSuccess ? "STATUS ALIGNED" : "CASCADE COMPILATION FAULT"}
@@ -1024,18 +1124,8 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
         {/* ================= BRUTE FORCE WORKSPACE LAYOUT ================= */}
         {mode === "brute" && (() => {
-          const topMatch = bruteResults.length > 0 ? bruteResults.find((r, idx) => idx === 0 && r.score > 40) : null;
-          const alternativeMatches = topMatch ? bruteResults.slice(1) : bruteResults;
-          // One coherent story: how many were evaluated vs. how many cleared the confidence bar.
-          const CONFIDENCE_THRESHOLD = 40;
-          const feasibleCount = bruteResults.filter(r => r.score > CONFIDENCE_THRESHOLD).length;
-          const CANDIDATE_PREVIEW = 6;
-          const visibleAlternatives = showAllCandidates
-            ? alternativeMatches
-            : alternativeMatches.slice(0, CANDIDATE_PREVIEW);
-
           return (
-            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[500px]" clipSize="md">
+            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[500px]" contentClassName="flex flex-col" clipSize="md">
               
               {/* Brute Mode Config Header */}
               <div className="border-b border-border-hairline/20 pb-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1078,11 +1168,13 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               </div>
 
               {/* 3-GATE HORIZONTAL ASSEMBLY CONVEYOR BELT */}
-              <div className="flex-1 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
+              {/* Fixed band, same reasoning as the manual rail: three gates
+                  stretched to full height were mostly void. */}
+              <div className="h-[380px] shrink-0 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
                 
                 {/* GATE 1: INTELLIGENCE STREAM SOURCE & CONFIG */}
-                <div className="w-[250px] shrink-0 flex items-stretch">
-                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" clipSize="sm" showCornerTicks={true}>
+                <div className="flex-1 min-w-[250px] flex items-stretch">
+                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12" />
@@ -1199,8 +1291,8 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 </div>
 
                 {/* GATE 2: SWEEP & DECRYPTION MATRIX CORE */}
-                <div className="w-[250px] shrink-0 flex items-stretch">
-                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" clipSize="sm" showCornerTicks={true}>
+                <div className="flex-1 min-w-[250px] flex items-stretch">
+                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12 animate-hex-pulse-flicker" />
@@ -1215,7 +1307,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                     {/* Interactive Scan Crack Controls & Statuses inside Gate 2 */}
                     {isScanning ? (
-                      <div className="flex-1 flex flex-col justify-between">
+                      <div className="flex-1 flex flex-col">
                         {/* Radar Spinner & Progress */}
                         <div className="flex items-center space-x-3 bg-bg-void/40 border border-border-hairline/10 p-2">
                           <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
@@ -1235,23 +1327,19 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                           </div>
                         </div>
 
-                        {/* Simulated Logs block */}
-                        <div className="mt-2 flex-1 min-h-[100px] bg-bg-void border border-border-hairline/15 p-2 rounded-none font-mono text-[12px] space-y-0.5 text-amber-text/80 overflow-y-auto hud-scrollbar select-text">
-                          {scanLogs.map((logLine, idx) => (
-                            <div key={idx} className="truncate select-text">
-                              {logLine}
-                            </div>
-                          ))}
-                          <div className="animate-hex-pulse-flicker flex items-center text-cyan-text font-bold">
-                            <span>&gt; INTERROGATING MATRIX...</span>
-                          </div>
-                        </div>
+                        {/* The log itself lives in the SWEEP LOG band below the
+                            gates now, so it outlives the run instead of being
+                            destroyed with this branch the moment results land. */}
                       </div>
                     ) : (
-                      <div className="flex-1 flex flex-col justify-between">
+                      // Grouped, not justify-between: spreading three items down a
+                      // ~700px card left the trigger stranded in the middle with a
+                      // void above and below it. The brief and its button belong
+                      // together, and the heuristics note reads as a footer.
+                      <div className="flex-1 flex flex-col min-h-0">
                         <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider block leading-relaxed mb-2">
-                          {bruteSubMode === "sweep" 
-                            ? `Sweeping ${sweepCipher.toUpperCase()} configurations to isolate plain english output vectors.` 
+                          {bruteSubMode === "sweep"
+                            ? `Sweeping ${sweepCipher.toUpperCase()} configurations to isolate plain english output vectors.`
                             : `Testing raw intercepts against forensic plugins simultaneously.`}
                         </span>
 
@@ -1265,8 +1353,9 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                           <span>INITIATE CRACK</span>
                         </button>
 
-                        {/* Heuristic tip */}
-                        <div className="mt-2.5 p-1.5 border border-border-hairline/10 bg-bg-void/40 text-left font-share uppercase tracking-wider text-[12px] text-text-dim/80 leading-normal">
+                        {/* Heuristic tip — mt-auto parks it at the bottom as a
+                            footer instead of it floating mid-card. */}
+                        <div className="mt-auto pt-2.5 p-1.5 border border-border-hairline/10 bg-bg-void/40 text-left font-share uppercase tracking-wider text-[12px] text-text-dim/80 leading-normal">
                           <span className="font-mono text-amber-alert font-bold block mb-0.5">HEURISTICS SEALED</span>
                           Evaluates whitespace, vowels, and core vocabulary frequencies.
                         </div>
@@ -1285,8 +1374,8 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 </div>
 
                 {/* GATE 3: TOP MATCH PLAUSIBILITY TERMINATION */}
-                <div className="w-[250px] shrink-0 flex items-stretch">
-                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" clipSize="sm" showCornerTicks={true}>
+                <div className="flex-1 min-w-[250px] flex items-stretch">
+                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
@@ -1378,6 +1467,47 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
               </div>
 
+              {/* ===== SWEEP LOG =====
+                  The run's own commentary. It used to live inside Gate 2, which
+                  meant it only existed while scanning and vanished the moment
+                  results arrived, taking the record of what was tried with it.
+                  Out here it survives the run and fills the band the gates gave
+                  back. */}
+              <div className="flex-1 min-h-0 mt-3 flex flex-col border border-border-hairline/15 bg-bg-void/30">
+                <div className="shrink-0 flex items-center justify-between px-2.5 py-1.5 border-b border-border-hairline/15">
+                  <span className="font-display text-[12px] font-black tracking-widest text-amber-text/80 uppercase flex items-center">
+                    <Radio className={`w-3 h-3 mr-1.5 text-amber-alert/70 ${isScanning ? "animate-hex-pulse-flicker" : ""}`} />
+                    SWEEP LOG
+                  </span>
+                  <span className="font-mono text-[12px] text-text-dim/60 tracking-widest uppercase">
+                    {isScanning
+                      ? `${scanProgress}% · RUNNING`
+                      : scanLogs.length > 0
+                        ? `${scanLogs.length} ENTRIES`
+                        : "IDLE"}
+                  </span>
+                </div>
+
+                <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin font-mono text-[12px] px-2.5 py-1.5 space-y-0.5 text-amber-text/80 select-text">
+                  {scanLogs.length === 0 && !isScanning ? (
+                    <div className="text-text-dim/50 uppercase tracking-wider py-1.5">
+                      Run a sweep and each attempt will be recorded here.
+                    </div>
+                  ) : (
+                    <>
+                      {scanLogs.map((logLine, idx) => (
+                        <div key={idx} className="truncate">{logLine}</div>
+                      ))}
+                      {isScanning && (
+                        <div className="animate-hex-pulse-flicker flex items-center text-cyan-text font-bold">
+                          <span>&gt; INTERROGATING MATRIX...</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
               {/* Informational banners: multi-byte XOR estimates, truncated search notices — never ranked "answers" */}
               {bruteNotes.length > 0 && (
                 <div className="mt-3 space-y-1.5">
@@ -1400,106 +1530,6 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 </div>
               )}
 
-              {/* SECONDARY ROW: ALTERNATIVE CANDIDATES REGISTER */}
-              {bruteResults.length > 0 && alternativeMatches.length > 0 && (
-                <div className="mt-2 pt-3.5 border-t border-border-hairline/15 flex flex-col min-h-0">
-                  {/* Single coherent summary: evaluated vs. cleared the bar vs. skipped */}
-                  <div className="flex items-center justify-between border-b border-border-hairline/10 pb-1.5 mb-2.5 gap-3">
-                    <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider truncate">
-                      CANDIDATE REGISTRY — {alternativeMatches.length} EVALUATED
-                      {bruteFailedCount > 0 && ` · ${bruteFailedCount} SKIPPED`}
-                    </span>
-                    <Badge variant={feasibleCount > 0 ? "green" : "dim"} size="xs">
-                      {feasibleCount > 0
-                        ? `${feasibleCount} ABOVE ${CONFIDENCE_THRESHOLD}%`
-                        : `NONE ABOVE ${CONFIDENCE_THRESHOLD}%`}
-                    </Badge>
-                  </div>
-
-                  {/* Ranked grid — no inner scroller; expands on demand */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {visibleAlternatives.map((result, idx) => {
-                      const rank = (topMatch ? idx + 2 : idx + 1);
-                      const plausible = result.score > CONFIDENCE_THRESHOLD;
-                      return (
-                        <div
-                          key={idx}
-                          className="hud-target hud-target-amber bg-bg-void/40 border border-border-hairline/10 p-2.5 flex flex-col justify-between hover:border-amber-alert/25 hover:bg-bg-void/75 transition-all"
-                        >
-                          <div className="flex items-center justify-between mb-1.5 gap-2">
-                            <div className="flex items-center space-x-1.5 min-w-0">
-                              <span className="font-mono text-[12px] text-text-dim/60 shrink-0">#{rank}</span>
-                              <span className="font-mono text-[12px] text-amber-text font-black truncate">{result.label}</span>
-                              {result.parameter && (
-                                <Badge variant="cyan" size="xs" className="px-1 py-0 font-mono text-[12px] shrink-0">
-                                  {result.parameter}
-                                </Badge>
-                              )}
-                            </div>
-                            {/* Confidence readout + bar, so ranking is legible at a glance */}
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <div className="w-10 h-1 bg-bg-void border border-border-hairline/15 overflow-hidden">
-                                <div
-                                  className={`h-full ${plausible ? "bg-green-verified" : "bg-amber-alert/50"}`}
-                                  style={{ width: `${Math.max(2, Math.min(100, result.score))}%` }}
-                                />
-                              </div>
-                              <span className={`font-mono text-[12px] ${plausible ? "text-green-verified" : "text-text-dim/60"}`}>
-                                {result.score}%
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="bg-bg-void/50 p-1.5 border border-border-hairline/5 font-mono text-[12px] text-text-dim/95 mb-2 truncate select-text">
-                            {result.text}
-                          </div>
-
-                          <div className="flex justify-end space-x-1.5 text-[12px] font-mono border-t border-border-hairline/5 pt-1.5">
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(result.text);
-                                playPinClick();
-                                addLog(`COPIED RESULT: ${result.label}`, "success", "SYS");
-                              }}
-                              className="hover:text-cyan-text text-text-dim uppercase transition-colors"
-                            >
-                              Copy
-                            </button>
-                            <span className="text-border-hairline/30">|</span>
-                            <button
-                              onClick={() => {
-                                setInputText(result.text);
-                                playPinClick();
-                                addLog(`FED ALTERNATIVE MATCH INTO INPUT`, "info", "SYS");
-                              }}
-                              className="hover:text-amber-text text-text-dim uppercase transition-colors"
-                            >
-                              Use as Input
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Progressive disclosure replaces the cramped scroll viewport */}
-                  {alternativeMatches.length > CANDIDATE_PREVIEW && (
-                    <button
-                      onClick={() => {
-                        setShowAllCandidates(v => !v);
-                        playPinClick();
-                      }}
-                      onMouseEnter={() => playHoverEvidence()}
-                      className="hud-target mt-2 self-center px-3 py-1 border border-border-hairline/20 bg-bg-void/40 hover:border-amber-alert/50 hover:text-amber-text text-text-dim text-[12px] font-mono uppercase tracking-widest transition-all"
-                    >
-                      {showAllCandidates
-                        ? `Collapse — showing all ${alternativeMatches.length}`
-                        : `Show all ${alternativeMatches.length} candidates`}
-                    </button>
-                  )}
-                </div>
-              )}
-
             </GlassPanel>
           );
         })()}
@@ -1507,12 +1537,12 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
       </div>
 
       {/* ================= RIGHT SECTION: OPERATIONS / PRESETS (SPAN 4) ================= */}
-      <div className="col-span-12 lg:col-span-4 flex flex-col space-y-4">
+      <div className="col-span-12 lg:col-span-4 flex flex-col space-y-4 min-h-0 overflow-y-auto scrollbar-thin">
         
         {mode === "manual" ? (
           <>
             {/* Searchable / Browsable Registry of available tools */}
-            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[350px]" clipSize="sm">
+            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[350px]" contentClassName="flex flex-col min-h-0" clipSize="sm">
               <div className="border-b border-border-hairline/20 pb-2 mb-3">
                 <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                   <Plus className="w-4 h-4 mr-1.5 text-cyan-primary" />
@@ -1536,8 +1566,8 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               </div>
 
               {/* Category Tabs */}
-              <div className="grid grid-cols-3 gap-1.5 mb-3.5 font-mono text-[12px] text-center">
-                {["all", "cipher", "encoding"].map((cat) => (
+              <div className="grid grid-cols-4 gap-1.5 mb-3.5 font-mono text-[12px] text-center">
+                {["all", "cipher", "encoding", "utility"].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => {
@@ -1556,7 +1586,10 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               </div>
 
               {/* Scrollable list of operations */}
-              <div className="flex-1 overflow-y-auto max-h-[350px] space-y-4 pr-1 hud-scrollbar">
+              {/* Fills the panel. max-h-[350px] capped this list inside an 834px
+                  panel, so the registry stopped after ~5 entries and left the
+                  rest of the column blank. */}
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 hud-scrollbar">
                 {filteredTools.length === 0 ? (
                   <div className="py-12 text-center text-[13px] text-text-dim uppercase font-mono">
                     No matching tools index.
@@ -1588,6 +1621,23 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                         {filteredEncodings.map(tool => renderToolItem(tool))}
                       </div>
                     )}
+
+                    {/* Utilities group. RSA Factorizer and Hash Lab have always
+                        been implemented and registered, but this panel only ever
+                        rendered the cipher and encoding lists, so the whole
+                        utility category was unreachable here — including under
+                        "ALL". */}
+                    {filteredUtilities.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center space-x-2 border-b border-border-hairline/10 pb-1 mb-2">
+                          <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
+                          <span className="font-display text-[12px] font-black tracking-widest text-green-verified uppercase">
+                            FORENSIC UTILITIES
+                          </span>
+                        </div>
+                        {filteredUtilities.map(tool => renderToolItem(tool))}
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="space-y-1.5">
@@ -1600,6 +1650,108 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
         ) : (
           /* Brute Force Modes Sidebar presets & heuristic notes */
           <>
+            {/* ===== CANDIDATE REGISTRY =====
+                Moved out of the workspace panel on the left, where it was
+                stacked under the three gate cards and competing with them for
+                height while this column sat empty. A ranked list belongs in the
+                tall narrow column, and it leaves the left half to the gates
+                that produce it. One card per row here rather than the old two,
+                since the column is ~409px wide. */}
+            {bruteResults.length > 0 && alternativeMatches.length > 0 && (
+              <GlassPanel className="p-4 flex flex-col min-h-0" contentClassName="flex flex-col min-h-0" clipSize="sm">
+                <div className="shrink-0 flex items-center justify-between border-b border-border-hairline/15 pb-1.5 mb-2.5 gap-3">
+                  <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider truncate">
+                    CANDIDATE REGISTRY — {alternativeMatches.length} EVALUATED
+                    {bruteFailedCount > 0 && ` · ${bruteFailedCount} SKIPPED`}
+                  </span>
+                  <Badge variant={feasibleCount > 0 ? "green" : "dim"} size="xs">
+                    {feasibleCount > 0
+                      ? `${feasibleCount} ABOVE ${CONFIDENCE_THRESHOLD}%`
+                      : `NONE ABOVE ${CONFIDENCE_THRESHOLD}%`}
+                  </Badge>
+                </div>
+
+                <div className="min-h-0 overflow-y-auto scrollbar-thin grid grid-cols-1 gap-2 pr-1">
+                  {visibleAlternatives.map((result, idx) => {
+                    const rank = (topMatch ? idx + 2 : idx + 1);
+                    const plausible = result.score > CONFIDENCE_THRESHOLD;
+                    return (
+                      <div
+                        key={idx}
+                        className="hud-target hud-target-amber bg-bg-void/40 border border-border-hairline/10 p-2.5 flex flex-col justify-between hover:border-amber-alert/25 hover:bg-bg-void/75 transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-1.5 gap-2">
+                          <div className="flex items-center space-x-1.5 min-w-0">
+                            <span className="font-mono text-[12px] text-text-dim/60 shrink-0">#{rank}</span>
+                            <span className="font-mono text-[12px] text-amber-text font-black truncate">{result.label}</span>
+                            {result.parameter && (
+                              <Badge variant="cyan" size="xs" className="px-1 py-0 font-mono text-[12px] shrink-0">
+                                {result.parameter}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="w-10 h-1 bg-bg-void border border-border-hairline/15 overflow-hidden">
+                              <div
+                                className={`h-full ${plausible ? "bg-green-verified" : "bg-amber-alert/50"}`}
+                                style={{ width: `${Math.max(2, Math.min(100, result.score))}%` }}
+                              />
+                            </div>
+                            <span className={`font-mono text-[12px] ${plausible ? "text-green-verified" : "text-text-dim/60"}`}>
+                              {result.score}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="bg-bg-void/50 p-1.5 border border-border-hairline/5 font-mono text-[12px] text-text-dim/95 mb-2 truncate select-text">
+                          {result.text}
+                        </div>
+
+                        <div className="flex justify-end space-x-1.5 text-[12px] font-mono border-t border-border-hairline/5 pt-1.5">
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(result.text);
+                              playPinClick();
+                              addLog(`COPIED RESULT: ${result.label}`, "success", "SYS");
+                            }}
+                            className="hover:text-cyan-text text-text-dim uppercase transition-colors"
+                          >
+                            Copy
+                          </button>
+                          <span className="text-border-hairline/30">|</span>
+                          <button
+                            onClick={() => {
+                              setInputText(result.text);
+                              playPinClick();
+                              addLog(`FED ALTERNATIVE MATCH INTO INPUT`, "info", "SYS");
+                            }}
+                            className="hover:text-amber-text text-text-dim uppercase transition-colors"
+                          >
+                            Use as Input
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {alternativeMatches.length > CANDIDATE_PREVIEW && (
+                  <button
+                    onClick={() => {
+                      setShowAllCandidates(v => !v);
+                      playPinClick();
+                    }}
+                    onMouseEnter={() => playHoverEvidence()}
+                    className="hud-target shrink-0 mt-2 self-center px-3 py-1 border border-border-hairline/20 bg-bg-void/40 hover:border-amber-alert/50 hover:text-amber-text text-text-dim text-[12px] font-mono uppercase tracking-widest transition-all"
+                  >
+                    {showAllCandidates
+                      ? `Collapse — showing all ${alternativeMatches.length}`
+                      : `Show all ${alternativeMatches.length} candidates`}
+                  </button>
+                )}
+              </GlassPanel>
+            )}
+
             {/* Heuristics Intelligence Core Panel */}
             <GlassPanel className="p-4" clipSize="sm">
               <div className="border-b border-border-hairline/20 pb-2 mb-3">
@@ -1622,9 +1774,43 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 </li>
               </ul>
             </GlassPanel>
+
+            {/* Ambient fill for the run-not-started state. Once a sweep produces
+                candidates the registry above claims this height instead, so the
+                decoration never competes with real results. */}
+            {bruteResults.length === 0 && (
+              <GlassPanel className="p-4 flex-1 flex flex-col min-h-[180px] relative overflow-hidden" contentClassName="flex flex-col" clipSize="sm">
+                <div className="absolute inset-0 bg-grid-pattern opacity-[0.04] pointer-events-none" />
+                <div className="shrink-0 flex items-center justify-between border-b border-border-hairline/20 pb-2 mb-2">
+                  <span className="font-display text-[13px] font-black tracking-widest text-cyan-text/70 uppercase flex items-center">
+                    <span className="w-1.5 h-1.5 bg-amber-alert mr-2 inline-block animate-ping-cyan" />
+                    KEYSPACE FIELD
+                  </span>
+                  <span className="font-mono text-[12px] text-text-dim/50 tracking-widest uppercase">
+                    Idle
+                  </span>
+                </div>
+                <div className="flex-1 min-h-0 pointer-events-none">
+                  <KeyspaceTunnel />
+                </div>
+              </GlassPanel>
+            )}
           </>
         )}
 
+      </div>
+
+      {/* ================= FOOTER: ORIENTATION STRIP =================
+          The explanation used to be a three-line paragraph in the header ribbon,
+          which pushed the whole workspace down before the operator reached a
+          single control. Condensed to one line and moved out of the way. */}
+      <div className="col-span-12 shrink-0">
+        <div className="flex items-center gap-2.5 px-3 py-2 bg-bg-void/40 border border-border-hairline/15 font-share text-[12px] text-text-dim/70 uppercase tracking-wider">
+          <Info className="w-3.5 h-3.5 text-cyan-primary/50 shrink-0" />
+          <span className="truncate">
+            Chain operations so each one feeds the next — or switch to brute force to try many keys at once.
+          </span>
+        </div>
       </div>
 
     </div>
