@@ -23,7 +23,7 @@ import CorrelationNetwork from "../../components/ui/CorrelationNetwork";
 import DataStream from "../../components/react-bits/DataStream";
 import TreeGrowth from "../../components/react-bits/TreeGrowth";
 import BinaryRain from "../../components/react-bits/BinaryRain";
-import BinaryScanner from "../../components/ui/BinaryScanner";
+import HolographicProjector from "../../components/ui/HolographicProjector";
 import {
   playSuccessChime,
   playPinClick,
@@ -32,6 +32,7 @@ import {
   playFileAnalysisComplete,
   playFileAnalysisScanner,
   playScanOpen,
+  playBinaryScanLoop,
   playBakeFailure
 } from "../../lib/soundEngine";
 import { useAppStore } from "../../store/appStore";
@@ -63,6 +64,28 @@ const TACTICAL_BINARY_PRESETS: BinaryPreset[] = [];
  * for minutes with no way to cancel and no indication anything was wrong.
  */
 const MAX_CARRIER_BYTES = 10 * 1024 * 1024;
+
+/**
+ * How much of the carrier the hex dump renders. This was 256 bytes — 16 rows,
+ * which could not fill the viewer at any window height, so the panel always
+ * bottomed out in empty space. 4KB gives 256 rows: enough to scroll and
+ * actually read structure, while staying cheap to build and render.
+ */
+const HEX_PREVIEW_BYTES = 4096;
+
+/**
+ * Scramble helpers for rows the read head has not reached yet. Both preserve
+ * the source string's length and spacing exactly, so nothing shifts when a row
+ * resolves — only the glyphs change.
+ */
+const HEX_GLYPHS = "0123456789ABCDEF";
+const ASCII_GLYPHS = "@#%&$?/\\<>[]{}=+*abcdefGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+const scrambleHex = (s: string) =>
+  s.replace(/[0-9A-F]/g, () => HEX_GLYPHS[(Math.random() * 16) | 0]);
+
+const scrambleAscii = (s: string) =>
+  s.replace(/\S/g, () => ASCII_GLYPHS[(Math.random() * ASCII_GLYPHS.length) | 0]);
 
 
 interface CarrierRejection {
@@ -98,10 +121,28 @@ export default function FileAnalysisLab() {
   // strip so that readout is driven by the file rather than decorated.
   const [byteHistogram, setByteHistogram] = useState<number[] | null>(null);
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hexScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Scan audio deliberately lives in BinaryScanner, which owns the loop for
-  // the whole scanner family. The lab used to drive playBinaryScanLoop itself;
-  // keeping that here as well would start the loop twice and stack it.
+  /**
+   * Scan audio. This briefly lived inside BinaryScanner while the module used
+   * that overlay; now the scan is rendered in the dump itself, the lab owns the
+   * loop again. Only one of the two may drive it — running both stacks it.
+   */
+  const scanSoundRef = useRef<{ stop: () => void } | null>(null);
+  useEffect(() => {
+    if (isScanning && !scanSoundRef.current) {
+      scanSoundRef.current = playBinaryScanLoop();
+    } else if (!isScanning && scanSoundRef.current) {
+      scanSoundRef.current.stop();
+      scanSoundRef.current = null;
+    }
+    return () => {
+      if (scanSoundRef.current) {
+        scanSoundRef.current.stop();
+        scanSoundRef.current = null;
+      }
+    };
+  }, [isScanning]);
 
   // Current active data lookup
   const currentData = useMemo(() => {
@@ -132,6 +173,30 @@ export default function FileAnalysisLab() {
     }
     return null;
   }, [selectedPresetId, customMetadata, activeFile]);
+
+  // Row the read head has reached. Derived from progress rather than stored, so
+  // it can never drift out of step with the rail in the left column.
+  const frontierRow = ((scanProgress / 100) * (currentData?.hexData?.length ?? 0));
+
+  /**
+   * Follow the read head down the dump while it decodes, then return to the top
+   * on completion — the magic-byte row is the payoff and it lives at offset 0,
+   * so leaving the viewer parked at the end would bury it.
+   */
+  useEffect(() => {
+    const el = hexScrollRef.current;
+    if (!el) return;
+    if (isScanning) {
+      const max = el.scrollHeight - el.clientHeight;
+      if (max > 0) el.scrollTop = (scanProgress / 100) * max;
+    } else if (scanComplete) {
+      // Direct assignment, not scrollTo({behavior:"smooth"}): smooth scrolling is
+      // driven by rAF, so it silently does nothing whenever the tab is not
+      // foregrounded and the viewer would stay parked at the end of the dump,
+      // burying the magic-byte row that is the whole payoff.
+      el.scrollTop = 0;
+    }
+  }, [scanProgress, isScanning, scanComplete]);
 
   // Handle Drag Events (page-wide: attached to lab root, not just the upload box)
   const dragCounterRef = useRef(0);
@@ -209,7 +274,7 @@ export default function FileAnalysisLab() {
     reader.onload = async (event) => {
       const buffer = event.target?.result as ArrayBuffer;
       const fullBytes = new Uint8Array(buffer);
-      const bytes = new Uint8Array(buffer.slice(0, 256)); // Grab first 256 bytes
+      const bytes = new Uint8Array(buffer.slice(0, HEX_PREVIEW_BYTES));
 
       // Format true magic bytes hex string
       const hexStrings: string[] = [];
@@ -510,7 +575,12 @@ ${currentData.threatSummary}`;
 
   return (
     <div
-      className="h-full w-full p-4 grid grid-cols-12 gap-4 overflow-y-auto font-chakra select-none text-text-primary relative"
+      /* overflow-hidden, not overflow-y-auto. With the dump now rendering 256
+         rows, an auto-height grid row let the hex panel grow to ~7000px and
+         pushed the scroll onto the page instead of the viewer. Bounding the
+         grid here is what lets the columns below claim exactly the viewport and
+         scroll internally. */
+      className="h-full w-full p-4 grid grid-cols-12 xl:grid-rows-[minmax(0,1fr)] gap-4 overflow-hidden font-chakra select-none text-text-primary relative"
       id="file-analysis-root"
       onDragEnter={handleDrag}
       onDragOver={handleDrag}
@@ -533,7 +603,7 @@ ${currentData.threatSummary}`;
       )}
       
       {/* ================= LEFT COLUMN: BINARY UPLOADER ================= */}
-      <div className="col-span-12 xl:col-span-3 flex flex-col space-y-4 min-h-0">
+      <div className="col-span-12 xl:col-span-3 flex flex-col space-y-4 min-h-0 overflow-y-auto scrollbar-thin">
         
         {/* Header Block */}
         <GlassPanel className="p-4 flex flex-col justify-between" clipSize="sm" showCornerTicks={true}>
@@ -803,98 +873,32 @@ ${currentData.threatSummary}`;
           )}
         </GlassPanel>
 
-        {/* ================= IDLE DIAGNOSTICS RETICLE =================
-            Purely ambient — it reports nothing and is not interactive. It
-            exists to stop the column dead-ending below the buffer port, and to
-            keep the console feeling powered while it waits. Motion is all CSS
-            transform/opacity so it costs nothing next to the scanner. */}
+        {/* ================= HOLOGRAPHIC PROJECTION =================
+            Purely ambient — it projects nothing real, reports nothing, and is
+            not interactive. It exists to stop the column dead-ending below the
+            buffer port and to keep the console feeling powered while it waits. */}
         <GlassPanel className="p-4 flex-1 flex flex-col min-h-[200px] relative overflow-hidden" clipSize="sm">
           <div className="absolute inset-0 bg-grid-pattern opacity-[0.04] pointer-events-none" />
 
           <div className="flex items-center justify-between border-b border-border-hairline/20 pb-2 mb-2">
             <span className="font-display text-[13px] font-black tracking-widest text-cyan-text/70 uppercase flex items-center">
               <span className="w-1.5 h-1.5 bg-cyan-primary mr-2 inline-block animate-ping-cyan" />
-              DIAGNOSTIC IDLE
+              PROJECTION FIELD
             </span>
             <span className="font-mono text-[12px] text-text-dim/50 tracking-widest uppercase">
-              Nominal
+              Stable
             </span>
           </div>
 
-          <div className="flex-1 flex items-center justify-center relative min-h-0">
-            <svg
-              viewBox="0 0 200 200"
-              className="w-full h-full max-h-[220px] text-cyan-primary pointer-events-none"
-              aria-hidden="true"
-            >
-              {/* Outer dashed ring, slow forward rotation */}
-              <circle
-                cx="100" cy="100" r="82"
-                fill="none" stroke="currentColor" strokeWidth="1"
-                strokeDasharray="3 7"
-                className="opacity-25 origin-center animate-[spin_70s_linear_infinite]"
-              />
-              {/* Counter-rotating inner ring — the opposing drift is what keeps
-                  it reading as machinery rather than a loading spinner. */}
-              <circle
-                cx="100" cy="100" r="58"
-                fill="none" stroke="currentColor" strokeWidth="1"
-                strokeDasharray="18 10"
-                className="opacity-20 origin-center animate-[spin_45s_linear_infinite_reverse]"
-              />
-              <circle
-                cx="100" cy="100" r="34"
-                fill="none" stroke="currentColor" strokeWidth="0.75"
-                className="opacity-25"
-              />
-
-              {/* Perimeter ticks, longer every quarter */}
-              {Array.from({ length: 32 }).map((_, i) => {
-                const a = (i * 360) / 32;
-                const rad = (a * Math.PI) / 180;
-                const major = i % 8 === 0;
-                const r1 = 86;
-                const r2 = major ? 96 : 91;
-                return (
-                  <line
-                    key={i}
-                    x1={100 + r1 * Math.cos(rad)} y1={100 + r1 * Math.sin(rad)}
-                    x2={100 + r2 * Math.cos(rad)} y2={100 + r2 * Math.sin(rad)}
-                    stroke="currentColor" strokeWidth={major ? 1.4 : 0.7}
-                    className={major ? "opacity-50" : "opacity-25"}
-                  />
-                );
-              })}
-
-              {/* Sweep arm */}
-              <g className="origin-center animate-[spin_9s_linear_infinite]">
-                <defs>
-                  <linearGradient id="fa-idle-sweep" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="currentColor" stopOpacity="0" />
-                    <stop offset="100%" stopColor="currentColor" stopOpacity="0.5" />
-                  </linearGradient>
-                </defs>
-                <path d="M 100 100 L 182 100 A 82 82 0 0 0 158 42 Z" fill="url(#fa-idle-sweep)" opacity="0.28" />
-                <line x1="100" y1="100" x2="182" y2="100" stroke="currentColor" strokeWidth="1" className="opacity-60" />
-              </g>
-
-              {/* Crosshair */}
-              <line x1="100" y1="10" x2="100" y2="30" stroke="currentColor" strokeWidth="0.75" className="opacity-35" />
-              <line x1="100" y1="170" x2="100" y2="190" stroke="currentColor" strokeWidth="0.75" className="opacity-35" />
-              <line x1="10" y1="100" x2="30" y2="100" stroke="currentColor" strokeWidth="0.75" className="opacity-35" />
-              <line x1="170" y1="100" x2="190" y2="100" stroke="currentColor" strokeWidth="0.75" className="opacity-35" />
-
-              {/* Core */}
-              <circle cx="100" cy="100" r="4" fill="currentColor" className="opacity-70 animate-hex-pulse-flicker" />
-              <circle cx="100" cy="100" r="12" fill="none" stroke="currentColor" strokeWidth="0.75" className="opacity-30" />
-            </svg>
+          <div className="flex-1 flex items-center justify-center relative min-h-0 pointer-events-none">
+            <HolographicProjector />
           </div>
         </GlassPanel>
 
       </div>
 
       {/* ================= RIGHT COLUMN: HEX DUMP & DETECTED STRINGS ================= */}
-      <div className="col-span-12 xl:col-span-9 flex flex-col space-y-4">
+      <div className="col-span-12 xl:col-span-9 flex flex-col space-y-4 min-h-0">
         
         {!currentData ? (
           /* Getting Started State */
@@ -916,15 +920,11 @@ ${currentData.threatSummary}`;
           /* Analysis Active Views */
           <>
             {/* Hex Dump Viewer Panel */}
-            <GlassPanel className="p-4 flex flex-col min-h-[300px] flex-1 relative overflow-hidden" clipSize="md">
-              {/* The module's scanner, finally the same one its siblings use.
-                  Image Forensics has ImageScanner and Audio Forensics has
-                  AudioScanner; File Analysis had a hand-rolled 2px line sliding
-                  down instead. Covering the dump while it runs also buys the
-                  completion reveal the module is supposed to have — the decoded
-                  hex is uncovered rather than just sitting there the whole time. */}
-              <BinaryScanner active={isScanning} scanLabel="DECOMPILING CARRIER" />
-
+            <GlassPanel
+              className="p-4 flex flex-col min-h-[300px] flex-1 relative overflow-hidden"
+              contentClassName="flex flex-col"
+              clipSize="md"
+            >
               <div className="border-b border-border-hairline/20 pb-2 mb-3.5 flex justify-between items-center">
                 <div className="flex items-center space-x-2">
                   <span className="w-1.5 h-3.5 bg-cyan-primary transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
@@ -951,33 +951,79 @@ ${currentData.threatSummary}`;
                 </div>
               ) : (
                 // The Scrollable Hex Dump Viewport (shown during scanning or after completion)
-                <div className="flex-1 flex flex-col justify-between font-share">
-                  
+                <div className="flex-1 flex flex-col min-h-0 font-share">
+
                   {/* Header headers for offsets */}
-                  <div className="bg-bg-void border-b border-border-hairline/20 p-2 font-share text-[12px] text-cyan-text/75 grid grid-cols-12 gap-1 tracking-widest select-none">
+                  <div className="shrink-0 bg-bg-void border-b border-border-hairline/20 p-2 font-share text-[12px] text-cyan-text/75 grid grid-cols-12 gap-1 tracking-widest select-none">
                     <div className="col-span-2">OFFSET</div>
                     <div className="col-span-7 text-center">00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F</div>
                     <div className="col-span-3 text-right">ASCII_DECODE</div>
                   </div>
 
                   {/* Actual rows using strict font-share alignment */}
-                  <div className="flex-1 overflow-y-auto max-h-[220px] font-share text-[13px] text-text-dim bg-bg-void/70 border border-border-hairline/10 p-2 divide-y divide-border-hairline/5 space-y-1 select-text scrollbar-thin relative overflow-hidden">
+                  {/* Fills the panel. This was flex-1 with max-h-[220px], so the
+                      dump stayed 220px tall however much room the panel had and
+                      the rest bottomed out empty. It also carried overflow-y-auto
+                      and overflow-hidden together, which fought over the scroll
+                      axis; the x/y split is explicit now. min-h-0 is what lets a
+                      flex child actually scroll instead of growing its parent. */}
+                  <div
+                    ref={hexScrollRef}
+                    className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden font-share text-[13px] text-text-dim bg-bg-void/70 border border-border-hairline/10 p-2 divide-y divide-border-hairline/5 space-y-1 select-text scrollbar-thin relative"
+                  >
                     {scanComplete && (
                       <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent via-cyan-primary/20 to-cyan-primary/50 border-b border-cyan-primary animate-scanline-sweep pointer-events-none z-10 mix-blend-screen" />
                     )}
-                    {currentData.hexData.map((row, idx) => {
+                    {currentData.hexData.map((row: any, idx: number) => {
                       const isRelevant = idx === 0; // First row contains the magic bytes signature
+
+                      /**
+                       * The scan resolves the dump in place rather than hiding
+                       * it behind an overlay. Rows below the read head are
+                       * still scrambled, the head row is lit, and everything
+                       * above it has settled into real bytes — so the motion
+                       * is the file being read, and the content stays legible
+                       * throughout instead of being covered up.
+                       */
+                      const resolved = !isScanning || idx < frontierRow;
+                      const isHead = isScanning && idx >= frontierRow && idx < frontierRow + 2;
+
                       return (
-                      <div key={idx} className={`grid grid-cols-12 gap-1 py-1 hover:bg-cyan-primary/[0.03] transition-colors leading-none relative z-20 ${scanComplete && isRelevant ? 'bg-cyan-primary/[0.05]' : ''}`}>
-                        <div className="col-span-2 text-cyan-text font-bold tracking-wider">{row.offset}</div>
-                        
-                        {/* Strict monospace spacing with font-share */}
-                        <div className={`col-span-7 text-text-primary text-center tracking-wider font-medium font-share ${scanComplete && isRelevant ? 'animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_var(--color-accent-primary)]' : ''}`}>
-                          {row.hex}
+                      <div
+                        key={idx}
+                        className={`grid grid-cols-12 gap-1 py-1 hover:bg-cyan-primary/[0.03] transition-colors leading-none relative z-20 ${
+                          isHead
+                            ? "bg-cyan-primary/[0.10] shadow-[0_0_12px_-2px_var(--color-accent-primary)]"
+                            : scanComplete && isRelevant
+                              ? "bg-cyan-primary/[0.05]"
+                              : ""
+                        }`}
+                      >
+                        <div className={`col-span-2 font-bold tracking-wider ${resolved ? "text-cyan-text" : "text-cyan-dim/40"}`}>
+                          {row.offset}
                         </div>
-                        
-                        <div className={`col-span-3 text-right font-bold truncate font-share ${scanComplete && isRelevant ? 'animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_var(--color-accent-primary)]' : 'text-cyan-primary/80'}`}>
-                          {row.ascii}
+
+                        {/* Strict monospace spacing with font-share */}
+                        <div className={`col-span-7 text-center tracking-wider font-medium font-share ${
+                          !resolved
+                            ? "text-cyan-dim/45"
+                            : isHead
+                              ? "text-white"
+                              : scanComplete && isRelevant
+                                ? "animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_var(--color-accent-primary)]"
+                                : "text-text-primary"
+                        }`}>
+                          {resolved ? row.hex : scrambleHex(row.hex)}
+                        </div>
+
+                        <div className={`col-span-3 text-right font-bold truncate font-share ${
+                          !resolved
+                            ? "text-cyan-dim/35"
+                            : scanComplete && isRelevant
+                              ? "animate-byte-flicker text-cyan-primary text-shadow-[0_0_8px_var(--color-accent-primary)]"
+                              : "text-cyan-primary/80"
+                        }`}>
+                          {resolved ? row.ascii : scrambleAscii(row.ascii)}
                         </div>
                       </div>
                     )})}
@@ -985,7 +1031,7 @@ ${currentData.threatSummary}`;
 
                   {/* Warning anomaly box if signature mismatch */}
                   {scanComplete && (
-                    <div className={`power-sweep mt-3 p-3 border font-mono text-[13px] flex items-start space-x-2 relative overflow-hidden ${
+                    <div className={`power-sweep shrink-0 mt-3 p-3 border font-mono text-[13px] flex items-start space-x-2 relative overflow-hidden ${
                       currentData.isMismatch
                         ? "bg-red-threat/10 border-red-threat/30 text-red-threat"
                         : "bg-bg-void/40 border-border-hairline/10 text-text-dim"
@@ -1008,7 +1054,7 @@ ${currentData.threatSummary}`;
             </GlassPanel>
 
             {/* Lower row: strings extraction and dossier integration */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="shrink-0 grid grid-cols-1 md:grid-cols-12 gap-4">
               
               {/* ASCII Strings Extraction list */}
               <div className="md:col-span-12 xl:col-span-4">
