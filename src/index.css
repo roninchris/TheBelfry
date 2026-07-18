@@ -1785,6 +1785,52 @@ button:hover, .btn-interactive:hover {
   .holo-band { opacity: 0; }
 }
 
+/* ---- Keyspace tunnel ----
+   Real CSS 3D (perspective + preserve-3d), not a flat SVG fake. Gates fly at
+   the viewer along Z on staggered delays, so the panel reads as travelling
+   through a key space rather than watching an object rotate — deliberately a
+   different shape of motion from the holographic sphere in File Analysis. */
+@keyframes keyspace-fly {
+  0% {
+    transform: translateZ(-1100px) rotate(var(--gate-spin, 0deg)) scale(0.92);
+    opacity: 0;
+  }
+  10% { opacity: 0.9; }
+  70% { opacity: 0.55; }
+  100% {
+    transform: translateZ(300px) rotate(calc(var(--gate-spin, 0deg) + 55deg)) scale(1);
+    opacity: 0;
+  }
+}
+.keyspace-gate {
+  animation: keyspace-fly 7s linear infinite;
+}
+
+/* Slow yaw so the tunnel mouth is seen slightly off-axis; without it the
+   perspective reads as concentric 2D squares. */
+@keyframes keyspace-yaw {
+  0%, 100% { transform: rotateX(7deg) rotateY(-10deg); }
+  50%      { transform: rotateX(-5deg) rotateY(10deg); }
+}
+.keyspace-scene {
+  transform-style: preserve-3d;
+  animation: keyspace-yaw 19s ease-in-out infinite;
+}
+
+/* Bright leading edge that pulses down the tunnel as a sweep marker. */
+@keyframes keyspace-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50%      { opacity: 0.75; transform: scale(1.08); }
+}
+.keyspace-core { animation: keyspace-pulse 2.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .keyspace-gate,
+  .keyspace-scene,
+  .keyspace-core { animation: none; }
+  .keyspace-gate { opacity: 0.35; }
+}
+
 /* A channel that actually produced output carries a live edge on the bus side;
    the rest stay inert. This is the difference between "sixteen rows" and
    "sixteen taps, four of which are carrying signal". */

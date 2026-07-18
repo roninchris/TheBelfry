@@ -30,7 +30,7 @@ import {
   Info
 } from "lucide-react";
 import GlassPanel from "../../components/ui/GlassPanel";
-import HolographicProjector from "../../components/ui/HolographicProjector";
+import KeyspaceTunnel from "../../components/ui/KeyspaceTunnel";
 import Checkbox from "../../components/ui/Checkbox";
 import Badge from "../../components/ui/Badge";
 import DecryptText from "../../components/ui/DecryptText";
@@ -765,7 +765,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   
                   {/* GATE 1: INPUT VESSEL CARD */}
                   <div className="w-[250px] shrink-0 flex items-stretch">
-                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" clipSize="sm" showCornerTicks={true}>
+                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="w-1.5 h-3 bg-cyan-primary inline-block transform -skew-x-12" />
@@ -969,7 +969,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                   {/* GATE 4: OUTPUT VESSEL CARD */}
                   <div className="w-[250px] shrink-0 flex items-stretch">
-                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" clipSize="sm" showCornerTicks={true}>
+                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
@@ -1088,7 +1088,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 
                 {/* GATE 1: INTELLIGENCE STREAM SOURCE & CONFIG */}
                 <div className="w-[250px] shrink-0 flex items-stretch">
-                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" clipSize="sm" showCornerTicks={true}>
+                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12" />
@@ -1206,7 +1206,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                 {/* GATE 2: SWEEP & DECRYPTION MATRIX CORE */}
                 <div className="w-[250px] shrink-0 flex items-stretch">
-                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" clipSize="sm" showCornerTicks={true}>
+                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12 animate-hex-pulse-flicker" />
@@ -1292,7 +1292,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                 {/* GATE 3: TOP MATCH PLAUSIBILITY TERMINATION */}
                 <div className="w-[250px] shrink-0 flex items-stretch">
-                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" clipSize="sm" showCornerTicks={true}>
+                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
@@ -1418,7 +1418,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
         {mode === "manual" ? (
           <>
             {/* Searchable / Browsable Registry of available tools */}
-            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[350px]" clipSize="sm">
+            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[350px]" contentClassName="flex flex-col min-h-0" clipSize="sm">
               <div className="border-b border-border-hairline/20 pb-2 mb-3">
                 <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                   <Plus className="w-4 h-4 mr-1.5 text-cyan-primary" />
@@ -1462,7 +1462,10 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               </div>
 
               {/* Scrollable list of operations */}
-              <div className="flex-1 overflow-y-auto max-h-[350px] space-y-4 pr-1 hud-scrollbar">
+              {/* Fills the panel. max-h-[350px] capped this list inside an 834px
+                  panel, so the registry stopped after ~5 entries and left the
+                  rest of the column blank. */}
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1 hud-scrollbar">
                 {filteredTools.length === 0 ? (
                   <div className="py-12 text-center text-[13px] text-text-dim uppercase font-mono">
                     No matching tools index.
@@ -1646,8 +1649,8 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                     Idle
                   </span>
                 </div>
-                <div className="flex-1 min-h-0 flex items-center justify-center pointer-events-none">
-                  <HolographicProjector />
+                <div className="flex-1 min-h-0 pointer-events-none">
+                  <KeyspaceTunnel />
                 </div>
               </GlassPanel>
             )}
