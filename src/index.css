@@ -931,6 +931,70 @@ button:hover, .btn-interactive:hover {
   animation: charge-ring-spin 2.4s linear infinite;
 }
 
+/* ---- Ambient telemetry: persistent glyph columns drifting behind the console ----
+   CSS-only on purpose. The corner readout in HexagonBackground drives a 100ms
+   setState; multiplying that across ~20 columns would put a constant re-render
+   load on the main thread. Here the glyph strings are generated once and only
+   `transform` animates, so the whole layer stays on the compositor. */
+@keyframes telemetry-fall {
+  from { transform: translate3d(0, -50%, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+
+/* Column-level brightness drift, so columns don't read as one flat block.
+   Deliberately `filter`, not `opacity`: opacity here would override the inline
+   per-column opacity that keeps this layer subordinate to module content. */
+@keyframes telemetry-breathe {
+  0%, 100% { filter: brightness(0.55); }
+  50%      { filter: brightness(1.5); }
+}
+
+.telemetry-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  /* Weight the glyphs toward the left/right margins and fade the vertical
+     extremes, so the centre — where module content lives — stays readable. */
+  -webkit-mask:
+    linear-gradient(90deg, #000 0%, transparent 26%, transparent 74%, #000 100%),
+    linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+  -webkit-mask-composite: source-in;
+          mask:
+    linear-gradient(90deg, #000 0%, transparent 26%, transparent 74%, #000 100%),
+    linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+          mask-composite: intersect;
+}
+
+.telemetry-column {
+  position: absolute;
+  top: 0;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  white-space: pre;
+  line-height: 1.05;
+  font-family: "Share Tech Mono", ui-monospace, monospace;
+  color: var(--color-cyan-primary);
+  will-change: transform;
+  animation:
+    telemetry-fall var(--telemetry-duration, 60s) linear infinite,
+    telemetry-breathe var(--telemetry-breathe, 9s) ease-in-out infinite;
+  animation-delay: var(--telemetry-delay, 0s);
+}
+
+/* Processing state: the field leans in while the system is working. Paired with
+   the scan cues (FILE_ANALYSIS_SCANNER / IMAGE_FORENSICS_SCAN) rather than
+   running hot all the time. */
+.telemetry-field[data-intensity="active"] .telemetry-column {
+  color: var(--color-accent-primary);
+  animation-duration: calc(var(--telemetry-duration, 60s) / 2.5), var(--telemetry-breathe, 9s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .telemetry-column { animation: none !important; opacity: 0.28 !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-data-assemble,
   .animate-hologram-flicker,

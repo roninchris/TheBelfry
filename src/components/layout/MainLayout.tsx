@@ -1,8 +1,10 @@
 import React from "react";
+import { useAppStore } from "../../store/appStore";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import StatusBar from "./StatusBar";
 import HexagonBackground from "../ui/HexagonBackground";
+import AmbientTelemetry from "../ui/AmbientTelemetry";
 import NotesPanel from "../ui/NotesPanel";
 
 interface MainLayoutProps {
@@ -10,6 +12,10 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
+  // The ambient field leans in while a forensic scan is running, so the console
+  // visibly reacts to work rather than idling at one level.
+  const isScanning = useAppStore((s) => s.isScanning);
+
   return (
     <div className="relative w-screen h-screen flex flex-col bg-bg-void text-text-primary overflow-hidden font-chakra">
       <div className="bat-bg"></div>
@@ -17,6 +23,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
       
       {/* Dynamic Hexagon background with pulsing effects */}
       <HexagonBackground />
+
+      {/* Ambient glyph telemetry drifting in the left/right margins */}
+      <AmbientTelemetry active={isScanning} />
 
       {/* Immersive HUD Grids and Edge vignettes */}
       <div className="absolute inset-0 hud-bg-grid opacity-100 z-0 pointer-events-none" />
