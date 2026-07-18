@@ -761,8 +761,12 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   })()}
                 </div>
 
-                <div className="relative z-10 flex-1 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
-                  
+                {/* The rail is a band, not a column. Letting it take the whole
+                    panel stretched three sparse cards into ~660px towers; a
+                    chain reads left-to-right, so it gets a fixed comfortable
+                    height and the trace below uses the rest. */}
+                <div className="relative z-10 h-[380px] shrink-0 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
+
                   {/* GATE 1: INPUT VESSEL CARD */}
                   <div className="flex-1 min-w-[250px] flex items-stretch">
                     <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
@@ -1025,8 +1029,72 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                 </div>
 
+                {/* ===== STAGE TRACE =====
+                    What the text actually looks like after each operation. The
+                    per-stage results were already computed for the step cards
+                    but only ever shown as a clipped two-line preview inside
+                    them, so following a chain meant reading across cards. Here
+                    the whole cascade reads down one column. */}
+                <div className="flex-1 min-h-0 flex flex-col border border-border-hairline/15 bg-bg-void/30">
+                  <div className="shrink-0 flex items-center justify-between px-2.5 py-1.5 border-b border-border-hairline/15">
+                    <span className="font-display text-[12px] font-black tracking-widest text-cyan-text/80 uppercase flex items-center">
+                      <Activity className="w-3 h-3 mr-1.5 text-cyan-primary/70" />
+                      STAGE TRACE
+                    </span>
+                    <span className="font-mono text-[12px] text-text-dim/60 tracking-widest uppercase">
+                      {pipelineSteps.length === 0
+                        ? "NO STAGES"
+                        : `${pipelineSteps.length} STAGE${pipelineSteps.length === 1 ? "" : "S"}`}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin font-mono text-[12px] divide-y divide-border-hairline/10">
+                    {/* Stage 0 is the raw buffer, so the trace starts where the
+                        operator's text starts rather than after the first op. */}
+                    <div className="flex items-start gap-2.5 px-2.5 py-1.5">
+                      <span className="text-text-dim/50 shrink-0 w-6">00</span>
+                      <span className="text-cyan-text/80 shrink-0 w-24 truncate uppercase">input</span>
+                      <span className="text-text-primary/90 truncate select-text">
+                        {inputText || <span className="text-text-dim/40">empty buffer</span>}
+                      </span>
+                    </div>
+
+                    {pipelineSteps.map((step, idx) => {
+                      const tool = getTool(step.toolId);
+                      const value = intermediateResults[idx];
+                      const isActive = activeStepIndex === idx;
+                      return (
+                        <div
+                          key={step.id}
+                          className={`flex items-start gap-2.5 px-2.5 py-1.5 transition-colors ${
+                            isActive ? "bg-cyan-primary/[0.07]" : "hover:bg-cyan-primary/[0.02]"
+                          }`}
+                        >
+                          <span className="text-text-dim/50 shrink-0 w-6">
+                            {String(idx + 1).padStart(2, "0")}
+                          </span>
+                          <span className="text-cyan-text/80 shrink-0 w-24 truncate uppercase">
+                            {tool?.label ?? step.toolId}
+                          </span>
+                          <span className="text-text-primary/90 truncate select-text">
+                            {value !== undefined && value !== ""
+                              ? value
+                              : <span className="text-text-dim/40">not baked yet</span>}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {pipelineSteps.length === 0 && (
+                      <div className="px-2.5 py-3 text-text-dim/50 uppercase tracking-wider">
+                        Add an operation and each stage's output will appear here in order.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Dossier database reporting row */}
-                <div className="mt-4 pt-3 border-t border-border-hairline/15 flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+                <div className="shrink-0 mt-3 pt-3 border-t border-border-hairline/15 flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
                   <span className="text-[12px] text-text-dim font-share uppercase tracking-widest flex items-center">
                     <Activity className="w-3.5 h-3.5 mr-1 text-cyan-primary animate-hex-pulse-flicker" />
                     FLOW MONITOR: {bakeSuccess ? "STATUS ALIGNED" : "CASCADE COMPILATION FAULT"}
@@ -1093,7 +1161,9 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
               </div>
 
               {/* 3-GATE HORIZONTAL ASSEMBLY CONVEYOR BELT */}
-              <div className="flex-1 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
+              {/* Fixed band, same reasoning as the manual rail: three gates
+                  stretched to full height were mostly void. */}
+              <div className="h-[380px] shrink-0 overflow-x-auto pb-4 scrollbar-thin flex items-stretch gap-2 px-1">
                 
                 {/* GATE 1: INTELLIGENCE STREAM SOURCE & CONFIG */}
                 <div className="flex-1 min-w-[250px] flex items-stretch">
@@ -1230,7 +1300,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                     {/* Interactive Scan Crack Controls & Statuses inside Gate 2 */}
                     {isScanning ? (
-                      <div className="flex-1 flex flex-col justify-between">
+                      <div className="flex-1 flex flex-col">
                         {/* Radar Spinner & Progress */}
                         <div className="flex items-center space-x-3 bg-bg-void/40 border border-border-hairline/10 p-2">
                           <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
@@ -1250,17 +1320,9 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                           </div>
                         </div>
 
-                        {/* Simulated Logs block */}
-                        <div className="mt-2 flex-1 min-h-[100px] bg-bg-void border border-border-hairline/15 p-2 rounded-none font-mono text-[12px] space-y-0.5 text-amber-text/80 overflow-y-auto hud-scrollbar select-text">
-                          {scanLogs.map((logLine, idx) => (
-                            <div key={idx} className="truncate select-text">
-                              {logLine}
-                            </div>
-                          ))}
-                          <div className="animate-hex-pulse-flicker flex items-center text-cyan-text font-bold">
-                            <span>&gt; INTERROGATING MATRIX...</span>
-                          </div>
-                        </div>
+                        {/* The log itself lives in the SWEEP LOG band below the
+                            gates now, so it outlives the run instead of being
+                            destroyed with this branch the moment results land. */}
                       </div>
                     ) : (
                       // Grouped, not justify-between: spreading three items down a
@@ -1396,6 +1458,47 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                   </GlassPanel>
                 </div>
 
+              </div>
+
+              {/* ===== SWEEP LOG =====
+                  The run's own commentary. It used to live inside Gate 2, which
+                  meant it only existed while scanning and vanished the moment
+                  results arrived, taking the record of what was tried with it.
+                  Out here it survives the run and fills the band the gates gave
+                  back. */}
+              <div className="flex-1 min-h-0 mt-3 flex flex-col border border-border-hairline/15 bg-bg-void/30">
+                <div className="shrink-0 flex items-center justify-between px-2.5 py-1.5 border-b border-border-hairline/15">
+                  <span className="font-display text-[12px] font-black tracking-widest text-amber-text/80 uppercase flex items-center">
+                    <Radio className={`w-3 h-3 mr-1.5 text-amber-alert/70 ${isScanning ? "animate-hex-pulse-flicker" : ""}`} />
+                    SWEEP LOG
+                  </span>
+                  <span className="font-mono text-[12px] text-text-dim/60 tracking-widest uppercase">
+                    {isScanning
+                      ? `${scanProgress}% · RUNNING`
+                      : scanLogs.length > 0
+                        ? `${scanLogs.length} ENTRIES`
+                        : "IDLE"}
+                  </span>
+                </div>
+
+                <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin font-mono text-[12px] px-2.5 py-1.5 space-y-0.5 text-amber-text/80 select-text">
+                  {scanLogs.length === 0 && !isScanning ? (
+                    <div className="text-text-dim/50 uppercase tracking-wider py-1.5">
+                      Run a sweep and each attempt will be recorded here.
+                    </div>
+                  ) : (
+                    <>
+                      {scanLogs.map((logLine, idx) => (
+                        <div key={idx} className="truncate">{logLine}</div>
+                      ))}
+                      {isScanning && (
+                        <div className="animate-hex-pulse-flicker flex items-center text-cyan-text font-bold">
+                          <span>&gt; INTERROGATING MATRIX...</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Informational banners: multi-byte XOR estimates, truncated search notices — never ranked "answers" */}
