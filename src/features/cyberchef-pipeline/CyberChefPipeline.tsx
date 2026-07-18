@@ -29,7 +29,6 @@ import {
   Award
 } from "lucide-react";
 import GlassPanel from "../../components/ui/GlassPanel";
-import DataWall from "../../components/ui/DataWall";
 import Checkbox from "../../components/ui/Checkbox";
 import Badge from "../../components/ui/Badge";
 import DecryptText from "../../components/ui/DecryptText";
@@ -601,52 +600,43 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
           </div>
         </GlassPanel>
 
-        {/* ================= HIGHLY STYLIZED HUD TAB SWITCHER ================= */}
-        <div 
-          className="grid grid-cols-2 bg-bg-void/85 border border-border-hairline/25 p-1 rounded-none overflow-hidden select-none" 
-          style={{ clipPath: "polygon(0 0, 100% 0, 99.3% 100%, 0.7% 100%)" }}
-        >
-          <button
-            onClick={() => {
-              playPinClick();
-              setMode("manual");
-            }}
-            className={`py-2.5 text-[13px] font-display font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
-              mode === "manual"
-                ? "bg-cyan-primary text-bg-void shadow-[0_0_15px_rgb(var(--rgb-accent) / 0.55)] font-black"
-                : "text-text-dim hover:text-white hover:bg-bg-void/40"
-            }`}
-          >
-            <Sliders className="w-4 h-4" />
-            <span>MANUAL CASCADE RECIPE</span>
-          </button>
-          
-          <button
-            onClick={() => {
-              playPinClick();
-              setMode("brute");
-            }}
-            className={`py-2.5 text-[13px] font-display font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${
-              mode === "brute"
-                ? "bg-amber-alert text-bg-void shadow-[0_0_15px_rgba(245,158,11,0.55)] font-black"
-                : "text-text-dim hover:text-white hover:bg-bg-void/40"
-            }`}
-          >
-            <ShieldAlert className="w-4 h-4 animate-hex-pulse-flicker" />
-            <span>BRUTE FORCE / AUTO-CRACK MATRIX</span>
-          </button>
-        </div>
-
       </div>
 
       {/* ================= LEFT SECTION: ACTIVE TOOL / WORKSPACE ================= */}
       <div className="col-span-12 lg:col-span-8 flex flex-col space-y-4">
         
         {/* Unified conveyor layout replaces former separate input rows */}
+        {/* Mode switcher, directly above the workspace it controls. It used to
+            sit at the bottom of the left-hand column, one column away from the
+            content it switches. */}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => { playPinClick(); setMode("manual"); }}
+            onMouseEnter={() => playHoverBlip()}
+            className={`tablet-btn hud-target py-2.5 text-[13px] flex items-center justify-center space-x-2 ${mode === "manual" ? "tablet-active" : ""}`}
+            style={{ "--frame-color": "var(--color-accent-primary)" } as React.CSSProperties}
+            aria-pressed={mode === "manual"}
+          >
+            <Sliders className="w-4 h-4" />
+            <span>Manual cascade</span>
+          </button>
+
+          <button
+            onClick={() => { playPinClick(); setMode("brute"); }}
+            onMouseEnter={() => playHoverBlip()}
+            className={`tablet-btn hud-target py-2.5 text-[13px] flex items-center justify-center space-x-2 ${mode === "brute" ? "tablet-active" : ""}`}
+            style={{ "--frame-color": "var(--color-amber-alert)" } as React.CSSProperties}
+            aria-pressed={mode === "brute"}
+          >
+            <ShieldAlert className="w-4 h-4" />
+            <span>Brute force</span>
+          </button>
+        </div>
+
 
         {/* MANUAL WORKSPACE LAYOUT (Steps List) */}
         {mode === "manual" && (
-          <GlassPanel className="p-4 flex-1 flex flex-col min-h-[500px]" clipSize="md">
+          <GlassPanel className="p-4 flex-1 flex flex-col min-h-0" clipSize="md">
             <div className="border-b border-border-hairline/20 pb-2 mb-4 flex justify-between items-center flex-wrap gap-2">
               <div className="flex items-center space-x-2">
                 <Sliders className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
@@ -670,7 +660,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 {pipelineSteps.length > 0 && (
                   <button
                     onClick={clearPipeline}
-                    className="px-2 py-1 border border-red-threat/25 hover:border-red-threat text-red-threat transition-all text-[12px] font-mono uppercase"
+                    className="tablet-btn hud-target px-2 py-1.5 text-[12px]" style={{ "--frame-color": "var(--color-red-threat)", color: "var(--color-red-threat)", borderColor: "rgb(var(--rgb-threat) / 0.45)" } as React.CSSProperties}
                   >
                     Clear Recipe
                   </button>
@@ -680,8 +670,8 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 <button
                   onClick={handleBake}
                   disabled={isBaking || pipelineSteps.length === 0}
-                  className="hud-target px-3 py-1 bg-cyan-primary hover:bg-white text-bg-void transition-all duration-150 text-[13px] font-black tracking-widest font-display uppercase disabled:opacity-30 disabled:pointer-events-none flex items-center space-x-1"
-                  style={{ clipPath: "polygon(0 0, 100% 0, 92% 100%, 0 100%)" }}
+                  className="tablet-btn hud-target px-3 py-1.5 text-[13px] disabled:opacity-30 disabled:pointer-events-none flex items-center space-x-1.5"
+                  style={{ "--frame-color": "var(--color-accent-primary)" } as React.CSSProperties}
                 >
                   <RefreshCw className={`w-3 h-3 ${isBaking ? "animate-radar-sweep" : ""}`} />
                   <span>BAKE PIPELINE</span>
@@ -696,10 +686,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 to act on. The empty state is now a card inside the chain. */}
             {(
               // Horizontal Conveyor Assembly Line
-              <div className="relative flex-1 flex flex-col justify-between min-h-0">
-                {/* Decorative machine chatter behind the chain — fills the dead
-                    space around the cards without competing with them. */}
-                <DataWall lines={12} className="z-0" />
+              <div className="relative flex-1 flex flex-col justify-start gap-3 min-h-0">
 
                 {/* ===== SEQUENCE PROGRESS RAIL — the "flow" identity for a chain of ops ===== */}
                 <div className="relative z-10 mb-3 flex items-center gap-0.5 overflow-x-auto scrollbar-none pb-1.5 border-b border-border-hairline/10">

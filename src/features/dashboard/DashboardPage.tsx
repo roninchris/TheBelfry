@@ -161,6 +161,10 @@ export default function DashboardPage() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgb(var(--rgb-accent) / 0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--rgb-accent) / 0.03)_1px,transparent_1px)] bg-[size:32px_32px] animate-[pulse_8s_infinite]" />
         <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-cyan-primary/5 rounded-full blur-[120px] animate-[pulse_4s_infinite_alternate]" />
         <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-red-threat/[0.02] rounded-full blur-[150px] animate-[pulse_6s_infinite_alternate]" />
+        {/* Ambient character field, well behind everything. */}
+        <div className="absolute inset-x-[8%] top-[22%] h-[46%]">
+          <DataWall cell={16} intensity={0.1} />
+        </div>
       </div>
 
       {/* ================= HIGH-TECH DENSE HUD READOUT STRIP ================= */}
@@ -535,7 +539,7 @@ export default function DashboardPage() {
               instead of nothing, and yields to the result panel below. */}
           {!scannedEvidence && !isScanning && (
             <div className="mt-4 flex-1 min-h-0 relative border border-border-hairline/15 bg-bg-void/25 overflow-hidden">
-              <DataWall lines={10} />
+              <DataWall intensity={0.13} />
               <div className="relative z-10 h-full flex flex-col items-center justify-center text-center gap-2 px-6">
                 <span className="font-display text-sm font-extrabold tracking-[0.18em] text-white/70 uppercase">
                   Analyzer idle

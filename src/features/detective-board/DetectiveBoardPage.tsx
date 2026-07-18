@@ -26,6 +26,7 @@ import ParticleReveal from "../../components/ui/ParticleReveal";
 import ShinyText from "../../components/react-bits/ShinyText";
 import BlurText from "../../components/react-bits/BlurText";
 import SplitText from "../../components/react-bits/SplitText";
+import DataWall from "../../components/ui/DataWall";
 import {
   Network,
   Plus,
@@ -900,6 +901,12 @@ export default function DetectiveBoardPage() {
         onContextMenu={handleBgContextMenu}
         onDoubleClick={handleBgDoubleClick}
       >
+        {/* Ambient character field behind the mesh — texture only, and it does
+            not pan or scale so it reads as the surface the board sits on. */}
+        <div className="absolute inset-[10%] pointer-events-none">
+          <DataWall cell={17} intensity={0.09} />
+        </div>
+
         {/* Subtle grid mesh background that stretches with pan and scales with zoom */}
         <div
           className="absolute inset-0 canvas-bg pointer-events-none"

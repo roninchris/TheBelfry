@@ -1,99 +1,85 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 
-const HEX = "0123456789ABCDEF";
-const OPS = [
-  "MEM",
-  "SEG",
-  "PTR",
-  "REG",
-  "BUS",
-  "CHK",
-  "XOR",
-  "LSB",
-  "SIG",
-  "ENT",
-  "DEC",
-  "IDX",
-];
-
-function rand<T>(arr: ArrayLike<T>): T {
-  return arr[Math.floor(Math.random() * arr.length)] as T;
-}
-
-/** One line of plausible machine chatter: address, opcode, payload, status. */
-function buildLine() {
-  const addr = Array.from({ length: 6 })
-    .map(() => rand(HEX))
-    .join("");
-  const op = rand(OPS);
-  const payload = Array.from({ length: 4 + Math.floor(Math.random() * 6) })
-    .map(() =>
-      Array.from({ length: 2 })
-        .map(() => rand(HEX))
-        .join(""),
-    )
-    .join(" ");
-  const state = Math.random() > 0.82 ? "FAULT" : Math.random() > 0.5 ? "OK" : "IDLE";
-  return { text: `0x${addr}  ${op}  ${payload}`, state };
-}
+const GLYPHS = "0123456789ABCDEF";
 
 interface DataWallProps {
-  /** Number of scrolling rows. */
-  lines?: number;
+  /** Character cell size in px. Larger = sparser field. */
+  cell?: number;
+  /** Peak opacity of the brightest characters. Keep this low. */
+  intensity?: number;
   className?: string;
 }
 
 /**
- * Horizontal machine-chatter wall — the scrolling code blocks from the Arkham
- * console reference, for filling dead panel space.
+ * Ambient character field — a fine grid of glyphs mutating in place.
  *
- * Complements AmbientTelemetry rather than repeating it: that one runs vertical
- * glyph columns in the screen margins, this one runs horizontal log lines
- * inside a container. Same discipline — lines are generated once and only
- * `transform` animates, so there is no JS loop and no re-render.
+ * Deliberately a background texture, not content: small type, low opacity, and
+ * it fills whatever box it is given without pushing layout. Earlier this
+ * component scrolled full-width log lines, which read as a foreground element
+ * competing with the panel it was supposed to sit behind.
  *
- * Purely decorative: it is aria-hidden and carries no real telemetry, so it
- * must never be the only thing occupying a region that should hold content.
+ * Only a handful of cells change per tick and each is written via textContent,
+ * so there is no React state and no re-render. The loop stops while the tab is
+ * hidden and respects reduced-motion.
  */
-export default function DataWall({ lines = 14, className = "" }: DataWallProps) {
-  const rows = useMemo(
+export default function DataWall({
+  cell = 14,
+  intensity = 0.16,
+  className = "",
+}: DataWallProps) {
+  const hostRef = useRef<HTMLDivElement | null>(null);
+
+  // Fixed pool of cells; the grid reflows to the container via CSS.
+  const seeds = useMemo(
     () =>
-      Array.from({ length: lines }).map((_, i) => {
-        // Doubled so the -50% -> 0 translate loops seamlessly.
-        const half = Array.from({ length: 3 })
-          .map(() => buildLine().text)
-          .join("     ");
-        const l = buildLine();
-        return {
-          text: `${half}     ${half}`,
-          state: l.state,
-          duration: 28 + Math.random() * 46,
-          delay: -Math.random() * 40,
-          reverse: i % 3 === 1,
-          opacity: 0.12 + Math.random() * 0.16,
-        };
-      }),
-    [lines],
+      Array.from({ length: 420 }).map(() => ({
+        ch: GLYPHS[(Math.random() * 16) | 0],
+        // Per-cell brightness so the field has depth rather than reading flat.
+        o: 0.25 + Math.random() * 0.75,
+      })),
+    [],
   );
 
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let timer = 0;
+    const tick = () => {
+      if (!document.hidden) {
+        const cells = host.children;
+        const n = cells.length;
+        // Mutate a small slice each pass — the point is a slow shimmer, not
+        // a wall of noise.
+        const changes = Math.max(1, Math.round(n * 0.04));
+        for (let i = 0; i < changes; i++) {
+          const el = cells[(Math.random() * n) | 0] as HTMLElement;
+          if (el) el.textContent = GLYPHS[(Math.random() * 16) | 0];
+        }
+      }
+      timer = window.setTimeout(tick, 110);
+    };
+    timer = window.setTimeout(tick, 110);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className={`data-wall ${className}`} aria-hidden="true">
-      {rows.map((r, i) => (
-        <div
-          key={i}
-          className={`data-wall-row ${r.reverse ? "data-wall-row--rev" : ""}`}
-          style={
-            {
-              opacity: r.opacity,
-              "--wall-duration": `${r.duration}s`,
-              "--wall-delay": `${r.delay}s`,
-            } as React.CSSProperties
-          }
-        >
-          <span className={r.state === "FAULT" ? "text-red-threat/70" : undefined}>
-            {r.text}
-          </span>
-        </div>
+    <div
+      ref={hostRef}
+      aria-hidden="true"
+      className={`data-wall ${className}`}
+      style={
+        {
+          gridTemplateColumns: `repeat(auto-fill, minmax(${cell}px, 1fr))`,
+          "--wall-intensity": String(intensity),
+        } as React.CSSProperties
+      }
+    >
+      {seeds.map((s, i) => (
+        <span key={i} style={{ opacity: s.o }}>
+          {s.ch}
+        </span>
       ))}
     </div>
   );

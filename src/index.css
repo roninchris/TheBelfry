@@ -1626,64 +1626,28 @@ button:hover, .btn-interactive:hover {
   .engine-btn { transition: none; }
 }
 
-/* ---- Data wall: horizontal machine-chatter for empty panel regions ----
-   CSS-only, same discipline as .telemetry-column: lines are generated once and
-   only transform animates, so this costs no re-renders and stays on the
-   compositor. Masked at all four edges so it fades into the panel rather than
-   ending on a hard line. */
-@keyframes data-wall-drift {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(-50%, 0, 0); }
-}
-@keyframes data-wall-drift-rev {
-  from { transform: translate3d(-50%, 0, 0); }
-  to   { transform: translate3d(0, 0, 0); }
-}
-
+/* ---- Data wall: ambient character field ----
+   Background texture, not content. Small type, low opacity, fills its box
+   without affecting layout. The previous version scrolled full-width log lines
+   and read as a foreground element competing with the panel behind it. */
 .data-wall {
   position: absolute;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
   user-select: none;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
+  display: grid;
+  grid-auto-rows: 1em;
+  align-content: start;
+  justify-items: center;
   font-family: "Share Tech Mono", ui-monospace, monospace;
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: 11px;
+  line-height: 1;
   color: var(--color-cyan-primary);
-  -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent),
-                linear-gradient(180deg, transparent, #000 15%, #000 85%, transparent);
-  -webkit-mask-composite: source-in;
-          mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent),
-                linear-gradient(180deg, transparent, #000 15%, #000 85%, transparent);
-          mask-composite: intersect;
+  opacity: var(--wall-intensity, 0.16);
+  /* Fade at every edge so the field dissolves into the panel rather than
+     ending on a hard rectangle. */
+  -webkit-mask: radial-gradient(ellipse at center, #000 35%, transparent 78%);
+          mask: radial-gradient(ellipse at center, #000 35%, transparent 78%);
 }
 
-.data-wall-row {
-  white-space: nowrap;
-  will-change: transform;
-  animation: data-wall-drift var(--wall-duration, 40s) linear infinite;
-  animation-delay: var(--wall-delay, 0s);
-}
-.data-wall-row--rev {
-  animation-name: data-wall-drift-rev;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .data-wall-row { animation: none !important; }
-}
-
-/* Scrollable region with no visible scrollbar. The wheel and trackpad still
-   work; only the chrome is hidden. Used where a visible bar would cut into a
-   panel's own framing (the case archive list). */
-.hud-scroll-hidden {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.hud-scroll-hidden::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
-}
