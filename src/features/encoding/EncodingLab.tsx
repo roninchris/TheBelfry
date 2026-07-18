@@ -735,19 +735,32 @@ export default function EncodingLab() {
 
                   {/* Translator Node Port */}
                   <div
-                    className={`hud-target flex-1 min-w-0 bg-bg-void/50 border p-2.5 space-y-1.5 relative hover:border-cyan-dim/30 hover:bg-bg-void/65 transition-all duration-300 ${
+                    className={`channel-port hud-target flex-1 min-w-0 border p-2.5 space-y-1.5 relative transition-all duration-300 ${
                       highlightedRow === row.key
                         ? "border-accent-primary/70 bg-accent-primary/[0.06] shadow-[0_0_16px_rgb(var(--rgb-accent) / 0.2)]"
-                        : "border-border-hairline/15"
+                        : isHit(row.value)
+                        ? "border-accent-primary/25 bg-accent-primary/[0.03]"
+                        : "border-border-hairline/15 bg-bg-void/50"
                     }`}
                     style={{ clipPath: "polygon(0 0, 100% 0, 99% 100%, 0 100%)", ["--reticle-size" as any]: "7px" }}
                   >
                     {/* Header label */}
-                    <div className="flex justify-between items-center text-[13px]">
-                      <div className="flex flex-col">
-                        <span className="font-chakra font-extrabold text-cyan-dim uppercase tracking-wider flex items-center">
-                          <span className={`w-1 h-2.5 mr-1.5 inline-block ${row.value ? "bg-cyan-primary shadow-[0_0_4px_var(--color-accent-primary)]" : "bg-cyan-dim/20"}`} />
-                          {row.label}
+                    <div className="flex justify-between items-center text-[13px] gap-2">
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-display font-extrabold uppercase tracking-[0.14em] flex items-center gap-1.5 min-w-0">
+                          <span
+                            className={`w-1 h-3 shrink-0 inline-block ${
+                              isHit(row.value)
+                                ? "bg-accent-primary shadow-[0_0_5px_var(--color-accent-primary)]"
+                                : "bg-cyan-dim/25"
+                            }`}
+                          />
+                          <span className="font-share text-[12px] text-text-dim/50 tabular-nums shrink-0">
+                            {String(idx + 1).padStart(2, "0")}
+                          </span>
+                          <span className={`truncate ${isHit(row.value) ? "text-white" : "text-cyan-dim"}`}>
+                            {row.label}
+                          </span>
                         </span>
                         <span className="text-[12px] text-text-dim/60 font-share uppercase tracking-wide mt-0.2">
                           {row.description}

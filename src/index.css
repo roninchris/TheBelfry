@@ -1699,3 +1699,33 @@ button:hover, .btn-interactive:hover {
 @media (prefers-reduced-motion: reduce) {
   .channel-resolve { animation: none; }
 }
+
+/* ---- Encoding Deck channel port ----
+   Panel material for a single breakout tap: a faint scanline wash and a
+   corner notch, so a settled row reads as a physical port on a bus rather
+   than a bordered rectangle. Kept cheap — one gradient, no animation at
+   rest. */
+.channel-port {
+  clip-path: polygon(0 0, 100% 0, 99% 100%, 0 100%);
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgb(var(--rgb-primary) / 0.045) 0px,
+    rgb(var(--rgb-primary) / 0.045) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+.channel-port:hover {
+  border-color: rgb(var(--rgb-accent) / 0.45);
+}
+/* Corner notch, bottom-right — the cut the clip-path implies, made visible. */
+.channel-port::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 10px;
+  height: 1px;
+  background: rgb(var(--rgb-primary) / 0.35);
+  pointer-events: none;
+}
