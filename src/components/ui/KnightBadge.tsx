@@ -37,10 +37,11 @@ export default function KnightBadge() {
           that hardcoded accent and spun a dashed ring, so e.g. Red Hood's
           saturated red rotated against cyan chrome and read as a foreign
           element rather than part of the console. */}
-      <span
-        className="tablet-frame relative w-10 h-10 shrink-0 flex items-center justify-center border border-border-hairline/30 bg-bg-void/60 transition-shadow duration-300 group-hover:border-accent-primary/40"
-        style={{ "--frame-color": "var(--color-accent-primary)" } as React.CSSProperties}
-      >
+      {/* No .tablet-frame here: its corner brackets grow 10px -> 16px on hover,
+          which on a 40px box means each bracket swells to nearly half the
+          width — it read as the badge breaking apart rather than lighting up.
+          At this size a border and glow shift is the whole effect. */}
+      <span className="relative w-10 h-10 shrink-0 flex items-center justify-center border border-border-hairline/30 bg-bg-void/60 transition-[border-color,box-shadow] duration-200 group-hover:border-accent-primary/60 group-hover:shadow-[0_0_10px_-2px_var(--color-accent-primary)]">
         {/* A slow inner glow replaces the rotating ring: still alive, but it
             does not draw the eye away from the module content. */}
         {!reduce && (
