@@ -7,7 +7,7 @@ import Badge from "../../components/ui/Badge";
 import ProgressBar from "../../components/ui/ProgressBar";
 import ScannerAnimation from "../../components/ui/ScannerAnimation";
 import Terminal from "../../components/ui/Terminal";
-import HexLattice from "../../components/ui/HexLattice";
+import NeuralActivity from "../../components/ui/NeuralActivity";
 import HexCluster from "../../components/ui/HexCluster";
 import AnimatedCounter from "../../components/ui/AnimatedCounter";
 import CorrelationNetwork from "../../components/ui/CorrelationNetwork";
@@ -740,15 +740,17 @@ export default function DashboardPage() {
           <div className="border-b border-border-hairline/25 pb-1 mb-2 flex items-baseline justify-between">
             <h3 className="font-display text-sm font-extrabold tracking-[0.18em] text-white flex items-center uppercase">
               <span className="w-1 h-2 bg-accent-primary mr-1.5 transform -skew-x-12 inline-block shadow-[0_0_4px_var(--color-accent-primary)]" />
-              Lattice
+              Neural Activity
             </h3>
             <span className="font-share text-[10px] tracking-widest text-text-dim/45 uppercase">
-              Idle
+              Inference field
             </span>
           </div>
 
-          <div className="flex-1 flex justify-center items-center py-2 min-h-[170px]">
-            <HexLattice />
+          {/* `relative` is required — NeuralActivity anchors itself with
+              absolute inset-0 (see the note in that component). */}
+          <div className="relative flex-1 my-2 min-h-[170px]">
+            <NeuralActivity />
           </div>
         </GlassPanel>
 
