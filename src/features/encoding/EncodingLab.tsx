@@ -929,18 +929,25 @@ export default function EncodingLab() {
       <div className="col-span-12 xl:col-span-3 flex flex-col space-y-4">
         
         {/* Cascade sequential encoding pipeline (Subtle styled secondary card) */}
-        <GlassPanel className="p-4 flex-1 flex flex-col justify-between bg-bg-void/10 border-border-hairline/10 hover:border-cyan-primary/10 transition-colors duration-300" clipSize="sm" showCornerTicks={false}>
+        {/* The rail was left in a deliberately washed-out treatment — near
+            transparent fill, hairline borders at a tenth opacity, no corner
+            ticks — while the rest of the deck moved to console material and
+            port channels. It read as disabled rather than secondary. It carries
+            the same material now; hierarchy comes from size and density, not
+            from draining the contrast out of it. */}
+        <GlassPanel className="panel-console p-4 flex-1 flex flex-col justify-between" clipSize="sm" showCornerTicks={true}>
           <div>
-            <div className="border-b border-border-hairline/10 pb-2 mb-3 flex justify-between items-start">
+            <div className="border-b border-border-hairline/25 pb-2 mb-3 flex justify-between items-start">
               <div>
-                <div className="flex items-center space-x-1.5 text-text-dim/60">
-                  <Layers className="w-3 h-3 text-cyan-primary/45" />
+                <div className="flex items-center space-x-1.5 text-text-dim">
+                  <Layers className="w-3 h-3 text-cyan-primary" />
                   <span className="font-mono text-[12px] tracking-widest uppercase">AUXILIARY PROCESSOR</span>
                 </div>
-                <h3 className="font-display text-[13px] font-black tracking-widest text-text-primary flex items-center mt-1">
+                <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-text flex items-center mt-1">
+                  <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                   CASCADE PIPELINE CODER
                 </h3>
-                <p className="text-[12px] font-share text-text-dim/80 tracking-wide uppercase mt-0.5">
+                <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
                   Chained step-by-step stream processor
                 </p>
               </div>
@@ -971,13 +978,13 @@ export default function EncodingLab() {
             <div className="space-y-3 font-share text-[12px]">
               {/* Active layers steps */}
               <div className="space-y-1.5">
-                <span className="text-text-dim/70 uppercase text-[12px] block">
+                <span className="text-text-dim uppercase text-[12px] block">
                   {isPipelineDecode ? "ACTIVE DECODE SEQUENCE:" : "ACTIVE ENCODE SEQUENCE:"}
                 </span>
-                <div className="bg-bg-void/45 border border-border-hairline/10 p-2 flex items-center flex-wrap gap-1.5">
+                <div className="bg-bg-void/45 border border-border-hairline/25 p-2 flex items-center flex-wrap gap-1.5">
                   {pipelineLayers.map((layer, idx) => (
                     <React.Fragment key={idx}>
-                      {idx > 0 && <ArrowRight className="w-2.5 h-2.5 text-cyan-primary/30" />}
+                      {idx > 0 && <ArrowRight className="w-2.5 h-2.5 text-cyan-primary" />}
                       <div className="bg-bg-void border border-cyan-primary/20 text-cyan-dim px-1.5 py-0.5 font-mono text-[12px]">
                         {layer.toUpperCase()}
                       </div>
@@ -988,11 +995,11 @@ export default function EncodingLab() {
 
               {/* Chain stage selectors — user-configured, no canned presets */}
               <div className="space-y-1.5 pt-1">
-                <span className="text-text-dim/70 uppercase text-[12px] block">CONFIGURE CHAIN STAGES:</span>
+                <span className="text-text-dim uppercase text-[12px] block">CONFIGURE CHAIN STAGES:</span>
                 <div className="grid grid-cols-2 gap-1.5">
                   {[0, 1].map((stageIdx) => (
                     <label key={stageIdx} className="flex flex-col gap-0.5">
-                      <span className="text-text-dim/50 text-[12px] uppercase tracking-widest">STAGE {stageIdx + 1}</span>
+                      <span className="text-text-dim text-[12px] uppercase tracking-widest">STAGE {stageIdx + 1}</span>
                       <select
                         value={pipelineLayers[stageIdx] || ""}
                         onChange={(e) => {
@@ -1003,7 +1010,7 @@ export default function EncodingLab() {
                           setPipelineLayers(next.filter(Boolean));
                           playPinClick();
                         }}
-                        className="p-1 bg-bg-void/60 border border-border-hairline/15 text-cyan-text font-mono text-[12px] uppercase outline-none focus:border-cyan-primary/50 cursor-pointer"
+                        className="channel-port hud-target p-1.5 bg-bg-void/70 border border-border-hairline/25 text-cyan-text font-mono text-[12px] uppercase outline-none focus:border-cyan-primary/60 cursor-pointer"
                       >
                         <option value="">— NONE —</option>
                         {Object.keys(pipelineLayerIds).map((label) => (
@@ -1017,11 +1024,13 @@ export default function EncodingLab() {
 
               {/* Pipeline Output */}
               <div className="space-y-1 pt-1.5">
-                <div className="flex justify-between items-center text-[12px] text-text-dim/70">
+                <div className="flex justify-between items-center text-[12px] text-text-dim">
                   <span>{isPipelineDecode ? "CASCADE DECODING OUTPUT:" : "CASCADE ENCODING OUTPUT:"}</span>
-                  <span className="text-cyan-dim/80 font-mono">{pipelineOutput.length} CHARS</span>
+                  <span className="text-cyan-dim font-mono">{pipelineOutput.length} CHARS</span>
                 </div>
-                <div className="bg-bg-void/80 border border-border-hairline/15 p-2 font-mono text-[12px] text-cyan-text break-all max-h-[75px] overflow-y-auto scrollbar-thin select-all leading-normal">
+                {/* Same port material as the breakout channels this rail feeds,
+                    so a cascade result reads as the same kind of output. */}
+                <div className="channel-port bg-bg-void/80 border border-border-hairline/25 p-2 font-mono text-[12px] text-cyan-text break-all max-h-[75px] overflow-y-auto scrollbar-thin select-all leading-normal">
                   {pipelineOutput ? (
                     <ShinyText text={pipelineOutput} speed={2} className="tracking-widest" />
                   ) : (
@@ -1033,25 +1042,26 @@ export default function EncodingLab() {
             </div>
           </div>
 
-          <div className="flex justify-between text-[12px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1.5 mt-2">
+          <div className="flex justify-between text-[12px] font-mono text-text-dim border-t border-border-hairline/25 pt-1.5 mt-2">
             <span>SEQUENCE PIPELINE ENGINE</span>
-            <span className="text-cyan-dim/40 font-bold">STABLE</span>
+            <span className="text-cyan-dim font-bold">STABLE</span>
           </div>
         </GlassPanel>
 
         {/* Arbitrary Precision Big Integer Coder */}
-        <GlassPanel className="p-4 flex flex-col justify-between bg-bg-void/20 border-border-hairline/10 hover:border-cyan-primary/10 transition-colors duration-300" clipSize="sm" showCornerTicks={false}>
+        <GlassPanel className="panel-console p-4 flex flex-col justify-between" clipSize="sm" showCornerTicks={true}>
           <div>
-            <div className="border-b border-border-hairline/10 pb-2 mb-3 flex justify-between items-start">
+            <div className="border-b border-border-hairline/25 pb-2 mb-3 flex justify-between items-start">
               <div>
-                <div className="flex items-center space-x-1.5 text-text-dim/60">
-                  <Cpu className="w-3 h-3 text-cyan-primary/45" />
+                <div className="flex items-center space-x-1.5 text-text-dim">
+                  <Cpu className="w-3 h-3 text-cyan-primary" />
                   <span className="font-mono text-[12px] tracking-widest uppercase">PRECISION NUMERICS</span>
                 </div>
-                <h3 className="font-display text-[13px] font-black tracking-widest text-text-primary flex items-center mt-1">
+                <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-text flex items-center mt-1">
+                  <span className="w-1.5 h-3 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                   BIGINT CODER
                 </h3>
-                <p className="text-[12px] font-share text-text-dim/80 tracking-wide uppercase mt-0.5">
+                <p className="text-[12px] font-share text-text-dim tracking-wide uppercase mt-0.5">
                   Arbitrary-precision integer mapping
                 </p>
               </div>
@@ -1083,7 +1093,7 @@ export default function EncodingLab() {
 
             <div className="space-y-3 font-share text-[12px]">
               <div className="space-y-1">
-                <span className="text-text-dim/70 uppercase text-[12px] block">
+                <span className="text-text-dim uppercase text-[12px] block">
                   {bigIntMode === "toBigInt" ? "INPUT PLAIN TEXT:" : "INPUT BIGINT DECIMAL VALUE:"}
                 </span>
                 <textarea
@@ -1093,14 +1103,14 @@ export default function EncodingLab() {
                     playTypeKey();
                   }}
                   placeholder={bigIntMode === "toBigInt" ? "ENTER PLAINTEXT TO REPRESENT..." : "ENTER DECIMAL DIGITS OR LARGE INTEGER..."}
-                  className="w-full bg-bg-void/60 border border-border-hairline/10 p-2 font-mono text-[12px] text-text-primary h-12 resize-none outline-none focus:border-cyan-primary/30"
+                  className="w-full bg-bg-void/60 border border-border-hairline/25 p-2 font-mono text-[12px] text-text-primary h-12 resize-none outline-none focus:border-cyan-primary/30"
                 />
               </div>
 
               <div className="space-y-1">
-                <div className="flex justify-between items-center text-[12px] text-text-dim/70">
+                <div className="flex justify-between items-center text-[12px] text-text-dim">
                   <span>TRANSFORMED REPRESENTATION:</span>
-                  <span className="text-cyan-dim/80 font-mono">{bigIntOutput.length} CHARS</span>
+                  <span className="text-cyan-dim font-mono">{bigIntOutput.length} CHARS</span>
                 </div>
                 <div className="bg-bg-void/80 border border-border-hairline/15 p-2 font-mono text-[12px] text-cyan-text break-all h-14 overflow-y-auto scrollbar-thin select-all leading-normal">
                   {bigIntOutput ? (
@@ -1120,7 +1130,7 @@ export default function EncodingLab() {
                     playSuccessChime();
                     setTimeout(() => setBigIntCopied(false), 2000);
                   }}
-                  className="flex-1 p-1 border border-border-hairline/10 bg-bg-void/25 text-center text-text-dim hover:text-cyan-primary hover:border-cyan-primary/30 hover:bg-cyan-primary/5 uppercase text-[12px] leading-tight transition-all cursor-pointer flex items-center justify-center space-x-1 disabled:opacity-35 disabled:cursor-not-allowed"
+                  className="flex-1 p-1 border border-border-hairline/25 bg-bg-void/25 text-center text-text-dim hover:text-cyan-primary hover:border-cyan-primary/30 hover:bg-cyan-primary/5 uppercase text-[12px] leading-tight transition-all cursor-pointer flex items-center justify-center space-x-1 disabled:opacity-35 disabled:cursor-not-allowed"
                 >
                   {bigIntCopied ? <CheckCircle className="w-3 h-3 text-green-verified" /> : <Copy className="w-3 h-3" />}
                   <span>{bigIntCopied ? "COPIED" : "COPY OUTPUT"}</span>
@@ -1137,7 +1147,7 @@ export default function EncodingLab() {
                     }
                     playPinClick();
                   }}
-                  className="p-1 border border-border-hairline/10 bg-bg-void/25 text-center text-text-dim hover:text-amber-alert hover:border-amber-alert/30 hover:bg-amber-alert/5 uppercase text-[12px] leading-tight transition-all cursor-pointer flex items-center justify-center space-x-1 disabled:opacity-35 disabled:cursor-not-allowed"
+                  className="p-1 border border-border-hairline/25 bg-bg-void/25 text-center text-text-dim hover:text-amber-alert hover:border-amber-alert/30 hover:bg-amber-alert/5 uppercase text-[12px] leading-tight transition-all cursor-pointer flex items-center justify-center space-x-1 disabled:opacity-35 disabled:cursor-not-allowed"
                   title="Load into Primary Encoding Buffer"
                 >
                   <RefreshCw className="w-3 h-3" />
@@ -1147,34 +1157,37 @@ export default function EncodingLab() {
             </div>
           </div>
 
-          <div className="flex justify-between text-[12px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1.5 mt-2">
+          <div className="flex justify-between text-[12px] font-mono text-text-dim border-t border-border-hairline/25 pt-1.5 mt-2">
             <span>INTEGER MAPPING SUBSYSTEM</span>
-            <span className="text-cyan-dim/40 uppercase font-bold">STABLE</span>
+            <span className="text-cyan-dim uppercase font-bold">STABLE</span>
           </div>
         </GlassPanel>
 
-        {/* Custom Charset Reference Table (Subtle styled secondary card) */}
-        <GlassPanel className="p-4 h-48 flex flex-col justify-between bg-bg-void/10 border-border-hairline/10" clipSize="sm" showCornerTicks={false}>
+        {/* Custom Charset Reference Table */}
+        {/* min-h, not a fixed h-48: the reference content is a shade taller than
+            192px and was being clipped by 18px. */}
+        <GlassPanel className="panel-console p-4 min-h-48 flex flex-col justify-between" clipSize="sm" showCornerTicks={true}>
           <div>
-            <div className="border-b border-border-hairline/10 pb-1 mb-2 flex justify-between items-center">
+            <div className="border-b border-border-hairline/25 pb-1 mb-2 flex justify-between items-center">
               <div className="flex flex-col">
-                <div className="flex items-center space-x-1.5 text-text-dim/60">
-                  <Search className="w-3 h-3 text-cyan-primary/30" />
+                <div className="flex items-center space-x-1.5 text-text-dim">
+                  <Search className="w-3 h-3 text-cyan-primary" />
                   <span className="font-mono text-[12px] tracking-widest uppercase">DICTIONARY LOOKUP</span>
                 </div>
-                <h3 className="font-display text-[12px] font-black tracking-widest text-text-primary mt-0.5">
+                <h3 className="font-display text-[12px] font-black tracking-widest text-cyan-text flex items-center mt-0.5">
+                  <span className="w-1.5 h-2.5 bg-cyan-primary mr-2 transform -skew-x-12 inline-block shadow-[0_0_6px_var(--color-accent-primary)]" />
                   ENCODING REFERENCER
                 </h3>
               </div>
-              <span className="text-[12px] font-mono text-text-dim bg-bg-void/50 px-1 border border-border-hairline/10 uppercase">
+              <span className="text-[12px] font-mono text-text-dim bg-bg-void/50 px-1 border border-border-hairline/25 uppercase">
                 ASCII INDEX
               </span>
             </div>
 
             <div className="flex-1 overflow-y-auto scrollbar-thin pr-1 max-h-[90px]">
-              <table className="w-full text-left font-mono text-[12px] text-text-dim/80">
+              <table className="w-full text-left font-mono text-[12px] text-text-dim">
                 <thead>
-                  <tr className="border-b border-border-hairline/10 pb-1 text-cyan-dim/80 font-bold uppercase text-[12px]">
+                  <tr className="border-b border-border-hairline/25 pb-1 text-cyan-dim font-bold uppercase text-[12px]">
                     <th className="py-0.5">CHAR</th>
                     <th className="py-0.5">DEC</th>
                     <th className="py-0.5">HEX</th>
@@ -1206,9 +1219,9 @@ export default function EncodingLab() {
             </div>
           </div>
 
-          <div className="flex justify-between text-[12px] font-mono text-text-dim/50 border-t border-border-hairline/10 pt-1.5">
+          <div className="flex justify-between text-[12px] font-mono text-text-dim border-t border-border-hairline/25 pt-1.5">
             <span>ISO/IEC 8859-1 CODES</span>
-            <span className="text-cyan-dim/40 uppercase font-bold">READY</span>
+            <span className="text-cyan-dim uppercase font-bold">READY</span>
           </div>
         </GlassPanel>
 
