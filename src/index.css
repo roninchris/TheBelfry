@@ -1785,6 +1785,44 @@ button:hover, .btn-interactive:hover {
   .holo-band { opacity: 0; }
 }
 
+/* ---- Boot screen: dot-matrix logo ----
+   The mark is rendered by using the real logo PNG as a mask and filling it with
+   a dot grid, so it stays the actual Belfry silhouette instead of a redrawn
+   approximation, and the dot pitch can be tuned without new art. */
+.dot-matrix-mark {
+  -webkit-mask-image: var(--mark-src);
+  mask-image: var(--mark-src);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background-image: radial-gradient(circle, currentColor 40%, transparent 44%);
+  background-size: var(--dot-pitch, 9px) var(--dot-pitch, 9px);
+}
+
+/* Unlit dots sit underneath at low opacity; the lit layer is revealed upward as
+   the sequence progresses, so the tower "powers on" from its base. */
+@keyframes boot-mark-flicker {
+  0%, 100% { opacity: 1; }
+  48% { opacity: 0.82; }
+  50% { opacity: 1; }
+  52% { opacity: 0.9; }
+}
+.boot-mark-live { animation: boot-mark-flicker 4.5s ease-in-out infinite; }
+
+@keyframes boot-edge-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-40px); }
+}
+.boot-edge-ticks { animation: boot-edge-drift 8s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-mark-live,
+  .boot-edge-ticks { animation: none; }
+}
+
 /* ---- Keyspace tunnel ----
    Real CSS 3D (perspective + preserve-3d), not a flat SVG fake. Gates fly at
    the viewer along Z on staggered delays, so the panel reads as travelling

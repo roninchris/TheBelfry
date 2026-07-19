@@ -5,7 +5,7 @@
 import { calculateEntropy } from "./entropy";
 import { detectPatterns } from "./pattern-match";
 import { calculateIC } from "./index-of-coincidence";
-import { crackCaesar, detectVigenere } from "./frequency-crack";
+import { crackCaesar, detectVigenere, detectAtbash } from "./frequency-crack";
 import { estimateXorKeyLength } from "../crypto-utils";
 import { detectFamilyCiphers } from "./family-detect";
 
@@ -125,6 +125,20 @@ export function identifyInput(text: string): IdentificationResult[] {
     }
   }
 
+  // Atbash. Keyless, so it is applied and judged rather than inferred; without
+  // this branch an Atbash message could only surface as a weak, wrong "caesar".
+  const atbashResult = detectAtbash(text);
+  if (atbashResult.isLikelyAtbash && atbashResult.confidence > 0.3 && !hasStrongEncodingSignal) {
+    const sample = atbashResult.decoded.substring(0, 30);
+    results.push({
+      toolId: "atbash",
+      confidence: atbashResult.confidence,
+      preview: `Atbash: "${sample}${atbashResult.decoded.length > 30 ? "..." : ""}"`,
+      details: "Reversed-alphabet substitution; decoding scores closer to English than the raw input",
+      isMatch: false
+    });
+  }
+
   // Add Vigenère detection
   if (vigenereResult.isLikelyVigenere && vigenereResult.confidence > 0.5) {
     results.push({
@@ -209,7 +223,7 @@ export function identifyInput(text: string): IdentificationResult[] {
 
   // Sort with precedence: pattern-based detectors rank above statistical detectors
   const patternBased = new Set(["base64", "base32", "base58", "base85", "braille", "hex", "binary", "morse", "url", "gematria", "a1z26", "polybius", "base62", "base100", "baudot", "tapcode", "phonekeypad", "geekcode"]);
-  const statistical = new Set(["caesar", "vigenere", "encrypted", "rot13", "xor", "railfence", "classical", "plaintext", "piglatin"]);
+  const statistical = new Set(["caesar", "vigenere", "encrypted", "rot13", "atbash", "xor", "railfence", "classical", "plaintext", "piglatin"]);
   
   results.sort((a, b) => {
     const aIsPattern = patternBased.has(a.toolId);

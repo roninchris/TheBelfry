@@ -186,6 +186,62 @@ export function crackCaesar(text: string): CaesarCrackResult | null {
   };
 }
 
+export interface AtbashDetectionResult {
+  isLikelyAtbash: boolean;
+  decoded: string;
+  confidence: number;
+}
+
+/**
+ * Detect Atbash (A<->Z, B<->Y, ...).
+ *
+ * Atbash has no key, so it does not need to be guessed at statistically the way
+ * IC-based detection was doing — it can simply be *applied* and the result
+ * judged. Previously an Atbash message fell through to a weak "caesar" report,
+ * because the orchestrator had no Atbash branch at all and Atbash is not
+ * reachable by any shift.
+ *
+ * The comparison against the untouched input matters: English plaintext run
+ * through Atbash produces noise, so requiring the transform to be *better* than
+ * the original stops ordinary prose being labelled Atbash.
+ */
+export function detectAtbash(text: string): AtbashDetectionResult {
+  const clean = text.toUpperCase().replace(/[^A-Z]/g, "");
+  if (clean.length < 8) {
+    return { isLikelyAtbash: false, decoded: text, confidence: 0 };
+  }
+
+  const decoded = text.replace(/[A-Za-z]/g, (ch) => {
+    const code = ch.charCodeAt(0);
+    if (code >= 65 && code <= 90) return String.fromCharCode(90 - (code - 65));
+    return String.fromCharCode(122 - (code - 97));
+  });
+
+  const decodedChi = calculateChiSquared(decoded) / clean.length;
+  const originalChi = calculateChiSquared(text) / clean.length;
+
+  // Atbash must both look like English and beat leaving the text alone.
+  const looksEnglish = Math.max(0, Math.min(1, (5 - decodedChi) / 3.5));
+  const beatsOriginal = originalChi / (decodedChi || 1);
+
+  if (beatsOriginal < 1.15 || looksEnglish < 0.25) {
+    return { isLikelyAtbash: false, decoded, confidence: 0 };
+  }
+
+  const commonWords = ["THE", "AND", "ING", "TION", "THAT", "THIS", "WITH", "FROM", "HAVE", "WERE"];
+  const upper = decoded.toUpperCase();
+  const hasCommonWords = commonWords.some(w => upper.includes(w));
+
+  let confidence = 0.45 * looksEnglish + 0.35 * Math.min(1, beatsOriginal - 1);
+  if (hasCommonWords) confidence += 0.3;
+
+  return {
+    isLikelyAtbash: true,
+    decoded,
+    confidence: parseFloat(Math.min(1, confidence).toFixed(3))
+  };
+}
+
 /**
  * Estimate Vigenère key length using Index of Coincidence.
  * Uses the Kasiski examination principle: split text into columns

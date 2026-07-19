@@ -1439,15 +1439,19 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                           </span>
                         </div>
 
-                        {/* Text Output Block */}
-                        <div className="flex-1 min-h-[250px] mb-2">
-                          <div className="w-full h-full p-2 bg-bg-void/60 border border-green-verified/35 text-xs font-mono overflow-y-auto select-text text-green-verified font-bold shadow-[inset_0_0_8px_rgba(34,197,94,0.05)] scrollbar-none">
+                        {/* Text Output Block. min-h-[250px] was taller than the
+                            room a gate card actually has now that the rail is a
+                            fixed band, so it pushed the action row past the card
+                            edge and the buttons were clipped out of view. It
+                            shrinks with the card and scrolls instead. */}
+                        <div className="flex-1 min-h-0 mb-2">
+                          <div className="w-full h-full p-2 bg-bg-void/60 border border-green-verified/35 text-xs font-mono overflow-y-auto select-text text-green-verified font-bold shadow-[inset_0_0_8px_rgba(34,197,94,0.05)] scrollbar-thin">
                             <DecryptText text={topMatch.text} trigger={topMatch.text} />
                           </div>
                         </div>
 
                         {/* Core Match Buttons */}
-                        <div className="grid grid-cols-3 gap-1 pt-1.5 border-t border-border-hairline/10">
+                        <div className="shrink-0 grid grid-cols-3 gap-1 pt-1.5 border-t border-border-hairline/10">
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(topMatch.text);

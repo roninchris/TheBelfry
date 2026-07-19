@@ -135,7 +135,21 @@ export function detectPatterns(text: string): PatternMatch[] {
 
   // Base32: RFC4648 alphabet [A-Z2-7], padded with '=', length % 8 === 0
   const base32Regex = /^[A-Z2-7]+={0,6}$/;
-  if (base32Regex.test(trimmed.toUpperCase()) && !(englishLike && !/[2-7=]/.test(trimmed))) {
+  /**
+   * The length floor matters as much as the alphabet. Base32's alphabet is
+   * A-Z plus 2-7, so *any* short uppercase word satisfies it — "HELLO" was
+   * being reported as Base32 at 0.6 and, being the highest scorer, was promoted
+   * to the recommended match while its own details read "invalid length". The
+   * English guard did not save it either, since that helper ignores anything
+   * under six letters. Below a real Base32 block length there is no signal
+   * here, and a charset-only match is now scored below the recommendation floor
+   * rather than above it.
+   */
+  if (
+    base32Regex.test(trimmed.toUpperCase()) &&
+    trimmed.length >= 8 &&
+    !(englishLike && !/[2-7=]/.test(trimmed))
+  ) {
     const isMultipleOf8 = trimmed.length % 8 === 0;
     if (isMultipleOf8) {
       results.push({
@@ -146,8 +160,8 @@ export function detectPatterns(text: string): PatternMatch[] {
     } else {
       results.push({
         pattern: "base32",
-        confidence: 0.6,
-        details: "Matches Base32 character set but invalid length"
+        confidence: 0.25,
+        details: "Matches Base32 character set but length is not a multiple of 8"
       });
     }
   }
@@ -172,12 +186,28 @@ export function detectPatterns(text: string): PatternMatch[] {
         confidence: 0.95,
         details: "Valid Ascii85 with delimiters"
       });
-    } else if (!englishLike) {
-      results.push({
-        pattern: "base85",
-        confidence: 0.5,
-        details: "Matches Ascii85 printable range (without delimiters)"
-      });
+    } else {
+      /**
+       * Without delimiters the Ascii85 "range" is almost the whole printable
+       * set, so this branch fired on essentially every input — plain sentences
+       * and other ciphers alike — and added a permanent 0.5 row to every
+       * result list. Real Ascii85 output is dense in punctuation, so require
+       * that density (and enough length to measure it) instead of just the
+       * character range.
+       */
+      const compact = trimmed.replace(/\s/g, "");
+      // '=' is Base32/Base64 padding, not Ascii85 punctuation — counting it made
+      // every padded Base32 block look symbol-dense enough to also be Ascii85.
+      const symbolCount = (compact.match(/[^A-Za-z0-9=]/g) || []).length;
+      const symbolRatio = compact.length > 0 ? symbolCount / compact.length : 0;
+
+      if (!englishLike && compact.length >= 16 && symbolRatio >= 0.15) {
+        results.push({
+          pattern: "base85",
+          confidence: 0.5,
+          details: "Matches Ascii85 printable range with punctuation density typical of Ascii85"
+        });
+      }
     }
   }
 
