@@ -290,6 +290,16 @@ export function playLoadTab(module: string) {
 }
 
 export function playTypeKey() { playSample('typeKey'); }
+/**
+ * Length of the boot sample in seconds, or null if it has not decoded yet.
+ * The boot screen paces its sequence to this so the bar finishes with the
+ * sound rather than drifting against it.
+ */
+export function getSystemBootDuration(): number | null {
+  const buf = sampleBuffers['systemBoot'];
+  return buf ? buf.duration : null;
+}
+
 export function playSystemBoot(loop: boolean = false): { stop: () => void } | void {
   if (!sampleBuffers['systemBoot']) {
     pendingPlaySystemBoot = true;

@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { getAudioContext, playSystemBoot } from "../../lib/soundEngine";
+import { getAudioContext, playSystemBoot, getSystemBootDuration } from "../../lib/soundEngine";
+
+/** Used only if the boot sample has not decoded yet; the real pace comes from
+ *  the sample's own length so picture and sound land together. */
+const DEFAULT_BOOT_SECONDS = 2.4;
 
 interface BelfryBootScreenProps {
   onComplete: () => void;
@@ -117,7 +121,6 @@ function SideScale({ side }: { side: "left" | "right" }) {
 export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) {
   const shouldReduceMotion = useReducedMotion();
   const [progress, setProgress] = useState(0);
-  const [statusIndex, setStatusIndex] = useState(0);
   const [isDone, setIsDone] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const bootSoundRef = useRef<{ stop: () => void } | void>(null);
@@ -157,24 +160,48 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
     bootSoundRef.current = playSystemBoot(true);
   };
 
+  /**
+   * Progress is animated per frame rather than stepped.
+   *
+   * It used to advance in nine discrete jumps on a 230ms interval, which is
+   * what made the bar and the mark reveal look like they were stuttering —
+   * there were literally only nine positions. A rAF loop interpolates
+   * continuously instead, so everything driven by progress moves smoothly.
+   *
+   * The duration is taken from the boot sample itself, so the bar lands exactly
+   * with the sound instead of drifting against it.
+   *
+   * rAF does not run in a backgrounded tab, so a timer backstop guarantees the
+   * sequence still completes and hands off — otherwise a user who tabbed away
+   * mid-boot would come back to a frozen screen.
+   */
   useEffect(() => {
     if (!hasStarted) return;
-    let currentIdx = 0;
-    const interval = setInterval(() => {
-      if (currentIdx < BOOT_MESSAGES.length) {
-        setStatusIndex(currentIdx);
-        setProgress(((currentIdx + 1) / BOOT_MESSAGES.length) * 100);
-        currentIdx++;
-      } else {
-        clearInterval(interval);
-        setTimeout(() => setIsDone(true), 600);
-      }
-      // Paced so the staged build (seed -> mark -> frame -> label -> title) is
-      // actually legible; at 150ms the whole sequence was over in 1.3s and the
-      // phases blurred into one another. Skippable at any point.
-    }, 230);
 
-    return () => clearInterval(interval);
+    const durationMs = (getSystemBootDuration() ?? DEFAULT_BOOT_SECONDS) * 1000;
+    const startedAt = performance.now();
+    let frame = 0;
+
+    const tick = () => {
+      const pct = Math.min(100, ((performance.now() - startedAt) / durationMs) * 100);
+      setProgress(pct);
+      if (pct >= 100) {
+        setIsDone(true);
+        return;
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+
+    const backstop = setTimeout(() => {
+      setProgress(100);
+      setIsDone(true);
+    }, durationMs + 500);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(backstop);
+    };
   }, [hasStarted]);
 
   // Completion is one-way: a later re-render, or a click landing in the same
@@ -195,6 +222,12 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
   }, [isDone]);
 
   const settled = progress >= 100;
+
+  // Derived, not stored: one source of truth for where the sequence is.
+  const statusIndex = Math.min(
+    BOOT_MESSAGES.length - 1,
+    Math.floor((progress / 100) * BOOT_MESSAGES.length)
+  );
 
   /**
    * Staged reveal, matching the reference's order: a light seed alone, then the
@@ -264,7 +297,7 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
       )}
 
       {/* ===== THE MARK ===== */}
-      <div className="absolute inset-0 flex items-center justify-center">
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
         <div className="relative w-[min(46vh,420px)] aspect-[3/4]">
           {/* Idle: the whole mark breathes at low opacity. Once started this
               becomes the unlit bed that the lit layer is revealed over. */}
@@ -292,11 +325,65 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
                 // fully dark for the whole sequence and then pop. The sequence
                 // already steps every 150ms, which reads as a climb on its own.
                 clipPath: `inset(${100 - progress}% 0 0 0)`,
-                filter: "drop-shadow(0 0 10px rgb(var(--rgb-accent) / 0.55))"
+                filter: "drop-shadow(0 0 10px rgb(var(--rgb-accent) / 0.55))",
+                // Hints the compositor to keep this layer on the GPU; without
+                // it the masked, drop-shadowed layer is re-rasterised on every
+                // frame of the reveal.
+                willChange: "clip-path"
               }}
             />
           )}
         </div>
+
+        {/* ===== LOAD BAR =====
+            Sits directly under the mark so the thing being loaded and its
+            progress read as one object. Thicker than the hairline it replaces,
+            with a framed channel, a lit fill and a bright head at the leading
+            edge. */}
+        {showMark && (
+          <div className="w-[min(46vh,420px)] mt-7 pointer-events-none">
+            <div className="flex items-end justify-between font-mono text-[12px] tracking-[0.25em] uppercase mb-1.5">
+              <span className="text-cyan-primary/70 truncate">
+                {BOOT_MESSAGES[statusIndex]}
+              </span>
+              <span className="text-cyan-text tabular-nums shrink-0 ml-4">
+                {String(Math.round(progress)).padStart(3, "0")}%
+              </span>
+            </div>
+
+            <div className="relative h-[10px] border border-cyan-primary/30 bg-bg-void/80 p-[2px]">
+              {/* Segment ticks read as a calibrated gauge rather than a plain bar. */}
+              <div className="absolute inset-0 flex pointer-events-none">
+                {Array.from({ length: 40 }).map((_, i) => (
+                  <span key={i} className="flex-1 border-r border-cyan-primary/10 last:border-r-0" />
+                ))}
+              </div>
+
+              <div className="relative h-full overflow-hidden">
+                <div
+                  className="h-full relative"
+                  style={{
+                    width: `${progress}%`,
+                    background:
+                      "linear-gradient(90deg, rgb(var(--rgb-accent) / 0.55) 0%, rgb(var(--rgb-accent) / 0.9) 70%, #fff 100%)",
+                    boxShadow: "0 0 12px 1px rgb(var(--rgb-accent) / 0.6)"
+                  }}
+                />
+              </div>
+
+              {/* Leading head, parked on the fill's edge. */}
+              {progress > 0 && progress < 100 && (
+                <div
+                  className="absolute top-0 bottom-0 w-[2px] bg-white"
+                  style={{
+                    left: `calc(${progress}% - 1px)`,
+                    boxShadow: "0 0 10px 2px rgb(var(--rgb-accent) / 0.9)"
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ===== TITLE BANNER =====
@@ -374,27 +461,8 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
         </div>
       )}
 
-      {/* ===== STATUS FOOTER ===== */}
-      {hasStarted && (
-        <div className="absolute bottom-10 inset-x-0 px-10 pointer-events-none">
-          <div className="mx-auto max-w-3xl">
-            <div className="flex items-end justify-between font-mono text-[12px] tracking-[0.2em] uppercase mb-2">
-              <span className="text-cyan-primary/70 truncate">
-                {BOOT_MESSAGES[statusIndex]}
-              </span>
-              <span className="text-cyan-primary/50 tabular-nums shrink-0 ml-4">
-                {Math.round(progress)}%
-              </span>
-            </div>
-            <div className="h-px w-full bg-cyan-primary/15 relative overflow-hidden">
-              <div
-                className="absolute inset-y-0 left-0 bg-cyan-primary shadow-[0_0_10px_var(--color-accent-primary)]"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* The status line and bar used to live down here, a full screen away
+          from the thing they were reporting on. They now sit under the mark. */}
 
       {/* ===== INVITATION =====
           Centred on the mark before start, because that is the only thing the
