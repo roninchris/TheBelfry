@@ -86,6 +86,10 @@ const soundFiles: Record<string, string> = {
   fileAnalysisScanner: '/sounds/FILE_ANALYSIS_SCANNER.mp3',
   audioForensicsScan: '/sounds/AUDIO_FORENSICS_SCAN.mp3',
   imageForensicsScan: '/sounds/IMAGE_FORENSICS_SCAN.mp3',
+  mapOpen: '/sounds/mapaudio/OPEN_MAP.mp3',
+  mapBackground: '/sounds/mapaudio/MAP_BG_AUDIO.mp3',
+  mapDrag: '/sounds/mapaudio/MOVE_MOUSE_MAP.mp3',
+  mapZoom: '/sounds/mapaudio/ZOOM.mp3',
 };
 
 const ambientFiles: string[] = [
@@ -351,6 +355,92 @@ export function playBinaryScanLoop(): { stop: () => void } {
   return { stop: () => {} };
 }
 
+/* ------------------------------------------------------------------ */
+/* Map module                                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Length of the map opening sting, or null before it has decoded.
+ *
+ * The entrance animation paces itself to this rather than to a hardcoded
+ * number, so the visual finishes with the sound instead of drifting against
+ * it — the same discipline the boot screen uses.
+ */
+export function getMapOpenDuration(): number | null {
+  const buf = sampleBuffers['mapOpen'];
+  return buf ? buf.duration : null;
+}
+
+export function playMapOpen() { playSample('mapOpen'); }
+
+/**
+ * Map ambience.
+ *
+ * The map's room tone plays *instead of* the app-wide drone, not on top of it:
+ * inside the module it is the only bed, and leaving restores whatever the
+ * drone was doing before.
+ *
+ * Driven by `setMapAmbience` from the current module rather than by a
+ * component's mount/unmount. Lifecycle proved to be the wrong hook — React
+ * StrictMode double-invokes effects, the module transition keeps the outgoing
+ * page mounted through its exit animation, and any future early-return in the
+ * component would strand the loop playing under another station. Module
+ * identity has none of those failure modes.
+ */
+let mapBackgroundSource: { stop: () => void } | null = null;
+
+/** True while the map owns the audio bed, silencing the app drone. */
+let ambientSuppressed = false;
+
+export function isAmbientSuppressed(): boolean {
+  return ambientSuppressed;
+}
+
+/** Enters or leaves the map's audio bed. Safe to call repeatedly. */
+export function setMapAmbience(active: boolean) {
+  if (active === ambientSuppressed && (!active || mapBackgroundSource)) return;
+
+  ambientSuppressed = active;
+
+  if (active) {
+    // Silence the app bed first so the two never overlap, even for a frame.
+    syncAmbientDrone();
+    if (!mapBackgroundSource) {
+      const source = playSample('mapBackground', true, 0.55);
+      if (source) mapBackgroundSource = source;
+    }
+  } else {
+    if (mapBackgroundSource) {
+      mapBackgroundSource.stop();
+      mapBackgroundSource = null;
+    }
+    syncAmbientDrone();
+  }
+}
+
+/**
+ * Pan and zoom cues.
+ *
+ * Both are throttled at the point of use rather than by the caller: a drag
+ * fires continuously and a trackpad pinch emits a stream of zoom events, so
+ * playing one sample per event would stack dozens of overlapping voices.
+ */
+let lastDragCue = 0;
+export function playMapDrag() {
+  const now = Date.now();
+  if (now - lastDragCue < 340) return;
+  lastDragCue = now;
+  playSample('mapDrag', false, 0.6);
+}
+
+let lastZoomCue = 0;
+export function playMapZoom() {
+  const now = Date.now();
+  if (now - lastZoomCue < 260) return;
+  lastZoomCue = now;
+  playSample('mapZoom', false, 0.7);
+}
+
 let decypheringLoopSource: { stop: () => void } | null = null;
 
 export function playDecypheringLoop() {
@@ -387,7 +477,9 @@ export function playMenuToggle() {}
 export function syncAmbientDrone() {
   const ctx = getAudioContext();
   if (!ctx || !masterGainNode) return;
-  const shouldPlay = currentAmbientEnabled && !currentMuted && currentVolume > 0;
+  // The map's room tone replaces the app bed rather than layering over it.
+  const shouldPlay =
+    currentAmbientEnabled && !currentMuted && currentVolume > 0 && !ambientSuppressed;
   
   if (shouldPlay) {
     ambientActive = true;

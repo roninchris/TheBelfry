@@ -27,6 +27,7 @@ import ShinyText from "../../components/react-bits/ShinyText";
 import BlurText from "../../components/react-bits/BlurText";
 import SplitText from "../../components/react-bits/SplitText";
 import DataWall from "../../components/ui/DataWall";
+import { detectCoordinates, formatDecimal, formatDMS } from "../../lib/geo/coordinates";
 import {
   Network,
   Plus,
@@ -47,7 +48,9 @@ import {
   Settings,
   FolderPlus,
   Pencil,
-  MoveDiagonal2
+  MoveDiagonal2,
+  Crosshair,
+  Map as MapIcon
 } from "lucide-react";
 
 // Default card footprint per evidence type, used whenever a node has no explicit width/height
@@ -124,6 +127,7 @@ export default function DetectiveBoardPage() {
   const updateEvidenceNodePosition = useAppStore((state) => state.updateEvidenceNodePosition);
   const resizeEvidenceNode = useAppStore((state) => state.resizeEvidenceNode);
   const commitEvidenceNode = useAppStore((state) => state.commitEvidenceNode);
+  const openCoordinateInMap = useAppStore((state) => state.openCoordinateInMap);
   const setDraggingNode = useAppStore((state) => state.setDraggingNode);
   const broadcastDrag = useAppStore((state) => state.broadcastDrag);
   const uploadEvidenceImage = useAppStore((state) => state.uploadEvidenceImage);
@@ -237,6 +241,22 @@ export default function DetectiveBoardPage() {
   // Evidence Detail State
   const [detailNodeId, setDetailNodeId] = useState<string | null>(null);
   const detailNode = boardNodes.find(n => n.id === detailNodeId);
+
+  /**
+   * Geospatial fixes written into the open evidence card.
+   *
+   * Scans the analyst's notes and the card's own content, because a coordinate
+   * arrives in either — pasted into the body of a text card, or jotted in the
+   * notes while working. Uses the strict detector: this fires unprompted, so a
+   * false positive would offer to plot a position nobody wrote.
+   */
+  const detectedFixes = React.useMemo(() => {
+    if (!detailNode) return [];
+    const haystack = [detailNode.notes, detailNode.type === "text" ? detailNode.content : ""]
+      .filter(Boolean)
+      .join("\n");
+    return detectCoordinates(haystack);
+  }, [detailNode]);
 
   // Rename/Label Connection state
   const [labelingConnId, setLabelingConnId] = useState<string | null>(null);
@@ -1626,6 +1646,54 @@ export default function DetectiveBoardPage() {
                         <Link className="w-4 h-4 shrink-0" />
                         <span className="truncate">{detailNode.content}</span>
                       </a>
+                    </div>
+                  )}
+
+                  {/*
+                    Geospatial relay. Only rendered when a position is actually
+                    written on the card, so it reads as the system noticing
+                    something rather than a control that is dead most of the
+                    time.
+                  */}
+                  {detectedFixes.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-[13px] font-display font-bold text-cyan-dim uppercase tracking-widest flex items-center">
+                        <Crosshair className="w-3.5 h-3.5 mr-1.5" />
+                        GEOSPATIAL FIX {detectedFixes.length > 1 && `// ${detectedFixes.length} DETECTED`}
+                      </label>
+                      <div className="space-y-1.5">
+                        {detectedFixes.map((fix, i) => (
+                          <div
+                            key={`${fix.index}-${i}`}
+                            className="flex items-center justify-between gap-3 bg-cyan-primary/[0.05] border-l-2 border-cyan-primary/60 p-3 rounded-sm"
+                          >
+                            <div className="min-w-0">
+                              <div className="font-mono text-[13px] text-cyan-text truncate">
+                                {formatDMS(fix)}
+                              </div>
+                              <div className="font-mono text-[12px] text-text-dim/70 truncate">
+                                {formatDecimal(fix, 5)} · read as {fix.format.toUpperCase()}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                openCoordinateInMap({
+                                  lat: fix.lat,
+                                  lon: fix.lon,
+                                  label: detailNode.title || "EVIDENCE FIX",
+                                  origin: "EVIDENCE BOARD",
+                                });
+                                playPinClick();
+                              }}
+                              onMouseEnter={playHoverEvidence}
+                              className="hud-target shrink-0 flex items-center space-x-1.5 px-3 py-1.5 bg-cyan-primary text-bg-void font-display text-[12px] font-black tracking-widest uppercase hover:bg-white transition-all"
+                            >
+                              <MapIcon className="w-3.5 h-3.5" />
+                              <span>Plot</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 

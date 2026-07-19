@@ -16,6 +16,7 @@ import {
 } from "../lib/storage";
 import { onSessionLost, resolveSessionIdentity } from "../lib/session";
 import { moduleForTool } from "../lib/toolRouting";
+import type { MapTarget } from "../lib/geo/coordinates";
 
 export interface ForensicLog {
   id: string;
@@ -159,6 +160,19 @@ interface AppState {
   openToolInModule: (toolId: string) => void;
   /** Takes the pending tool id, clearing it. Returns null if there is none. */
   consumePendingTool: () => string | null;
+
+  /**
+   * A position another module asked the map to open on, pending pickup.
+   *
+   * Same read-once contract as `pendingToolId`: the map consumes it on arrival
+   * and clears it, so returning to the map later does not silently fly back to
+   * a position the analyst has since moved on from.
+   */
+  pendingCoordinate: MapTarget | null;
+  /** Switches to the map and asks it to open on this position. */
+  openCoordinateInMap: (target: MapTarget) => void;
+  /** Takes the pending position, clearing it. Returns null if there is none. */
+  consumePendingCoordinate: () => MapTarget | null;
 
   logs: ForensicLog[];
   cases: Case[];
@@ -511,6 +525,26 @@ export const useAppStore = create<AppState>()(
       consumePendingTool: () => {
         const pending = get().pendingToolId;
         if (pending) set({ pendingToolId: null });
+        return pending;
+      },
+
+      pendingCoordinate: null,
+
+      openCoordinateInMap: (target) => {
+        set({ pendingCoordinate: target, currentModule: "map" });
+        get().addLog(
+          `PLOTTING ${target.lat.toFixed(4)}, ${target.lon.toFixed(4)}${
+            target.label ? ` // ${target.label.toUpperCase()}` : ""
+          }`,
+          "info",
+          "CARTOGRAPHY"
+        );
+        playMaterialize();
+      },
+
+      consumePendingCoordinate: () => {
+        const pending = get().pendingCoordinate;
+        if (pending) set({ pendingCoordinate: null });
         return pending;
       },
       
