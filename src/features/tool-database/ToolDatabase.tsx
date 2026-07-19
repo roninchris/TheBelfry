@@ -669,7 +669,7 @@ export default function ToolDatabase() {
         </GlassPanel>
 
         {/* Dynamic Nodes Grid (Bento/Hex Theme matching Belfry Upgrade Grid) */}
-        <GlassPanel className="panel-console p-4 flex-1 flex flex-col justify-between min-h-[460px]" contentClassName="flex flex-col min-h-0" clipSize="md">
+        <GlassPanel className="panel-console p-4 flex-1 flex flex-col justify-between min-h-[460px]" clipSize="md">
           <div className="border-b border-border-hairline/20 pb-2 mb-4 flex justify-between items-center">
             <h3 className="font-display text-xs font-black tracking-widest text-cyan-text uppercase flex items-center space-x-2">
               <Layers className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
@@ -825,7 +825,7 @@ export default function ToolDatabase() {
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col min-h-0 flex-1"
           >
-            <GlassPanel className="p-4 flex flex-col flex-1 min-h-0" contentClassName="flex flex-col min-h-0" clipSize="md">
+            <GlassPanel className="p-4 flex flex-col flex-1 min-h-0" clipSize="md">
           
           {/* Header metadata dossier */}
           <div className="border-b border-border-hairline/25 pb-3 mb-4 flex justify-between items-start flex-wrap gap-2">

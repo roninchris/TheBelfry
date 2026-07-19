@@ -8,19 +8,22 @@ interface GlassPanelProps extends React.HTMLAttributes<HTMLDivElement> {
   hoverGlow?: boolean;
   clipSize?: "sm" | "md" | "none";
   className?: string;
-  /**
-   * Classes for the inner content wrapper.
-   *
-   * Children do not live directly inside the panel element — they sit in a
-   * plain block wrapper, so `flex flex-col` on `className` styles that wrapper
-   * and never reaches the children. Any `flex-1` a caller puts on its own
-   * content is therefore inert, which is why panels have repeatedly grown to
-   * their content instead of bounding it. Pass `contentClassName="flex flex-col"`
-   * to make the wrapper a flex container so `flex-1`/`min-h-0` work as written.
-   */
-  contentClassName?: string;
 }
 
+/**
+ * Children render directly inside the panel element.
+ *
+ * They used to sit in a plain block wrapper, which meant `flex flex-col` on a
+ * caller's `className` styled that wrapper and never reached the children — so
+ * every `flex-1` written inside a panel was inert, and panels grew to their
+ * content instead of bounding it. An audit found 46 panels carrying that
+ * pattern. Rather than opt each one in through a prop, the wrapper is gone, so
+ * a caller's flex classes now apply to the children they were always meant for.
+ *
+ * The decorations are all absolutely positioned, so they stay out of the flex
+ * flow. They also render before the children, which is what keeps content
+ * painted above them now that nothing carries an explicit stacking context.
+ */
 export default function GlassPanel({
   children,
   showCornerTicks = true,
@@ -29,7 +32,6 @@ export default function GlassPanel({
   hoverGlow = false,
   clipSize = "md",
   className = "",
-  contentClassName = "",
   ...props
 }: GlassPanelProps) {
   const clipClass = 
@@ -48,9 +50,11 @@ export default function GlassPanel({
       } ${className}`}
       {...props}
     >
-      {/* Top-edge Glass Sheens */}
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none z-10" />
-      <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent blur-[0.5px] pointer-events-none z-10" />
+      {/* Top-edge Glass Sheens. z-0, not z-10: with the content wrapper gone the
+          children carry no stacking context of their own, so a z-10 sheen would
+          paint over the top few pixels of real content. */}
+      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none z-0" />
+      <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent blur-[0.5px] pointer-events-none z-0" />
 
       {/* Background CRT scanline texture */}
       {showScanlines && (
@@ -74,10 +78,7 @@ export default function GlassPanel({
         </>
       )}
 
-      {/* Main Content */}
-      <div className={`relative z-10 w-full h-full min-h-0 ${contentClassName}`}>
-        {children}
-      </div>
+      {children}
     </div>
   );
 }

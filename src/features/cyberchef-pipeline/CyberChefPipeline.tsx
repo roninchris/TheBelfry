@@ -716,7 +716,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
         {/* MANUAL WORKSPACE LAYOUT (Steps List) */}
         {mode === "manual" && (
-          <GlassPanel className="p-4 flex-1 flex flex-col min-h-0" contentClassName="flex flex-col" clipSize="md">
+          <GlassPanel className="p-4 flex-1 flex flex-col min-h-0" clipSize="md">
             <div className="border-b border-border-hairline/20 pb-2 mb-4 flex justify-between items-center flex-wrap gap-2">
               <div className="flex items-center space-x-2">
                 <Sliders className="w-4 h-4 text-cyan-primary animate-hex-pulse-flicker" />
@@ -833,7 +833,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                   {/* GATE 1: INPUT VESSEL CARD */}
                   <div className="flex-1 min-w-[250px] flex items-stretch">
-                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
+                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between min-h-0" clipSize="sm" showCornerTicks={true}>
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="w-1.5 h-3 bg-cyan-primary inline-block transform -skew-x-12" />
@@ -870,8 +870,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                             block, which read as an unstyled gap rather than a
                             placeholder for a stage. */}
                         <GlassPanel
-                          className="p-6 w-full h-full border-dashed"
-                          contentClassName="flex flex-col items-center justify-center text-center"
+                          className="p-6 w-full h-full border-dashed flex flex-col items-center justify-center text-center"
                           clipSize="sm"
                           showCornerTicks={false}
                         >
@@ -1046,7 +1045,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                   {/* GATE 4: OUTPUT VESSEL CARD */}
                   <div className="flex-1 min-w-[250px] flex items-stretch">
-                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
+                    <GlassPanel className="p-4 flex flex-col w-full h-full justify-between min-h-0" clipSize="sm" showCornerTicks={true}>
                       <div className="border-b border-border-hairline/20 pb-2 mb-3 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
@@ -1182,7 +1181,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
         {/* ================= BRUTE FORCE WORKSPACE LAYOUT ================= */}
         {mode === "brute" && (() => {
           return (
-            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[500px]" contentClassName="flex flex-col" clipSize="md">
+            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[500px]" clipSize="md">
               
               {/* Brute Mode Config Header */}
               <div className="border-b border-border-hairline/20 pb-3 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1231,7 +1230,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 
                 {/* GATE 1: INTELLIGENCE STREAM SOURCE & CONFIG */}
                 <div className="flex-1 min-w-[250px] flex items-stretch">
-                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
+                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12" />
@@ -1349,7 +1348,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                 {/* GATE 2: SWEEP & DECRYPTION MATRIX CORE */}
                 <div className="flex-1 min-w-[250px] flex items-stretch">
-                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
+                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-amber-alert inline-block transform -skew-x-12 animate-hex-pulse-flicker" />
@@ -1432,7 +1431,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
 
                 {/* GATE 3: TOP MATCH PLAUSIBILITY TERMINATION */}
                 <div className="flex-1 min-w-[250px] flex items-stretch">
-                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between" contentClassName="flex flex-col min-h-0" clipSize="sm" showCornerTicks={true}>
+                  <GlassPanel className="p-3.5 flex flex-col w-full h-full justify-between min-h-0" clipSize="sm" showCornerTicks={true}>
                     <div className="border-b border-border-hairline/20 pb-1.5 mb-2.5 flex justify-between items-center">
                       <div className="flex items-center space-x-2">
                         <span className="w-1.5 h-3 bg-green-verified inline-block transform -skew-x-12" />
@@ -1603,7 +1602,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
         {mode === "manual" ? (
           <>
             {/* Searchable / Browsable Registry of available tools */}
-            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[350px]" contentClassName="flex flex-col min-h-0" clipSize="sm">
+            <GlassPanel className="p-4 flex-1 flex flex-col min-h-[350px]" clipSize="sm">
               <div className="border-b border-border-hairline/20 pb-2 mb-3">
                 <h3 className="font-display text-xs font-black tracking-widest text-cyan-text flex items-center uppercase">
                   <Plus className="w-4 h-4 mr-1.5 text-cyan-primary" />
@@ -1719,7 +1718,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 that produce it. One card per row here rather than the old two,
                 since the column is ~409px wide. */}
             {bruteResults.length > 0 && alternativeMatches.length > 0 && (
-              <GlassPanel className="p-4 flex flex-col min-h-0" contentClassName="flex flex-col min-h-0" clipSize="sm">
+              <GlassPanel className="p-4 flex flex-col min-h-0" clipSize="sm">
                 <div className="shrink-0 flex items-center justify-between border-b border-border-hairline/15 pb-1.5 mb-2.5 gap-3">
                   <span className="text-[12px] font-mono text-text-dim uppercase tracking-wider truncate">
                     CANDIDATE REGISTRY — {alternativeMatches.length} EVALUATED
@@ -1840,7 +1839,7 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                 candidates the registry above claims this height instead, so the
                 decoration never competes with real results. */}
             {bruteResults.length === 0 && (
-              <GlassPanel className="p-4 flex-1 flex flex-col min-h-[180px] relative overflow-hidden" contentClassName="flex flex-col" clipSize="sm">
+              <GlassPanel className="p-4 flex-1 flex flex-col min-h-[180px] relative overflow-hidden" clipSize="sm">
                 <div className="absolute inset-0 bg-grid-pattern opacity-[0.04] pointer-events-none" />
                 <div className="shrink-0 flex items-center justify-between border-b border-border-hairline/20 pb-2 mb-2">
                   <span className="font-display text-[13px] font-black tracking-widest text-cyan-text/70 uppercase flex items-center">

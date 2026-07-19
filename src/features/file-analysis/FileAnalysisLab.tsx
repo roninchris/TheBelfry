@@ -922,7 +922,6 @@ ${currentData.threatSummary}`;
             {/* Hex Dump Viewer Panel */}
             <GlassPanel
               className="p-4 flex flex-col min-h-[300px] flex-1 relative overflow-hidden"
-              contentClassName="flex flex-col"
               clipSize="md"
             >
               <div className="border-b border-border-hairline/20 pb-2 mb-3.5 flex justify-between items-center">
