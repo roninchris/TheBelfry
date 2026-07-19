@@ -1953,3 +1953,134 @@ button:hover, .btn-interactive:hover {
   background: rgb(var(--rgb-primary) / 0.35);
   pointer-events: none;
 }
+
+/* ------------------------------------------------------------------ */
+/* CARTOGRAPHY — tile surface and target pins                          */
+/* ------------------------------------------------------------------ */
+
+/* MapLibre ships its own furniture (logo, attribution bar, focus ring) which
+   fights the HUD frame. Attribution is not dropped — it is re-rendered as part
+   of the module's chrome, where it belongs visually. */
+.map-surface .maplibregl-ctrl-bottom-left,
+.map-surface .maplibregl-ctrl-bottom-right,
+.map-surface .maplibregl-ctrl-logo {
+  display: none;
+}
+.map-surface .maplibregl-canvas:focus {
+  outline: none;
+}
+/* The drag cursor is left to MapLibre. Its own `.maplibregl-canvas-container
+   .maplibregl-interactive { cursor: grab }` is two classes deep and unlayered,
+   so a single-class override here never wins — and `grab` is the honest
+   affordance for a surface you pan anyway. */
+
+/* Target pin — a reticle, not a teardrop. Sized in fixed px because a marker
+   sits outside the panel's cascade and must not inherit map scaling. */
+.map-pin {
+  position: relative;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.map-pin-core,
+.map-pin-ring {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.map-pin-core {
+  width: 6px;
+  height: 6px;
+  background: rgb(var(--rgb-primary));
+  box-shadow: 0 0 8px rgb(var(--rgb-primary) / 0.9);
+}
+.map-pin-ring {
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgb(var(--rgb-primary) / 0.5);
+}
+.map-pin-label {
+  position: absolute;
+  left: 16px;
+  top: -8px;
+  white-space: nowrap;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(var(--rgb-primary) / 0.75);
+  text-shadow: 0 0 6px rgb(0 0 0 / 0.9);
+}
+
+/* The active fix is the one the camera is holding: brighter, and it pings. */
+.map-pin-active .map-pin-core {
+  background: rgb(var(--rgb-accent));
+  box-shadow: 0 0 14px rgb(var(--rgb-accent));
+}
+.map-pin-active .map-pin-ring {
+  border-color: rgb(var(--rgb-accent) / 0.9);
+  animation: map-pin-ping 2.4s ease-out infinite;
+}
+.map-pin-active .map-pin-label {
+  color: rgb(var(--rgb-accent));
+}
+
+@keyframes map-pin-ping {
+  0%   { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+  70%  { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
+}
+
+/* ------------------------------------------------------------------ */
+/* MAP — radar sweep and reticle cursor                                */
+/* ------------------------------------------------------------------ */
+
+/* Ambient radar. Decorative: the sweep measures nothing. Transform/opacity
+   only, so it never competes with the tile renderer for the main thread. */
+.radar-sweep {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: radar-rotate 4s linear infinite;
+}
+
+/* Contacts sit dark and flash as the arm crosses their bearing. Each carries
+   its own negative-free delay derived from its angle, so the flash is in step
+   with the rotation rather than on an unrelated timer. */
+.radar-contact {
+  opacity: 0;
+  animation: radar-contact-ping 4s ease-out infinite;
+}
+
+@keyframes radar-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes radar-contact-ping {
+  0%   { opacity: 0.95; }
+  14%  { opacity: 0.5; }
+  46%  { opacity: 0.12; }
+  100% { opacity: 0.06; }
+}
+
+/*
+  Reticle cursor over the tile surface.
+
+  A targeting mark rather than an arrow — this is the one place in the app you
+  are aiming at the world instead of pointing at controls. Declared with an
+  inline SVG data URI so it needs no asset and follows nothing but its own
+  geometry; the trailing `crosshair` is the fallback if the URI is refused.
+
+  MapLibre sets `grab`/`grabbing` on its own canvas container from an unlayered
+  stylesheet, which outranks utility classes — so these rules are written at the
+  same two-class depth to actually win.
+*/
+.map-surface .maplibregl-canvas-container.maplibregl-interactive,
+.map-surface .maplibregl-canvas-container.maplibregl-interactive:active,
+.map-surface .maplibregl-canvas-container.maplibregl-interactive .maplibregl-canvas {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='none' stroke='%2300f3ff' stroke-width='1.4'%3E%3Crect x='13' y='13' width='14' height='14'/%3E%3Cpath d='M20 0v9M20 31v9M0 20h9M31 20h9'/%3E%3C/g%3E%3Crect x='19' y='19' width='2' height='2' fill='%2300f3ff'/%3E%3C/svg%3E")
+      20 20,
+    crosshair;
+}

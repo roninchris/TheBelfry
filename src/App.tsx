@@ -16,12 +16,13 @@ import FileAnalysisLab from "./features/file-analysis/FileAnalysisLab";
 import CyberChefPipeline from "./features/cyberchef-pipeline/CyberChefPipeline";
 import DossierPage from "./features/dossier/DossierPage";
 import DetectiveBoardPage from "./features/detective-board/DetectiveBoardPage";
+import MapModule from "./features/map/MapModule";
 import SettingsPage from "./features/settings/SettingsPage";
 import BelfryBootScreen from "./components/ui/BelfryBootScreen";
 import CredentialChallenge from "./components/ui/CredentialChallenge";
 import ToolDatabase from "./features/tool-database/ToolDatabase";
 import { useAppStore } from "./store/appStore";
-import { playGlitchBurst, playDebouncedTypeKey, playLoadTab, syncAmbientDrone, preloadSounds } from "./lib/soundEngine";
+import { playGlitchBurst, playDebouncedTypeKey, playLoadTab, syncAmbientDrone, preloadSounds, setMapAmbience } from "./lib/soundEngine";
 import { useEffect, useState } from "react";
 
 export default function App() {
@@ -57,6 +58,23 @@ export default function App() {
     }
   }, [hasBooted]);
 
+  /**
+   * The map owns the audio bed while it is the current module.
+   *
+   * Keyed on module identity rather than on the module component's lifecycle:
+   * the outgoing page stays mounted through its exit animation, and StrictMode
+   * double-invokes effects, so a mount/unmount hook let the map's loop bleed
+   * into the next station. This cannot — leaving the module *is* the signal.
+   */
+  useEffect(() => {
+    if (!hasBooted) return;
+    setMapAmbience(currentModule === "map");
+  }, [currentModule, hasBooted]);
+
+  // A reload or tab close while on the map must not leave the bed suppressed
+  // for the next session's boot.
+  useEffect(() => () => setMapAmbience(false), []);
+
   const renderModule = () => {
     switch (currentModule) {
       case "dashboard":
@@ -67,6 +85,9 @@ export default function App() {
         
       case "case-files":
         return <DossierPage />;
+
+      case "map":
+        return <MapModule />;
         
       case "crypto-lab":
         return <CryptoLab />;

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAppStore } from "../../store/appStore";
 import { playNavTick, playHoverBlip } from "../../lib/soundEngine";
 import ShinyText from "../react-bits/ShinyText";
+import MapPlaneIcon from "../ui/MapPlaneIcon";
 import {
   Activity,
   Network,
@@ -26,6 +27,13 @@ interface SidebarItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
+/**
+ * Modules whose work happens on a large canvas, where the rail costs more than
+ * it gives. They collapse it on arrival and hand it back on the way out — but
+ * only if the collapse was ours, so a manual preference is never overridden.
+ */
+const CANVAS_MODULES = new Set(["detective-board", "map"]);
+
 export default function Sidebar() {
   const currentModule = useAppStore((state) => state.currentModule);
   const openChallenge = useAppStore((state) => state.openChallenge);
@@ -39,13 +47,13 @@ export default function Sidebar() {
     const prevModule = prevModuleRef.current;
     prevModuleRef.current = currentModule;
 
-    if (currentModule === "detective-board") {
+    if (CANVAS_MODULES.has(currentModule)) {
       if (!isMinimized) {
         setIsMinimized(true);
         wasAutoCollapsedRef.current = true;
       }
-    } else if (prevModule === "detective-board") {
-      // Auto-restore sidebar when leaving board ONLY if we auto-collapsed it
+    } else if (CANVAS_MODULES.has(prevModule)) {
+      // Auto-restore sidebar when leaving ONLY if we auto-collapsed it
       if (wasAutoCollapsedRef.current) {
         setIsMinimized(false);
         wasAutoCollapsedRef.current = false;
@@ -76,6 +84,7 @@ export default function Sidebar() {
       title: "TOOLS",
       items: [
         { id: "cyberchef-pipeline", label: "Signal Chain", icon: GitBranch },
+        { id: "map", label: "Map", icon: MapPlaneIcon },
         { id: "tool-database", label: "Tool Database", icon: Database },
         { id: "settings", label: "Settings", icon: Sliders },
       ],
