@@ -109,7 +109,20 @@ export function detectPatterns(text: string): PatternMatch[] {
         confidence = Math.max(confidence, 0.6);
       }
 
-      if (englishLike) {
+      /**
+       * The English-plaintext guard exists to stop a bare word like
+       * "HelloWorld" being called Base64. But it keyed off index of
+       * coincidence, and IC is noisy on short strings — a genuine payload like
+       * "SGVsbG8gd29ybGQgdGhpcyBpcyBhIHRlc3Q=" scores 0.073, above the English
+       * threshold, so it was demoted to 0.25 even though it decodes cleanly to
+       * "Hello world this is a test".
+       *
+       * Actually decoding is far stronger evidence than a letter-distribution
+       * guess, so a clean decode to mostly-printable text now wins outright.
+       */
+      const decodesConvincingly = decodeCheck.valid && decodeCheck.printableRatio > 0.85;
+
+      if (englishLike && !decodesConvincingly) {
         confidence = Math.min(confidence, 0.25);
         details = "Matches Base64 charset, but input resembles English text - low confidence";
       }
@@ -122,7 +135,21 @@ export function detectPatterns(text: string): PatternMatch[] {
 
   // Base32: RFC4648 alphabet [A-Z2-7], padded with '=', length % 8 === 0
   const base32Regex = /^[A-Z2-7]+={0,6}$/;
-  if (base32Regex.test(trimmed.toUpperCase()) && !(englishLike && !/[2-7=]/.test(trimmed))) {
+  /**
+   * The length floor matters as much as the alphabet. Base32's alphabet is
+   * A-Z plus 2-7, so *any* short uppercase word satisfies it — "HELLO" was
+   * being reported as Base32 at 0.6 and, being the highest scorer, was promoted
+   * to the recommended match while its own details read "invalid length". The
+   * English guard did not save it either, since that helper ignores anything
+   * under six letters. Below a real Base32 block length there is no signal
+   * here, and a charset-only match is now scored below the recommendation floor
+   * rather than above it.
+   */
+  if (
+    base32Regex.test(trimmed.toUpperCase()) &&
+    trimmed.length >= 8 &&
+    !(englishLike && !/[2-7=]/.test(trimmed))
+  ) {
     const isMultipleOf8 = trimmed.length % 8 === 0;
     if (isMultipleOf8) {
       results.push({
@@ -133,8 +160,8 @@ export function detectPatterns(text: string): PatternMatch[] {
     } else {
       results.push({
         pattern: "base32",
-        confidence: 0.6,
-        details: "Matches Base32 character set but invalid length"
+        confidence: 0.25,
+        details: "Matches Base32 character set but length is not a multiple of 8"
       });
     }
   }
@@ -159,12 +186,28 @@ export function detectPatterns(text: string): PatternMatch[] {
         confidence: 0.95,
         details: "Valid Ascii85 with delimiters"
       });
-    } else if (!englishLike) {
-      results.push({
-        pattern: "base85",
-        confidence: 0.5,
-        details: "Matches Ascii85 printable range (without delimiters)"
-      });
+    } else {
+      /**
+       * Without delimiters the Ascii85 "range" is almost the whole printable
+       * set, so this branch fired on essentially every input — plain sentences
+       * and other ciphers alike — and added a permanent 0.5 row to every
+       * result list. Real Ascii85 output is dense in punctuation, so require
+       * that density (and enough length to measure it) instead of just the
+       * character range.
+       */
+      const compact = trimmed.replace(/\s/g, "");
+      // '=' is Base32/Base64 padding, not Ascii85 punctuation — counting it made
+      // every padded Base32 block look symbol-dense enough to also be Ascii85.
+      const symbolCount = (compact.match(/[^A-Za-z0-9=]/g) || []).length;
+      const symbolRatio = compact.length > 0 ? symbolCount / compact.length : 0;
+
+      if (!englishLike && compact.length >= 16 && symbolRatio >= 0.15) {
+        results.push({
+          pattern: "base85",
+          confidence: 0.5,
+          details: "Matches Ascii85 printable range with punctuation density typical of Ascii85"
+        });
+      }
     }
   }
 
@@ -176,6 +219,204 @@ export function detectPatterns(text: string): PatternMatch[] {
       confidence: 0.99,
       details: "Braille unicode characters detected"
     });
+  }
+
+  /**
+   * Runic script (U+16A0-U+16FF). Neither Gematria Primus nor the Elder Futhark
+   * cipher was detected at all before this — runes are unmistakable as a script,
+   * so the only real question is which alphabet is in play. The two tables
+   * overlap, but each has exclusive runes, so membership decides it. When a
+   * sample uses only shared runes both are reported, since picking one would be
+   * arbitrary.
+   */
+  const runeChars = trimmed.match(/[ᚠ-᛿]/g) || [];
+  if (runeChars.length >= 2) {
+    const ELDER_ONLY = new Set(["ᚨ", "ᚲ", "ᚺ", "ᛃ", "ᛊ"]); // a, k, h, j, s
+    const FUTHORC_ONLY = new Set(["ᚩ", "ᚳ", "ᚻ", "ᛡ", "ᛟ"]); // os, cen, haegl, ior, oethel
+
+    const hasElder = runeChars.some(c => ELDER_ONLY.has(c));
+    const hasFuthorc = runeChars.some(c => FUTHORC_ONLY.has(c));
+
+    // Density guards against a stray rune glyph sitting inside ordinary text.
+    const density = runeChars.length / Math.max(1, trimmed.replace(/\s/g, "").length);
+    const base = density > 0.5 ? 0.95 : 0.7;
+
+    if (hasFuthorc && !hasElder) {
+      results.push({
+        pattern: "gematria",
+        confidence: base,
+        details: "Anglo-Saxon futhorc runes (Gematria Primus alphabet)"
+      });
+    } else if (hasElder && !hasFuthorc) {
+      results.push({
+        pattern: "runic",
+        confidence: base,
+        details: "Elder Futhark runes"
+      });
+    } else {
+      results.push({
+        pattern: "runic",
+        confidence: base - 0.1,
+        details: "Runic script; alphabet ambiguous between Elder Futhark and futhorc"
+      });
+      results.push({
+        pattern: "gematria",
+        confidence: base - 0.12,
+        details: "Runic script; alphabet ambiguous between futhorc and Elder Futhark"
+      });
+    }
+  }
+
+  /**
+   * Gematria Primus prime sequence: space-separated values drawn only from the
+   * 24 primes in the table, with '-' as the word gap. Requiring *every* numeric
+   * token to be a member is what separates this from an arbitrary number list,
+   * which will almost immediately contain a non-member.
+   */
+  const GEMATRIA_PRIMES = new Set([
+    2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37,
+    41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89
+  ]);
+  const allTokens = trimmed.split(/\s+/).filter(Boolean);
+  const numericTokens = allTokens.filter(t => /^\d+$/.test(t));
+  if (numericTokens.length >= 4 && numericTokens.length / allTokens.length >= 0.5) {
+    if (numericTokens.every(t => GEMATRIA_PRIMES.has(parseInt(t, 10)))) {
+      results.push({
+        pattern: "gematria",
+        confidence: 0.9,
+        details: `All ${numericTokens.length} numeric tokens are Gematria Primus primes`
+      });
+    }
+  }
+
+  /**
+   * Gematria Primus Latin transliteration: space-separated table tokens with
+   * '-' for word gaps. Single letters alone are indistinguishable from ordinary
+   * spaced-out text, so a multi-letter token (TH, EO, OE, ING) is required as
+   * the actual signature — those are the runes that have no single-letter
+   * spelling, and nothing else in the app emits them this way.
+   */
+  const LATIN_TOKENS = new Set([
+    "F", "U", "TH", "O", "R", "C", "G", "W", "H", "N", "I", "J",
+    "EO", "P", "X", "S", "T", "B", "E", "M", "L", "ING", "OE", "D"
+  ]);
+  const gemTokens = trimmed.toUpperCase().split(/\s+/).filter(Boolean);
+  if (gemTokens.length >= 6) {
+    const meaningful = gemTokens.filter(t => t !== "-");
+    // A majority, not all: the table has no rune for A (and a few others), so
+    // the encoder passes those letters through untouched. Demanding every token
+    // be a table member meant real output never matched.
+    const knownCount = meaningful.filter(t => LATIN_TOKENS.has(t)).length;
+    const knownRatio = meaningful.length > 0 ? knownCount / meaningful.length : 0;
+    const allShort = meaningful.every(t => /^[A-Z]{1,3}$/.test(t));
+    const hasMultiChar = meaningful.some(t => t.length > 1 && LATIN_TOKENS.has(t));
+
+    if (allShort && hasMultiChar && knownRatio >= 0.7) {
+      results.push({
+        pattern: "gematria",
+        confidence: 0.8,
+        details: "Space-separated Gematria Primus Latin tokens, including multi-letter rune names"
+      });
+    }
+  }
+
+  /**
+   * ===== Structural cipher signatures =====
+   * These ciphers emit shapes nothing else in the app produces, so they can be
+   * recognised outright rather than inferred from letter statistics. A survey of
+   * all 52 cipher tools found only five were being identified at all; most of
+   * the misses were shapes as distinctive as these.
+   */
+
+  // Bacon: only two distinct letters, in groups of five.
+  const baconGroups = trimmed.toUpperCase().split(/\s+/).filter(Boolean);
+  if (baconGroups.length >= 3 && baconGroups.every(g => /^[AB]{5}$/.test(g))) {
+    results.push({
+      pattern: "bacon",
+      confidence: 0.96,
+      details: "Groups of five drawn from a two-letter alphabet (A/B)"
+    });
+  }
+
+  // Dancing Men: bracketed figure codes. The flag letter is M or F (the figure
+  // holds a flag to mark a word break), not M alone.
+  const dancingCodes = trimmed.match(/\[[MF]\d{2}\]/g) || [];
+  if (dancingCodes.length >= 3 && /^(\[[MF]\d{2}\]|\s)+$/.test(trimmed)) {
+    results.push({
+      pattern: "dancingmen",
+      confidence: 0.97,
+      details: "Bracketed dancing-men figure codes"
+    });
+  }
+
+  // Pigpen: grid-position tokens such as 1-UL, 3-L, 2-UC, 1-ML. The position
+  // part spans upper/middle/lower and left/centre/right, so it is not limited
+  // to the four compass letters.
+  const pigpenTokens = trimmed.toUpperCase().split(/\s+/).filter(Boolean);
+  if (
+    pigpenTokens.length >= 3 &&
+    pigpenTokens.filter(t => /^[1-4]-[UMLDCR]{1,2}$/.test(t)).length / pigpenTokens.length >= 0.8
+  ) {
+    results.push({
+      pattern: "pigpen",
+      confidence: 0.95,
+      details: "Pigpen grid-position tokens (quadrant plus cell position)"
+    });
+  }
+
+  /**
+   * Numeric ciphers, separated by the digit range they can produce:
+   *  - Polybius coordinates use only digits 1-5 in pairs.
+   *  - Nihilist adds a key to those coordinates, so values run past 55 but stay
+   *    two-digit.
+   *  - Homophonic substitution uses the full 00-99 space.
+   * The ranges overlap, so more than one may be reported; the ordering below
+   * reflects how specific each claim is.
+   */
+  const numTokens = trimmed.split(/[\s/,-]+/).filter(Boolean);
+  const twoDigit = numTokens.filter(t => /^\d{2}$/.test(t));
+  if (numTokens.length >= 4 && twoDigit.length / numTokens.length >= 0.85) {
+    const values = twoDigit.map(t => parseInt(t, 10));
+    const allPolybius = twoDigit.every(t => /^[1-5][1-5]$/.test(t));
+    const maxVal = Math.max(...values);
+
+    if (allPolybius) {
+      results.push({
+        pattern: "polybius",
+        confidence: 0.9,
+        details: "Two-digit pairs using only digits 1-5 (Polybius square coordinates)"
+      });
+    } else if (maxVal <= 99) {
+      results.push({
+        pattern: "nihilist",
+        confidence: 0.6,
+        details: "Two-digit number series consistent with Nihilist additive coordinates"
+      });
+      results.push({
+        pattern: "homophonic",
+        confidence: 0.5,
+        details: "Two-digit number series consistent with homophonic substitution"
+      });
+    }
+  }
+
+  // ROT47 operates over printable ASCII, so its output is unusually rich in
+  // punctuation compared with any letter-based cipher.
+  const rot47Body = trimmed.replace(/\s/g, "");
+  // Bracketed or dash-delimited token grammars (dancing men, pigpen) are also
+  // punctuation-rich; they have their own detectors and should not be offered a
+  // competing ROT47 reading.
+  const looksTokenised = /\[[A-Z]\d{2}\]/.test(trimmed) || /\b[1-4]-[A-Z]{1,2}\b/i.test(trimmed);
+  if (!looksTokenised && rot47Body.length >= 12 && /^[!-~]+$/.test(rot47Body)) {
+    const symbols = (rot47Body.match(/[!-\/:-@\[-`{-~]/g) || []).length;
+    const ratio = symbols / rot47Body.length;
+    if (ratio >= 0.25 && ratio < 0.9) {
+      results.push({
+        pattern: "rot47",
+        confidence: 0.55,
+        details: "Dense printable-ASCII punctuation mix typical of ROT47"
+      });
+    }
   }
 
   // Hex: Even-length string of 0-9, A-F, a-f

@@ -84,7 +84,7 @@ function tokenizeLatin(text: string): string[] {
 
 export function gematriaEncode(text: string, options?: ToolOptions): TransformOutput {
   if (!text) return "";
-  const format = (options?.format as "runes" | "primes") || "runes";
+  const format = (options?.format as "runes" | "primes" | "latin") || "runes";
   const tokens = tokenizeLatin(text);
 
   if (format === "primes") {
@@ -114,6 +114,24 @@ export function gematriaEncode(text: string, options?: ToolOptions): TransformOu
       }
     });
     return primeSequence.join(" ");
+  } else if (format === "latin") {
+    /**
+     * Latin transliteration: the table's own token per glyph, space separated.
+     *
+     * The options schema has always offered "Latin", but only "primes" was ever
+     * branched on and everything else fell through to runes — so choosing Latin
+     * silently produced rune output identical to the Runes option, and the
+     * format was effectively dead.
+     */
+    return tokens
+      .map((tok) => {
+        let entry = GEMATRIA_TABLE.find((e) => e.latin === tok);
+        if (!entry && tok === "K") entry = GEMATRIA_TABLE.find((e) => e.latin === "C");
+        if (!entry && tok === "Z") entry = GEMATRIA_TABLE.find((e) => e.latin === "X");
+        if (entry) return entry.latin;
+        return /\s/.test(tok) ? "-" : tok;
+      })
+      .join(" ");
   } else {
     // Format is "runes"
     let runeStr = "";
@@ -138,7 +156,16 @@ export function gematriaEncode(text: string, options?: ToolOptions): TransformOu
 
 export function gematriaDecode(input: string, options?: ToolOptions): TransformOutput {
   if (!input) return "";
-  const format = (options?.format as "runes" | "primes") || "runes";
+  const format = (options?.format as "runes" | "primes" | "latin") || "runes";
+
+  if (format === "latin") {
+    // Space-separated transliteration tokens back to a plain string.
+    return input
+      .trim()
+      .split(/\s+/)
+      .map((tok) => (tok === "-" ? " " : tok))
+      .join("");
+  }
 
   if (format === "primes") {
     // Input is space-separated primes or pass-through characters

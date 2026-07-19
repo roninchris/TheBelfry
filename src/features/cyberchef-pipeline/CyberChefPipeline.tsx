@@ -39,7 +39,7 @@ import PipelineConnector from "../../components/react-bits/PipelineConnector";
 import { useAppStore } from "../../store/appStore";
 import { getTool, getAllTools, asResult } from "../../lib/tools/registry";
 import { scoreDecodedPlaintext } from "../../lib/tools/scoring";
-import { bruteForceTool, DEFAULT_WORDLIST } from "../../lib/tools/bruteForce";
+import { bruteForceTool, DEFAULT_WORDLIST, SWEEPABLE_TOOL_IDS } from "../../lib/tools/bruteForce";
 import WordlistControl from "../../components/brute-force/WordlistControl";
 import { identifyInput } from "../../lib/tools/identify";
 import {
@@ -437,9 +437,42 @@ Custom chain processing successfully compiled. Extracted and formatted coordinat
       notes = outcome.notes;
       failedCount = outcome.failedCount;
     } else {
-      // Try everything mode! Run all registry decoders
+      /**
+       * "Try everything" mode.
+       *
+       * This used to call every decoder exactly once with its default options,
+       * with a hardcoded `opts.shift = 7` for Caesar. That meant auto-crack
+       * could only ever solve a Caesar whose shift happened to be 7, and the
+       * same blind spot applied to every other parameterised cipher — the mode
+       * named "try everything" was in fact trying one arbitrary configuration
+       * each. Anything the brute forcer knows how to sweep is now swept
+       * properly, and only its best few candidates are kept so one cipher
+       * cannot flood the registry.
+       */
       const allTools = getAllTools();
+      const KEEP_PER_SWEEP = 3;
+
       for (const t of allTools) {
+        if ((SWEEPABLE_TOOL_IDS as readonly string[]).includes(t.id)) {
+          const outcome = bruteForceTool(t.id, inputVal, bruteWordlist);
+          failedCount += outcome.failedCount;
+          notes.push(...outcome.notes);
+          outcome.results
+            .slice()
+            .sort((a, b) => b.score - a.score)
+            .slice(0, KEEP_PER_SWEEP)
+            .forEach(c => {
+              resultsList.push({
+                label: t.label,
+                parameter: c.parameter,
+                text: c.output,
+                score: c.score,
+                options: c.options
+              });
+            });
+          continue;
+        }
+
         try {
           const opts: any = {};
           if (t.optionsSchema) {
@@ -447,7 +480,6 @@ Custom chain processing successfully compiled. Extracted and formatted coordinat
               opts[field.name] = field.defaultValue;
             });
           }
-          if (t.id === "caesar") opts.shift = 7; // test shift 7 as default sweep candidate
 
           const res = t.decode(inputVal, opts);
           const outText = asResult(res).text;
@@ -470,8 +502,33 @@ Custom chain processing successfully compiled. Extracted and formatted coordinat
       }
     }
 
+    /**
+     * Fold the identifier's opinion into the ranking.
+     *
+     * Plaintext scoring alone is blind to *what the input looked like*: a
+     * decoder that happens to emit vowel-rich noise could outrank the cipher the
+     * identifier had already recognised from the input's own signature. Since
+     * both halves are now reliable, the ranking uses both — a candidate whose
+     * tool the identifier flagged is promoted in proportion to that confidence,
+     * so the auto-cracker and the identifier stop disagreeing on screen.
+     */
+    const signals = new Map<string, number>();
+    for (const r of identifyInput(inputVal)) {
+      if (r.confidence > 0.4) signals.set(r.toolId, r.confidence);
+    }
+
+    const toolIdFor = (label: string) =>
+      getAllTools().find(t => t.label === label)?.id ?? "";
+
+    const ranked = resultsList.map(r => {
+      const conf = signals.get(toolIdFor(r.label)) ?? 0;
+      // Capped so a strong identification nudges ordering without letting a
+      // recognised-but-wrong key beat a candidate that actually reads as English.
+      return { ...r, score: Math.min(100, r.score + Math.round(conf * 25)) };
+    });
+
     // Sort descending by plausibility score
-    const sorted = resultsList.sort((a, b) => b.score - a.score);
+    const sorted = ranked.sort((a, b) => b.score - a.score);
     setBruteResults(sorted);
     setBruteNotes(notes);
     setBruteFailedCount(failedCount);
@@ -1407,15 +1464,19 @@ Simultaneous parameter sweeping successfully breached the encryption boundary. D
                           </span>
                         </div>
 
-                        {/* Text Output Block */}
-                        <div className="flex-1 min-h-[250px] mb-2">
-                          <div className="w-full h-full p-2 bg-bg-void/60 border border-green-verified/35 text-xs font-mono overflow-y-auto select-text text-green-verified font-bold shadow-[inset_0_0_8px_rgba(34,197,94,0.05)] scrollbar-none">
+                        {/* Text Output Block. min-h-[250px] was taller than the
+                            room a gate card actually has now that the rail is a
+                            fixed band, so it pushed the action row past the card
+                            edge and the buttons were clipped out of view. It
+                            shrinks with the card and scrolls instead. */}
+                        <div className="flex-1 min-h-0 mb-2">
+                          <div className="w-full h-full p-2 bg-bg-void/60 border border-green-verified/35 text-xs font-mono overflow-y-auto select-text text-green-verified font-bold shadow-[inset_0_0_8px_rgba(34,197,94,0.05)] scrollbar-thin">
                             <DecryptText text={topMatch.text} trigger={topMatch.text} />
                           </div>
                         </div>
 
                         {/* Core Match Buttons */}
-                        <div className="grid grid-cols-3 gap-1 pt-1.5 border-t border-border-hairline/10">
+                        <div className="shrink-0 grid grid-cols-3 gap-1 pt-1.5 border-t border-border-hairline/10">
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(topMatch.text);

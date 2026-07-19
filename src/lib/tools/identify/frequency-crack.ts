@@ -96,17 +96,19 @@ export function crackCaesar(text: string): CaesarCrackResult | null {
   let bestChiSquared = Infinity;
   let bestDecoded = "";
   let shift0ChiSquared = Infinity;
+  const allChiSquared: number[] = [];
 
   for (let shift = 0; shift < 26; shift++) {
     const decoded = caesarShift(text, shift);
     const chiSquared = calculateChiSquared(decoded);
-    
+    allChiSquared.push(chiSquared);
+
     if (chiSquared < bestChiSquared) {
       bestChiSquared = chiSquared;
       bestShift = shift;
       bestDecoded = decoded;
     }
-    
+
     // Track shift 0 specifically for comparison
     if (shift === 0) {
       shift0ChiSquared = chiSquared;
@@ -128,11 +130,34 @@ export function crackCaesar(text: string): CaesarCrackResult | null {
     };
   }
 
-  // Calculate confidence based on chi-squared score and text length
-  // A chi-squared of ~30-50 is typical for English text
-  // Higher values indicate less English-like distribution
-  // Shorter texts get lower confidence since frequency analysis is less reliable
-  let confidence = Math.max(0, 1 - (bestChiSquared / 100));
+  /**
+   * Confidence.
+   *
+   * This used to be `1 - bestChiSquared / 100`, which assumed a chi-squared of
+   * ~30-50 for English. But chi-squared is a *sum over letters*, so it grows
+   * with sample size: a correctly solved 35-letter sentence scores >100 and the
+   * old formula clamped it to 0. A textbook Caesar therefore came back with
+   * confidence 0.2 and the orchestrator discarded it, which is why a plain
+   * shift-3 message identified as nothing at all.
+   *
+   * Two length-independent signals replace it:
+   *  - fit: chi-squared *per letter*, which does not scale with length.
+   *  - separation: how far the best shift beats the runner-up. For a real
+   *    Caesar exactly one shift lands on English, so the gap is large; for text
+   *    that is not a Caesar every shift scores about the same.
+   * Separation is weighted higher because it is the more specific evidence.
+   */
+  const sortedChi = [...allChiSquared].sort((a, b) => a - b);
+  const runnerUpChiSquared = sortedChi[1] ?? bestChiSquared;
+  const chiPerLetter = bestChiSquared / clean.length;
+  const separation = bestChiSquared > 0 ? runnerUpChiSquared / bestChiSquared : 1;
+
+  // chiPerLetter <= 1.5 reads as English; >= 5 reads as noise.
+  const fitScore = Math.max(0, Math.min(1, (5 - chiPerLetter) / 3.5));
+  // A runner-up twice as bad is decisive; equal scores mean nothing stands out.
+  const separationScore = Math.max(0, Math.min(1, separation - 1));
+
+  let confidence = 0.35 * fitScore + 0.65 * separationScore;
 
   // Penalize confidence for short texts — chi-squared is unreliable on tiny samples,
   // but we still surface a (heavily discounted) signal instead of no signal at all.
@@ -158,6 +183,84 @@ export function crackCaesar(text: string): CaesarCrackResult | null {
     decoded: bestDecoded,
     chiSquared: parseFloat(bestChiSquared.toFixed(2)),
     confidence: parseFloat(confidence.toFixed(3))
+  };
+}
+
+/**
+ * Chi-squared against English, normalised per letter so it does not scale with
+ * sample size. This is the axis that separates a transposition (letters
+ * untouched, so it stays low) from a substitution (letters remapped, so it
+ * climbs) — the two are indistinguishable by index of coincidence alone.
+ */
+export function englishChiPerLetter(text: string): number {
+  const clean = text.toUpperCase().replace(/[^A-Z]/g, "");
+  if (clean.length === 0) return Infinity;
+  return calculateChiSquared(text) / clean.length;
+}
+
+export interface AtbashDetectionResult {
+  isLikelyAtbash: boolean;
+  decoded: string;
+  confidence: number;
+}
+
+/**
+ * Detect Atbash (A<->Z, B<->Y, ...).
+ *
+ * Atbash has no key, so it does not need to be guessed at statistically the way
+ * IC-based detection was doing — it can simply be *applied* and the result
+ * judged. Previously an Atbash message fell through to a weak "caesar" report,
+ * because the orchestrator had no Atbash branch at all and Atbash is not
+ * reachable by any shift.
+ *
+ * The comparison against the untouched input matters: English plaintext run
+ * through Atbash produces noise, so requiring the transform to be *better* than
+ * the original stops ordinary prose being labelled Atbash.
+ */
+export function detectAtbash(text: string): AtbashDetectionResult {
+  const clean = text.toUpperCase().replace(/[^A-Z]/g, "");
+  if (clean.length < 8) {
+    return { isLikelyAtbash: false, decoded: text, confidence: 0 };
+  }
+
+  const decoded = text.replace(/[A-Za-z]/g, (ch) => {
+    const code = ch.charCodeAt(0);
+    if (code >= 65 && code <= 90) return String.fromCharCode(90 - (code - 65));
+    return String.fromCharCode(122 - (code - 97));
+  });
+
+  const decodedChi = calculateChiSquared(decoded) / clean.length;
+  const originalChi = calculateChiSquared(text) / clean.length;
+
+  // Atbash must both look like English and beat leaving the text alone.
+  const looksEnglish = Math.max(0, Math.min(1, (5 - decodedChi) / 3.5));
+  const beatsOriginal = originalChi / (decodedChi || 1);
+
+  if (beatsOriginal < 1.15 || looksEnglish < 0.25) {
+    return { isLikelyAtbash: false, decoded, confidence: 0 };
+  }
+
+  const commonWords = ["THE", "AND", "ING", "TION", "THAT", "THIS", "WITH", "FROM", "HAVE", "WERE"];
+  const upper = decoded.toUpperCase();
+  const hasCommonWords = commonWords.some(w => upper.includes(w));
+
+  /**
+   * A frequency profile alone is not enough. Vigenère output happens to invert
+   * into something with an English-ish letter distribution often enough that
+   * this fired at 0.76 on a Vigenère message. Atbash is deterministic, so if it
+   * is really Atbash the decode is readable — requiring a common English
+   * fragment costs nothing on true positives and removes the false ones.
+   */
+  if (!hasCommonWords) {
+    return { isLikelyAtbash: false, decoded, confidence: 0 };
+  }
+
+  const confidence = 0.45 * looksEnglish + 0.25 * Math.min(1, beatsOriginal - 1) + 0.3;
+
+  return {
+    isLikelyAtbash: true,
+    decoded,
+    confidence: parseFloat(Math.min(1, confidence).toFixed(3))
   };
 }
 
