@@ -83,6 +83,12 @@ export function identifyInput(text: string): IdentificationResult[] {
       preview = "URL-encoded data detected";
       // Boost URL confidence since it's a very specific pattern
       confidence = Math.min(1, confidence + 0.15);
+    } else if (match.pattern === "gematria") {
+      toolId = "gematria";
+      preview = "Gematria Primus detected";
+    } else if (match.pattern === "runic") {
+      toolId = "runic";
+      preview = "Elder Futhark runes detected";
     }
 
     results.push({
@@ -222,7 +228,7 @@ export function identifyInput(text: string): IdentificationResult[] {
   }
 
   // Sort with precedence: pattern-based detectors rank above statistical detectors
-  const patternBased = new Set(["base64", "base32", "base58", "base85", "braille", "hex", "binary", "morse", "url", "gematria", "a1z26", "polybius", "base62", "base100", "baudot", "tapcode", "phonekeypad", "geekcode"]);
+  const patternBased = new Set(["base64", "base32", "base58", "base85", "braille", "hex", "binary", "morse", "url", "gematria", "runic", "a1z26", "polybius", "base62", "base100", "baudot", "tapcode", "phonekeypad", "geekcode"]);
   const statistical = new Set(["caesar", "vigenere", "encrypted", "rot13", "atbash", "xor", "railfence", "classical", "plaintext", "piglatin"]);
   
   results.sort((a, b) => {

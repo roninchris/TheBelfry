@@ -221,6 +221,105 @@ export function detectPatterns(text: string): PatternMatch[] {
     });
   }
 
+  /**
+   * Runic script (U+16A0-U+16FF). Neither Gematria Primus nor the Elder Futhark
+   * cipher was detected at all before this — runes are unmistakable as a script,
+   * so the only real question is which alphabet is in play. The two tables
+   * overlap, but each has exclusive runes, so membership decides it. When a
+   * sample uses only shared runes both are reported, since picking one would be
+   * arbitrary.
+   */
+  const runeChars = trimmed.match(/[ᚠ-᛿]/g) || [];
+  if (runeChars.length >= 2) {
+    const ELDER_ONLY = new Set(["ᚨ", "ᚲ", "ᚺ", "ᛃ", "ᛊ"]); // a, k, h, j, s
+    const FUTHORC_ONLY = new Set(["ᚩ", "ᚳ", "ᚻ", "ᛡ", "ᛟ"]); // os, cen, haegl, ior, oethel
+
+    const hasElder = runeChars.some(c => ELDER_ONLY.has(c));
+    const hasFuthorc = runeChars.some(c => FUTHORC_ONLY.has(c));
+
+    // Density guards against a stray rune glyph sitting inside ordinary text.
+    const density = runeChars.length / Math.max(1, trimmed.replace(/\s/g, "").length);
+    const base = density > 0.5 ? 0.95 : 0.7;
+
+    if (hasFuthorc && !hasElder) {
+      results.push({
+        pattern: "gematria",
+        confidence: base,
+        details: "Anglo-Saxon futhorc runes (Gematria Primus alphabet)"
+      });
+    } else if (hasElder && !hasFuthorc) {
+      results.push({
+        pattern: "runic",
+        confidence: base,
+        details: "Elder Futhark runes"
+      });
+    } else {
+      results.push({
+        pattern: "runic",
+        confidence: base - 0.1,
+        details: "Runic script; alphabet ambiguous between Elder Futhark and futhorc"
+      });
+      results.push({
+        pattern: "gematria",
+        confidence: base - 0.12,
+        details: "Runic script; alphabet ambiguous between futhorc and Elder Futhark"
+      });
+    }
+  }
+
+  /**
+   * Gematria Primus prime sequence: space-separated values drawn only from the
+   * 24 primes in the table, with '-' as the word gap. Requiring *every* numeric
+   * token to be a member is what separates this from an arbitrary number list,
+   * which will almost immediately contain a non-member.
+   */
+  const GEMATRIA_PRIMES = new Set([
+    2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37,
+    41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89
+  ]);
+  const allTokens = trimmed.split(/\s+/).filter(Boolean);
+  const numericTokens = allTokens.filter(t => /^\d+$/.test(t));
+  if (numericTokens.length >= 4 && numericTokens.length / allTokens.length >= 0.5) {
+    if (numericTokens.every(t => GEMATRIA_PRIMES.has(parseInt(t, 10)))) {
+      results.push({
+        pattern: "gematria",
+        confidence: 0.9,
+        details: `All ${numericTokens.length} numeric tokens are Gematria Primus primes`
+      });
+    }
+  }
+
+  /**
+   * Gematria Primus Latin transliteration: space-separated table tokens with
+   * '-' for word gaps. Single letters alone are indistinguishable from ordinary
+   * spaced-out text, so a multi-letter token (TH, EO, OE, ING) is required as
+   * the actual signature — those are the runes that have no single-letter
+   * spelling, and nothing else in the app emits them this way.
+   */
+  const LATIN_TOKENS = new Set([
+    "F", "U", "TH", "O", "R", "C", "G", "W", "H", "N", "I", "J",
+    "EO", "P", "X", "S", "T", "B", "E", "M", "L", "ING", "OE", "D"
+  ]);
+  const gemTokens = trimmed.toUpperCase().split(/\s+/).filter(Boolean);
+  if (gemTokens.length >= 6) {
+    const meaningful = gemTokens.filter(t => t !== "-");
+    // A majority, not all: the table has no rune for A (and a few others), so
+    // the encoder passes those letters through untouched. Demanding every token
+    // be a table member meant real output never matched.
+    const knownCount = meaningful.filter(t => LATIN_TOKENS.has(t)).length;
+    const knownRatio = meaningful.length > 0 ? knownCount / meaningful.length : 0;
+    const allShort = meaningful.every(t => /^[A-Z]{1,3}$/.test(t));
+    const hasMultiChar = meaningful.some(t => t.length > 1 && LATIN_TOKENS.has(t));
+
+    if (allShort && hasMultiChar && knownRatio >= 0.7) {
+      results.push({
+        pattern: "gematria",
+        confidence: 0.8,
+        details: "Space-separated Gematria Primus Latin tokens, including multi-letter rune names"
+      });
+    }
+  }
+
   // Hex: Even-length string of 0-9, A-F, a-f
   const hexRegex = /^[0-9A-Fa-f]+$/;
   const hexEvenLength = trimmed.length % 2 === 0;

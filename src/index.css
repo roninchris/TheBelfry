@@ -1812,6 +1812,33 @@ button:hover, .btn-interactive:hover {
 }
 .boot-mark-live { animation: boot-mark-flicker 4.5s ease-in-out infinite; }
 
+/* Idle state: the mark breathes while waiting for the operator, so the screen
+   reads as powered-but-dormant rather than as a static image. */
+@keyframes boot-idle-breathe {
+  0%, 100% { opacity: 0.16; }
+  50% { opacity: 0.34; }
+}
+.boot-idle-breathe { animation: boot-idle-breathe 2.6s ease-in-out infinite; }
+
+/* The banner's light bar: a beam that strikes outward from the centre when the
+   sequence starts, rather than a flat gradient that is simply present. */
+@keyframes boot-beam-strike {
+  0% { transform: scaleX(0); opacity: 0; }
+  35% { opacity: 1; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+.boot-beam {
+  transform-origin: center;
+  animation: boot-beam-strike 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Slow bloom on the beam core so the light feels alive once struck. */
+@keyframes boot-beam-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.9; }
+}
+.boot-beam-core { animation: boot-beam-pulse 3.2s ease-in-out infinite; }
+
 @keyframes boot-edge-drift {
   from { transform: translateX(0); }
   to { transform: translateX(-40px); }
@@ -1820,7 +1847,12 @@ button:hover, .btn-interactive:hover {
 
 @media (prefers-reduced-motion: reduce) {
   .boot-mark-live,
-  .boot-edge-ticks { animation: none; }
+  .boot-edge-ticks,
+  .boot-idle-breathe,
+  .boot-beam-core { animation: none; }
+  .boot-idle-breathe { opacity: 0.28; }
+  /* `both` fill would otherwise leave the beam collapsed at scaleX(0). */
+  .boot-beam { animation: none; transform: scaleX(1); opacity: 1; }
 }
 
 /* ---- Keyspace tunnel ----

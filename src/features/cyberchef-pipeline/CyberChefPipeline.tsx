@@ -502,8 +502,33 @@ Custom chain processing successfully compiled. Extracted and formatted coordinat
       }
     }
 
+    /**
+     * Fold the identifier's opinion into the ranking.
+     *
+     * Plaintext scoring alone is blind to *what the input looked like*: a
+     * decoder that happens to emit vowel-rich noise could outrank the cipher the
+     * identifier had already recognised from the input's own signature. Since
+     * both halves are now reliable, the ranking uses both — a candidate whose
+     * tool the identifier flagged is promoted in proportion to that confidence,
+     * so the auto-cracker and the identifier stop disagreeing on screen.
+     */
+    const signals = new Map<string, number>();
+    for (const r of identifyInput(inputVal)) {
+      if (r.confidence > 0.4) signals.set(r.toolId, r.confidence);
+    }
+
+    const toolIdFor = (label: string) =>
+      getAllTools().find(t => t.label === label)?.id ?? "";
+
+    const ranked = resultsList.map(r => {
+      const conf = signals.get(toolIdFor(r.label)) ?? 0;
+      // Capped so a strong identification nudges ordering without letting a
+      // recognised-but-wrong key beat a candidate that actually reads as English.
+      return { ...r, score: Math.min(100, r.score + Math.round(conf * 25)) };
+    });
+
     // Sort descending by plausibility score
-    const sorted = resultsList.sort((a, b) => b.score - a.score);
+    const sorted = ranked.sort((a, b) => b.score - a.score);
     setBruteResults(sorted);
     setBruteNotes(notes);
     setBruteFailedCount(failedCount);
