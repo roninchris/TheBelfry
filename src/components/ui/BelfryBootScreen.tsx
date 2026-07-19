@@ -6,6 +6,10 @@ import { getAudioContext, playSystemBoot, getSystemBootDuration } from "../../li
  *  the sample's own length so picture and sound land together. */
 const DEFAULT_BOOT_SECONDS = 2.4;
 
+/** How long the completed state is held before hand-off, carved out of the
+ *  sample's length rather than added after it. */
+const SETTLE_HOLD_MS = 320;
+
 interface BelfryBootScreenProps {
   onComplete: () => void;
 }
@@ -157,7 +161,11 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
   const startBoot = () => {
     setHasStarted(true);
     getAudioContext();
-    bootSoundRef.current = playSystemBoot(true);
+    // Not looped. The sequence is paced to the sample's own length, so looping
+    // meant the sample restarted the instant the animation finished and got cut
+    // off a fraction of a second later — audible as the boot sound playing
+    // twice.
+    bootSoundRef.current = playSystemBoot(false);
   };
 
   /**
@@ -179,13 +187,17 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
     if (!hasStarted) return;
 
     const durationMs = (getSystemBootDuration() ?? DEFAULT_BOOT_SECONDS) * 1000;
+    // The bar finishes a beat early and holds, so "SYSTEM OPERATIONAL" is
+    // actually readable before the screen leaves. Hand-off still lands on the
+    // final sample of audio rather than after it.
+    const rampMs = Math.max(400, durationMs - SETTLE_HOLD_MS);
     const startedAt = performance.now();
     let frame = 0;
 
     const tick = () => {
-      const pct = Math.min(100, ((performance.now() - startedAt) / durationMs) * 100);
-      setProgress(pct);
-      if (pct >= 100) {
+      const elapsed = performance.now() - startedAt;
+      setProgress(Math.min(100, (elapsed / rampMs) * 100));
+      if (elapsed >= durationMs) {
         setIsDone(true);
         return;
       }
@@ -217,8 +229,10 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
 
   useEffect(() => {
     if (!isDone) return;
-    const timer = setTimeout(handleSkip, 200);
-    return () => clearTimeout(timer);
+    // Immediate. isDone already fires at the end of the sample's own length, so
+    // an extra delay here was tail beyond the audio — the screen outlasted the
+    // sound it was scored to.
+    handleSkip();
   }, [isDone]);
 
   const settled = progress >= 100;
@@ -237,11 +251,17 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
    */
   const showBeam = progress > 8;
   const showMark = progress > 12;
-  const showBrackets = progress > 32;
-  const showLabel = progress > 42;
-  const showTitle = progress > 68;
+  // Ahead of the label: in the reference the frame snaps in first and the
+  // lettering then assembles inside it.
+  const showBrackets = progress > 22;
+  const showLabel = progress > 28;
+  // The title lands well before the end so it has room to sit, rather than
+  // arriving just as the screen is about to leave.
+  const showTitle = progress > 48;
 
-  const labelRatio = Math.max(0, Math.min(1, (progress - 42) / 26));
+  // Resolves by ~46% so the label has settled into words just before the title
+  // strikes in, rather than the two arriving on top of each other.
+  const labelRatio = Math.max(0, Math.min(1, (progress - 28) / 18));
   const label = resolveText(LABEL_TEXT, labelRatio, labelOrder);
 
   // Beam widens from the centre seed as the sequence climbs.
