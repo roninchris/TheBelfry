@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { getAudioContext, playSystemBoot } from "../../lib/soundEngine";
 
@@ -22,6 +22,26 @@ function randomFrom(set: string, n: number): string {
   return out;
 }
 
+/**
+ * Partially-resolved text. The reference assembles its lettering out of noise
+ * rather than fading it in — at 40% through you can read "IN...ON" of
+ * "INCOMING TRANSMISSION" with garbage between. Characters lock in from a
+ * scattered order, not left to right, so the word appears to precipitate.
+ */
+function resolveText(full: string, ratio: number, order: number[]): string {
+  if (ratio >= 1) return full;
+  const lockCount = Math.floor(full.length * Math.max(0, ratio));
+  const locked = new Set(order.slice(0, lockCount));
+  return full
+    .split("")
+    .map((ch, i) => {
+      if (ch === " ") return " ";
+      if (locked.has(i)) return ch;
+      return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+    })
+    .join("");
+}
+
 function makeTelemetry(): string {
   const seg = () => randomFrom(GLYPHS, 3 + Math.floor(Math.random() * 5));
   const sym = () => randomFrom(SYMBOLS, 1 + Math.floor(Math.random() * 2));
@@ -29,6 +49,8 @@ function makeTelemetry(): string {
     .toString()
     .padStart(3, "0")}`;
 }
+
+const LABEL_TEXT = "SYSTEM INITIALIZING";
 
 const BOOT_MESSAGES = [
   "INITIALIZING COLD BOOT SEQUENCE",
@@ -42,23 +64,34 @@ const BOOT_MESSAGES = [
   "SYSTEM READY"
 ];
 
-/** Ruler ticks along the top and bottom edges. */
-function EdgeTicks({ position }: { position: "top" | "bottom" }) {
+/**
+ * Edge chips. In the reference these are not a uniform ruler — they are
+ * irregular vertical dashes of varying length, brightness and spacing, which is
+ * what stops the frame reading as a evenly-ticked scale.
+ */
+function EdgeTicks({ position, seed }: { position: "top" | "bottom"; seed: number[] }) {
   return (
     <div
-      className={`absolute inset-x-0 ${position === "top" ? "top-0" : "bottom-0"} h-6 overflow-hidden pointer-events-none select-none`}
+      className={`absolute inset-x-0 ${position === "top" ? "top-0" : "bottom-0"} h-20 overflow-hidden pointer-events-none select-none`}
       aria-hidden="true"
     >
-      <div className="boot-edge-ticks flex items-start gap-[19px] px-2 w-[200%]">
-        {Array.from({ length: 160 }).map((_, i) => (
+      {seed.map((v, i) => {
+        const left = (i / seed.length) * 100 + (v % 3) * 0.4;
+        const height = 6 + (v % 5) * 7;
+        const bright = v % 7 === 0;
+        return (
           <span
             key={i}
-            className={`shrink-0 w-px bg-cyan-primary ${
-              i % 8 === 0 ? "h-4 opacity-45" : "h-2 opacity-20"
-            }`}
+            className="absolute w-px bg-white"
+            style={{
+              left: `${left}%`,
+              [position]: `${(v % 4) * 9}px`,
+              height: `${height}px`,
+              opacity: bright ? 0.75 : 0.2 + (v % 3) * 0.12
+            }}
           />
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
@@ -92,6 +125,21 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
   const [telemetry, setTelemetry] = useState(() => makeTelemetry());
   const [subCode, setSubCode] = useState(() => makeTelemetry());
 
+  // Fixed per mount so the frame furniture does not reshuffle on every render.
+  const tickSeed = useMemo(
+    () => Array.from({ length: 46 }, () => Math.floor(Math.random() * 100)),
+    []
+  );
+  // Scattered lock-in order for the label's characters.
+  const labelOrder = useMemo(() => {
+    const idx = LABEL_TEXT.split("").map((_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [idx[i], idx[j]] = [idx[j], idx[i]];
+    }
+    return idx;
+  }, []);
+
   // Re-roll the readouts while the sequence runs. Idle is left static so the
   // waiting screen is calm and only the boot itself looks busy.
   useEffect(() => {
@@ -119,9 +167,12 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
         currentIdx++;
       } else {
         clearInterval(interval);
-        setTimeout(() => setIsDone(true), 200);
+        setTimeout(() => setIsDone(true), 600);
       }
-    }, 150);
+      // Paced so the staged build (seed -> mark -> frame -> label -> title) is
+      // actually legible; at 150ms the whole sequence was over in 1.3s and the
+      // phases blurred into one another. Skippable at any point.
+    }, 230);
 
     return () => clearInterval(interval);
   }, [hasStarted]);
@@ -145,6 +196,24 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
 
   const settled = progress >= 100;
 
+  /**
+   * Staged reveal, matching the reference's order: a light seed alone, then the
+   * mark, then the frame, then the label assembling out of noise, and only then
+   * the title. Previously everything appeared at once on click, which skipped
+   * the entire build.
+   */
+  const showBeam = progress > 8;
+  const showMark = progress > 12;
+  const showBrackets = progress > 32;
+  const showLabel = progress > 42;
+  const showTitle = progress > 68;
+
+  const labelRatio = Math.max(0, Math.min(1, (progress - 42) / 26));
+  const label = resolveText(LABEL_TEXT, labelRatio, labelOrder);
+
+  // Beam widens from the centre seed as the sequence climbs.
+  const beamScale = Math.max(0.04, Math.min(1, (progress - 6) / 55));
+
   return (
     <div
       className="fixed inset-0 z-[100] bg-bg-void overflow-hidden select-none cursor-pointer font-display"
@@ -161,10 +230,29 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
       <div className="absolute inset-0 crt-scanlines opacity-[0.18] pointer-events-none" />
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none" />
 
-      <EdgeTicks position="top" />
-      <EdgeTicks position="bottom" />
-      <SideScale side="left" />
-      <SideScale side="right" />
+      {showMark && (
+        <>
+          <EdgeTicks position="top" seed={tickSeed} />
+          <EdgeTicks position="bottom" seed={tickSeed} />
+          <SideScale side="left" />
+          <SideScale side="right" />
+        </>
+      )}
+
+      {/* The seed: a single sliver of light at dead centre, which is all the
+          reference shows on its first frame before anything else exists. */}
+      {hasStarted && !showMark && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div
+            className="h-px w-24"
+            style={{
+              background: "linear-gradient(90deg, transparent, #fff, transparent)",
+              boxShadow: "0 0 18px 3px rgb(var(--rgb-accent) / 0.7)"
+            }}
+          />
+          <div className="absolute h-5 w-px bg-white/70" />
+        </div>
+      )}
 
       {/* Top telemetry strip — only once the machine is actually doing something. */}
       {hasStarted && (
@@ -184,7 +272,11 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
             className={`absolute inset-0 dot-matrix-mark text-cyan-primary ${
               hasStarted ? "opacity-[0.15]" : "boot-idle-breathe"
             }`}
-            style={{ ["--mark-src" as string]: MARK_SRC, ["--dot-pitch" as string]: "9px" }}
+            style={{
+              ["--mark-src" as string]: MARK_SRC,
+              ["--dot-pitch" as string]: "9px",
+              visibility: hasStarted && !showMark ? "hidden" : "visible"
+            }}
           />
           {/* Lit dots, revealed upward from the base as the sequence advances,
               so the tower powers on rather than simply fading in. */}
@@ -211,12 +303,16 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
           Deliberately absent until the operator commits. Before the click the
           screen is just a dormant mark and an invitation; the banner and its
           beam are the response to that click. */}
-      {hasStarted && (
+      {showBeam && (
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center pointer-events-none">
           <div className="relative px-14 py-3">
-            {/* The beam. Struck outward from the centre on start, then held with
-                a slow bloom — a light source rather than a painted gradient. */}
-            <div className="boot-beam absolute inset-y-0 -inset-x-[42vw] pointer-events-none">
+            {/* The beam grows out of the centre seed rather than appearing at
+                full width — scaleX is driven by progress so it widens with the
+                sequence, matching the reference's slit-to-band build. */}
+            <div
+              className="absolute inset-y-0 -inset-x-[42vw] pointer-events-none"
+              style={{ transform: `scaleX(${beamScale})`, transformOrigin: "center" }}
+            >
               <div
                 className="boot-beam-core absolute inset-0"
                 style={{
@@ -236,25 +332,42 @@ export default function BelfryBootScreen({ onComplete }: BelfryBootScreenProps) 
               />
             </div>
 
-            {/* Corner brackets */}
-            {[
-              "top-0 left-0 border-t border-l",
-              "top-0 right-0 border-t border-r",
-              "bottom-0 left-0 border-b border-l",
-              "bottom-0 right-0 border-b border-r"
-            ].map((pos, i) => (
-              <span key={i} className={`absolute w-4 h-4 border-white/70 ${pos}`} />
-            ))}
+            {/* Corner brackets snap in before the lettering does. */}
+            {showBrackets &&
+              [
+                "top-0 left-0 border-t border-l",
+                "top-0 right-0 border-t border-r",
+                "bottom-0 left-0 border-b border-l",
+                "bottom-0 right-0 border-b border-r"
+              ].map((pos, i) => (
+                <span key={i} className={`absolute w-5 h-5 border-white/80 ${pos}`} />
+              ))}
 
-            <div className="relative text-center">
-              <div className="font-display text-sm md:text-base tracking-[0.42em] text-white/90 uppercase">
-                {settled ? "SYSTEM OPERATIONAL" : "SYSTEM INITIALIZING"}
+            {/* min sizes hold the banner's footprint steady while the lines
+                arrive, so the brackets do not jump as text appears. */}
+            <div className="relative text-center min-w-[19rem] md:min-w-[26rem]">
+              <div className="h-6 flex items-center justify-center">
+                {showLabel && (
+                  <span className="font-display text-sm md:text-base tracking-[0.42em] text-white/90 uppercase">
+                    {settled ? "SYSTEM OPERATIONAL" : label}
+                  </span>
+                )}
               </div>
-              <div className="font-display text-4xl md:text-6xl font-black tracking-[0.14em] text-white uppercase leading-none mt-0.5 drop-shadow-[0_0_18px_rgb(var(--rgb-accent)/0.5)]">
-                THE BELFRY
+
+              <div className="h-10 md:h-14 flex items-center justify-center">
+                {showTitle && (
+                  <span className="font-display text-4xl md:text-6xl font-black tracking-[0.14em] text-white uppercase leading-none drop-shadow-[0_0_18px_rgb(var(--rgb-accent)/0.5)]">
+                    THE BELFRY
+                  </span>
+                )}
               </div>
-              <div className="font-mono text-[12px] tracking-[0.25em] text-white/45 uppercase mt-1.5 truncate">
-                {subCode}
+
+              <div className="h-4 flex items-center justify-center">
+                {showLabel && (
+                  <span className="font-mono text-[12px] tracking-[0.25em] text-white/45 uppercase truncate">
+                    {subCode}
+                  </span>
+                )}
               </div>
             </div>
           </div>
