@@ -43,6 +43,15 @@ export function identifyInput(text: string): IdentificationResult[] {
   const familyMatches = detectFamilyCiphers(text);
   results.push(...familyMatches);
 
+  /**
+   * When the input is confidently a transport encoding, the substitution
+   * detectors are just noise: Base64's skewed letter distribution scores well
+   * as a "Caesar", so a clean payload listed base64 first and caesar at 0.88
+   * right behind it. If the bytes are Base64, the next move is to decode them,
+   * not to run a shift over the encoded form.
+   */
+  const hasStrongEncodingSignal = patternMatches.some(p => p.confidence >= 0.7);
+
   // Add pattern-based detections
   for (const match of patternMatches) {
     let toolId = match.pattern;
@@ -85,8 +94,16 @@ export function identifyInput(text: string): IdentificationResult[] {
     });
   }
 
-  // Add Caesar cipher detection if frequency analysis succeeds
-  if (caesarResult && caesarResult.confidence > 0.5) {
+  /**
+   * Caesar.
+   *
+   * The threshold used to be 0.5 here with a `<= 0.1` plaintext branch below,
+   * leaving a dead zone: a result scoring between those two was reported as
+   * neither a cipher nor plaintext, so identifyInput returned an *empty array*
+   * for a solved Caesar. Anything above the plaintext band is surfaced now; the
+   * 0.5 floor still governs whether it earns the "recommended" flag at the end.
+   */
+  if (caesarResult && caesarResult.confidence > 0.15 && !hasStrongEncodingSignal) {
     results.push({
       toolId: "caesar",
       confidence: caesarResult.confidence,
@@ -150,7 +167,7 @@ export function identifyInput(text: string): IdentificationResult[] {
 
   // Rail Fence: weak confidence heuristic based on character frequency / IC
   // If it's not a substitution cipher but has English-like IC
-  if (icResult.ic >= 0.055 && icResult.ic <= 0.075) {
+  if (icResult.ic >= 0.055 && icResult.ic <= 0.075 && !hasStrongEncodingSignal) {
     if (!caesarResult || caesarResult.confidence <= 0.2) {
       const hasRailFence = results.some(r => r.toolId === "railfence");
       if (!hasRailFence) {

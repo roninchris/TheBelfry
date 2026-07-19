@@ -36,6 +36,17 @@ export const DEFAULT_WORDLIST = [
   "BANK", "TOWER", "BRIDGE", "RIVER", "PORT", "DOCKS", "STATION", "GRID"
 ];
 
+/**
+ * Tools this module can actually sweep parameters for (see the switch below).
+ * Exported so callers doing a "try everything" pass can sweep these properly
+ * instead of decoding them once with default options — a Caesar only yields to
+ * the right shift, so a single default call finds it purely by luck.
+ */
+export const SWEEPABLE_TOOL_IDS = [
+  "caesar", "railfence", "affine", "atbash", "xor",
+  "vigenere", "playfair", "bifid", "trifid", "hill"
+] as const;
+
 export function bruteForceTool(
   toolId: string,
   input: string,

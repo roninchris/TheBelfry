@@ -39,7 +39,7 @@ import PipelineConnector from "../../components/react-bits/PipelineConnector";
 import { useAppStore } from "../../store/appStore";
 import { getTool, getAllTools, asResult } from "../../lib/tools/registry";
 import { scoreDecodedPlaintext } from "../../lib/tools/scoring";
-import { bruteForceTool, DEFAULT_WORDLIST } from "../../lib/tools/bruteForce";
+import { bruteForceTool, DEFAULT_WORDLIST, SWEEPABLE_TOOL_IDS } from "../../lib/tools/bruteForce";
 import WordlistControl from "../../components/brute-force/WordlistControl";
 import { identifyInput } from "../../lib/tools/identify";
 import {
@@ -437,9 +437,42 @@ Custom chain processing successfully compiled. Extracted and formatted coordinat
       notes = outcome.notes;
       failedCount = outcome.failedCount;
     } else {
-      // Try everything mode! Run all registry decoders
+      /**
+       * "Try everything" mode.
+       *
+       * This used to call every decoder exactly once with its default options,
+       * with a hardcoded `opts.shift = 7` for Caesar. That meant auto-crack
+       * could only ever solve a Caesar whose shift happened to be 7, and the
+       * same blind spot applied to every other parameterised cipher — the mode
+       * named "try everything" was in fact trying one arbitrary configuration
+       * each. Anything the brute forcer knows how to sweep is now swept
+       * properly, and only its best few candidates are kept so one cipher
+       * cannot flood the registry.
+       */
       const allTools = getAllTools();
+      const KEEP_PER_SWEEP = 3;
+
       for (const t of allTools) {
+        if ((SWEEPABLE_TOOL_IDS as readonly string[]).includes(t.id)) {
+          const outcome = bruteForceTool(t.id, inputVal, bruteWordlist);
+          failedCount += outcome.failedCount;
+          notes.push(...outcome.notes);
+          outcome.results
+            .slice()
+            .sort((a, b) => b.score - a.score)
+            .slice(0, KEEP_PER_SWEEP)
+            .forEach(c => {
+              resultsList.push({
+                label: t.label,
+                parameter: c.parameter,
+                text: c.output,
+                score: c.score,
+                options: c.options
+              });
+            });
+          continue;
+        }
+
         try {
           const opts: any = {};
           if (t.optionsSchema) {
@@ -447,7 +480,6 @@ Custom chain processing successfully compiled. Extracted and formatted coordinat
               opts[field.name] = field.defaultValue;
             });
           }
-          if (t.id === "caesar") opts.shift = 7; // test shift 7 as default sweep candidate
 
           const res = t.decode(inputVal, opts);
           const outText = asResult(res).text;

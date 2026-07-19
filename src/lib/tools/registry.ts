@@ -62,6 +62,8 @@ import {
   bookCipherDecode,
   gematriaEncode,
   gematriaDecode,
+  runicEncode,
+  runicDecode,
   pigpenEncode,
   pigpenDecode,
   dancingMenEncode,
@@ -626,6 +628,14 @@ const tools: ToolEntry[] = [
     optionsSchema: [
       { name: "format", type: "enum", label: "Output Format", defaultValue: "primes", enumValues: [{value: "runes", label: "Runes"}, {value: "primes", label: "Primes"}, {value: "latin", label: "Latin"}] }
     ]
+  },
+  {
+    id: "runic",
+    label: "Runic (Elder Futhark)",
+    category: "cipher",
+    encode: runicEncode,
+    decode: runicDecode,
+    optionsSchema: []
   },
   {
     id: "rsafactorizer",

@@ -109,7 +109,20 @@ export function detectPatterns(text: string): PatternMatch[] {
         confidence = Math.max(confidence, 0.6);
       }
 
-      if (englishLike) {
+      /**
+       * The English-plaintext guard exists to stop a bare word like
+       * "HelloWorld" being called Base64. But it keyed off index of
+       * coincidence, and IC is noisy on short strings — a genuine payload like
+       * "SGVsbG8gd29ybGQgdGhpcyBpcyBhIHRlc3Q=" scores 0.073, above the English
+       * threshold, so it was demoted to 0.25 even though it decodes cleanly to
+       * "Hello world this is a test".
+       *
+       * Actually decoding is far stronger evidence than a letter-distribution
+       * guess, so a clean decode to mostly-printable text now wins outright.
+       */
+      const decodesConvincingly = decodeCheck.valid && decodeCheck.printableRatio > 0.85;
+
+      if (englishLike && !decodesConvincingly) {
         confidence = Math.min(confidence, 0.25);
         details = "Matches Base64 charset, but input resembles English text - low confidence";
       }

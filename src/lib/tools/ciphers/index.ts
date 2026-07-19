@@ -16,6 +16,7 @@ export { trifidEncode, trifidDecode } from "./trifid";
 export { hillEncode, hillDecode } from "./hill";
 export { bookCipherEncode, bookCipherDecode } from "./bookCipher";
 export { gematriaEncode, gematriaDecode } from "./gematria";
+export { runicEncode, runicDecode, ELDER_FUTHARK } from "./runic";
 export { pigpenEncode, pigpenDecode } from "./pigpen";
 export { dancingMenEncode, dancingMenDecode } from "./dancingmen";
 export { nihilistEncode, nihilistDecode } from "./nihilist";
