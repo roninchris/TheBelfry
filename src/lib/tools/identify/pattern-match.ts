@@ -320,6 +320,105 @@ export function detectPatterns(text: string): PatternMatch[] {
     }
   }
 
+  /**
+   * ===== Structural cipher signatures =====
+   * These ciphers emit shapes nothing else in the app produces, so they can be
+   * recognised outright rather than inferred from letter statistics. A survey of
+   * all 52 cipher tools found only five were being identified at all; most of
+   * the misses were shapes as distinctive as these.
+   */
+
+  // Bacon: only two distinct letters, in groups of five.
+  const baconGroups = trimmed.toUpperCase().split(/\s+/).filter(Boolean);
+  if (baconGroups.length >= 3 && baconGroups.every(g => /^[AB]{5}$/.test(g))) {
+    results.push({
+      pattern: "bacon",
+      confidence: 0.96,
+      details: "Groups of five drawn from a two-letter alphabet (A/B)"
+    });
+  }
+
+  // Dancing Men: bracketed figure codes. The flag letter is M or F (the figure
+  // holds a flag to mark a word break), not M alone.
+  const dancingCodes = trimmed.match(/\[[MF]\d{2}\]/g) || [];
+  if (dancingCodes.length >= 3 && /^(\[[MF]\d{2}\]|\s)+$/.test(trimmed)) {
+    results.push({
+      pattern: "dancingmen",
+      confidence: 0.97,
+      details: "Bracketed dancing-men figure codes"
+    });
+  }
+
+  // Pigpen: grid-position tokens such as 1-UL, 3-L, 2-UC, 1-ML. The position
+  // part spans upper/middle/lower and left/centre/right, so it is not limited
+  // to the four compass letters.
+  const pigpenTokens = trimmed.toUpperCase().split(/\s+/).filter(Boolean);
+  if (
+    pigpenTokens.length >= 3 &&
+    pigpenTokens.filter(t => /^[1-4]-[UMLDCR]{1,2}$/.test(t)).length / pigpenTokens.length >= 0.8
+  ) {
+    results.push({
+      pattern: "pigpen",
+      confidence: 0.95,
+      details: "Pigpen grid-position tokens (quadrant plus cell position)"
+    });
+  }
+
+  /**
+   * Numeric ciphers, separated by the digit range they can produce:
+   *  - Polybius coordinates use only digits 1-5 in pairs.
+   *  - Nihilist adds a key to those coordinates, so values run past 55 but stay
+   *    two-digit.
+   *  - Homophonic substitution uses the full 00-99 space.
+   * The ranges overlap, so more than one may be reported; the ordering below
+   * reflects how specific each claim is.
+   */
+  const numTokens = trimmed.split(/[\s/,-]+/).filter(Boolean);
+  const twoDigit = numTokens.filter(t => /^\d{2}$/.test(t));
+  if (numTokens.length >= 4 && twoDigit.length / numTokens.length >= 0.85) {
+    const values = twoDigit.map(t => parseInt(t, 10));
+    const allPolybius = twoDigit.every(t => /^[1-5][1-5]$/.test(t));
+    const maxVal = Math.max(...values);
+
+    if (allPolybius) {
+      results.push({
+        pattern: "polybius",
+        confidence: 0.9,
+        details: "Two-digit pairs using only digits 1-5 (Polybius square coordinates)"
+      });
+    } else if (maxVal <= 99) {
+      results.push({
+        pattern: "nihilist",
+        confidence: 0.6,
+        details: "Two-digit number series consistent with Nihilist additive coordinates"
+      });
+      results.push({
+        pattern: "homophonic",
+        confidence: 0.5,
+        details: "Two-digit number series consistent with homophonic substitution"
+      });
+    }
+  }
+
+  // ROT47 operates over printable ASCII, so its output is unusually rich in
+  // punctuation compared with any letter-based cipher.
+  const rot47Body = trimmed.replace(/\s/g, "");
+  // Bracketed or dash-delimited token grammars (dancing men, pigpen) are also
+  // punctuation-rich; they have their own detectors and should not be offered a
+  // competing ROT47 reading.
+  const looksTokenised = /\[[A-Z]\d{2}\]/.test(trimmed) || /\b[1-4]-[A-Z]{1,2}\b/i.test(trimmed);
+  if (!looksTokenised && rot47Body.length >= 12 && /^[!-~]+$/.test(rot47Body)) {
+    const symbols = (rot47Body.match(/[!-\/:-@\[-`{-~]/g) || []).length;
+    const ratio = symbols / rot47Body.length;
+    if (ratio >= 0.25 && ratio < 0.9) {
+      results.push({
+        pattern: "rot47",
+        confidence: 0.55,
+        details: "Dense printable-ASCII punctuation mix typical of ROT47"
+      });
+    }
+  }
+
   // Hex: Even-length string of 0-9, A-F, a-f
   const hexRegex = /^[0-9A-Fa-f]+$/;
   const hexEvenLength = trimmed.length % 2 === 0;
