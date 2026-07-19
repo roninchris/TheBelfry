@@ -186,6 +186,18 @@ export function crackCaesar(text: string): CaesarCrackResult | null {
   };
 }
 
+/**
+ * Chi-squared against English, normalised per letter so it does not scale with
+ * sample size. This is the axis that separates a transposition (letters
+ * untouched, so it stays low) from a substitution (letters remapped, so it
+ * climbs) — the two are indistinguishable by index of coincidence alone.
+ */
+export function englishChiPerLetter(text: string): number {
+  const clean = text.toUpperCase().replace(/[^A-Z]/g, "");
+  if (clean.length === 0) return Infinity;
+  return calculateChiSquared(text) / clean.length;
+}
+
 export interface AtbashDetectionResult {
   isLikelyAtbash: boolean;
   decoded: string;
@@ -232,8 +244,18 @@ export function detectAtbash(text: string): AtbashDetectionResult {
   const upper = decoded.toUpperCase();
   const hasCommonWords = commonWords.some(w => upper.includes(w));
 
-  let confidence = 0.45 * looksEnglish + 0.35 * Math.min(1, beatsOriginal - 1);
-  if (hasCommonWords) confidence += 0.3;
+  /**
+   * A frequency profile alone is not enough. Vigenère output happens to invert
+   * into something with an English-ish letter distribution often enough that
+   * this fired at 0.76 on a Vigenère message. Atbash is deterministic, so if it
+   * is really Atbash the decode is readable — requiring a common English
+   * fragment costs nothing on true positives and removes the false ones.
+   */
+  if (!hasCommonWords) {
+    return { isLikelyAtbash: false, decoded, confidence: 0 };
+  }
+
+  const confidence = 0.45 * looksEnglish + 0.25 * Math.min(1, beatsOriginal - 1) + 0.3;
 
   return {
     isLikelyAtbash: true,
