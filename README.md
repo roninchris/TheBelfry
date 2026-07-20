@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/belfry_icon_readme.png" width="110" alt="The Belfry">
+
 # The Belfry
 
 **A Batcomputer-styled cryptanalysis and digital-forensics workbench.**
@@ -11,20 +13,23 @@ a realtime **multiplayer evidence board**
 ![React 19](https://img.shields.io/badge/React-19-70a2a8?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-70a2a8?style=flat-square)
 ![Vite 6](https://img.shields.io/badge/Vite-6-70a2a8?style=flat-square)
+![WebAssembly](https://img.shields.io/badge/WebAssembly-OutGuess-70a2a8?style=flat-square)
 ![Runs offline](https://img.shields.io/badge/runs-offline%20%2F%20zero%20config-2fffa8?style=flat-square)
+
+<img src="docs/loading.png" width="100%" alt="The Belfry boot sequence — a dot-matrix belfry mark resolving out of noise">
 
 </div>
 
 ---
 
-Drop in a file or paste something unreadable, and The Belfry tells you what it is
-and hands you the tool that cracks it. Then pin the result to a corkboard your
-whole team is standing around — live.
+Drop in a file or paste something unreadable. The Belfry tells you what it is,
+hands you the tool that cracks it, and lets you pin the result to a corkboard
+your whole team is standing around — live.
 
 Built as a CTF and puzzle-solving companion, wrapped in an Arkham-inspired
 tactical HUD.
 
-> **Zero-config.** Clone, `npm install`, `npm run dev` — every tool works offline
+> **Zero-config.** Clone, `npm install`, `npm run dev`. Every tool works offline
 > with no account and no network. Multiplayer is opt-in and uses **your own**
 > Supabase project.
 
@@ -33,19 +38,20 @@ tactical HUD.
 ## The multiplayer evidence board
 
 The centrepiece. A shared corkboard where several analysts pin evidence, draw
-connections, and work a case together in real time.
+connections between clues, and work a case together in real time.
 
-![The Belfry evidence board — evidence cards linked by connection strings, with live presence and a remote analyst dragging a card](docs/mockup-evidence-board.svg)
+![The evidence board — note, photo, link and file cards connected by tracked links, each tagged with the sigil of the analyst who added it](docs/multiplayerboard.png)
 
-<sub>*Illustrative mockup rendered in the app's own design tokens.*</sub>
+Every card carries the **sigil of the analyst who pinned it**, so attribution is
+visible at a glance. Cards can hold notes, photos, links, or carved data files.
 
-Two channels do the work, and the split matters:
+Two channels do the work, and the split is the interesting part:
 
 ```mermaid
 flowchart LR
-    A["Analyst A"] -->|"drag in flight"| B["broadcast<br/>(ephemeral, throttled)"]
-    A -->|"drop / add / link"| C["postgres_changes<br/>(durable, RLS-gated)"]
-    B --> D["Analyst B, C, D"]
+    A["Analyst A"] -->|"drag in flight"| B["broadcast<br/>ephemeral · throttled"]
+    A -->|"drop · add · link"| C["postgres_changes<br/>durable · RLS-gated"]
+    B --> D["Analysts B · C · D"]
     C --> E[("Postgres")]
     E --> D
     F["presence"] --- D
@@ -56,15 +62,13 @@ flowchart LR
   receives nothing.
 - **In-flight drag** — dragging a card would otherwise write a row per frame.
   Positions travel over an ephemeral `broadcast` channel instead, throttled, and
-  only the final position is persisted. You see teammates moving cards smoothly;
-  the database never sees the intermediate frames.
+  only the final position is persisted. Teammates see cards move smoothly; the
+  database never sees the intermediate frames.
 - **Presence** — who is currently on the board.
-- **Attribution sigils** — each analyst has an identity colour, so every pinned
-  item shows who added it.
 - **Private evidence images** — a multi-MB data URL exceeds Realtime's payload
   limit and comes back truncated. Images live in a private Storage bucket; the
-  board stores only an object path and resolves it to a short-lived signed URL at
-  render time.
+  board stores only an object path and resolves it to a short-lived signed URL
+  at render time.
 
 **Guests get the same board**, stored in their own browser. A guest session never
 constructs a network-capable backend at all — the separation is structural, not a
@@ -74,35 +78,96 @@ check that could be forgotten at a call site.
 
 ## Identify → crack
 
-Paste something unknown. The identifier ranks candidates on Shannon entropy,
-index of coincidence, chi-squared per letter, cipher-family detection, and
-pattern matching — then routes you to the tool that solves it.
+You rarely know what you're holding. Paste it in and the identifier ranks
+candidates on Shannon entropy, index of coincidence, chi-squared per letter,
+cipher-family detection, and pattern matching — then routes you to the tool that
+solves it.
 
-![The Belfry crypto lab — unknown buffer analysed, candidate ciphers ranked by confidence, recovered plaintext](docs/mockup-crypto-lab.svg)
+![Auto-crack sweeping all 71 decoders against an unknown stream and recovering the plaintext](docs/autocrack.png)
 
-<sub>*Illustrative mockup rendered in the app's own design tokens.*</sub>
+The ranking has opinions:
 
-The ranking has opinions. **A claim must survive its own decode** — a cipher that
-scores well statistically but produces gibberish gets demoted, because otherwise
-junk top-results mask the correct family classifier underneath.
+- **A claim must survive its own decode.** A cipher that scores well
+  statistically but produces gibberish gets demoted — otherwise junk top-results
+  mask the correct family classifier underneath.
+- **Length-independent scoring.** Chi-squared is a sum over letters, so it grows
+  with input length. Confidence uses chi *per letter* plus best-vs-runner-up
+  separation, or a long sentence would score zero on a cipher it had already
+  solved correctly.
+- **Family fallback.** When the exact cipher is unclear, it still narrows to
+  transposition / monoalphabetic / polyalphabetic — index of coincidence alone
+  cannot separate those, but pairing it with chi-squared can.
+
+<img src="docs/crypto.png" width="49%" align="top" alt="The Codex — plaintext encrypted to ciphertext"> <img src="docs/database.png" width="49%" align="top" alt="Tool database — all 71 modules with searchable metadata">
 
 ---
 
-## Modules
+## The modules
+
+### Encoding Deck
+
+One buffer, demultiplexed into every encoding at once — hex, Base64, Base32,
+binary, ASCII decimal, Morse and more, each on its own channel. The **source
+signature** panel reads the live buffer and reports entropy, character-class
+composition, alphabet fit, and which formats its shape matches.
+
+![Encoding Deck — a buffer broken out into simultaneous hex, Base64, Base32, binary, decimal and Morse channels](docs/encoding.png)
+
+### Image Forensics
+
+LSB/jsteg extraction, steghide, **OutGuess compiled to WebAssembly** from
+vendored upstream C, stegdetect, chi-square steganalysis, C2PA provenance, EXIF,
+QR/barcode scanning, and autostereogram ("magic eye") depth reconstruction.
+Everything runs **on device** — no upload.
+
+![Image forensics — carrier signature entropy per channel, and an autostereogram depth map reconstructed from noise](docs/imageanalysis.png)
+
+### File Analysis
+
+Magic-byte identification, embedded-file carving, string extraction, and a hex
+dump that decodes in place as the scan walks it. The entropy map applies
+**finite-sample bias correction**, so a few hundred bytes don't read as
+low-entropy purely because they cannot fill 256 bins.
+
+![File analysis — hex sector map, declared vs detected structure, and byte-value entropy distribution](docs/fileanalysis.png)
+
+### Audio Forensics
+
+Waveform, spectrogram, and MIDI views to surface data hidden in the frequency
+domain — the usual home of tones, SSTV, and spectrogram art.
+
+![Audio forensics — time-domain waveform display with filter profile and playback controls](docs/soundwave.png)
+
+### Tactical Map
+
+MapLibre GL with a radar sweep, coordinate parsing (decimal degrees, DMS, DDM),
+and forward/reverse geocoding. Keyless services only — OpenFreeMap tiles and OSM
+Nominatim, so no API keys and no accounts.
+
+**The map never requests your location.** It plots only what you type or relay
+to it.
+
+![Tactical map — a 3D vector city plane with sector sweep and target register](docs/map.png)
+
+### Everything else
 
 | | |
 |---|---|
 | **The Codex** | 52 ciphers — Caesar, Vigenère (+autokey), Beaufort, Playfair, Hill, ADFGVX, Bifid, Enigma, Nihilist, Four-square, Homophonic, One-time pad, Pigpen, Dancing Men, Cicada, Gematria, Elder Futhark, plus AES, DES, Blowfish, RC4. Most are bidirectional; many brute-force keylessly with scoring. |
-| **Encoding Deck** | 17 encodings — Base32/58/62/64/85/100, hex, binary, ASCII, Morse, Braille, Baudot, Tap code, Phone keypad, Pig Latin, Geek code, URL. A live source-signature panel reads the buffer and tells you which formats its shape matches. |
-| **Image Forensics** | LSB/jsteg extraction, steghide, **OutGuess compiled to WebAssembly** from vendored upstream C, stegdetect, chi-square steganalysis, C2PA provenance, barcode/QR scanning, stereogram decoding. |
-| **Audio Forensics** | Spectrogram rendering to surface data hidden in the frequency domain, plus waveform and channel analysis. |
-| **File Analysis** | Magic-byte identification, embedded-file carving, string extraction, and an entropy map with finite-sample bias correction — so a few hundred bytes don't read as low-entropy just because they can't fill 256 bins. |
-| **Signal Chain** | A CyberChef-style pipeline. Stack operations, feed each result into the next, and read the actual output at every stage. |
-| **Tactical Map** | MapLibre GL with radar sweep, coordinate parsing (decimal degrees, DMS, DDM), and forward/reverse geocoding. Keyless services only — no API keys, no accounts. **The map never requests your location**; it plots only what you enter. |
+| **Encoding Deck** | 17 encodings — Base32/58/62/64/85/100, hex, binary, ASCII, Morse, Braille, Baudot, Tap code, Phone keypad, Pig Latin, Geek code, URL. |
+| **Signal Chain** | A CyberChef-style pipeline. Stack operations, feed each result into the next, and read the real output at every stage. |
 | **Tool Database** | Searchable registry of all 71 modules with live parameter schemas. |
+| **Dossier & Case Files** | Register cases, track threat level, and carry evidence between modules. |
 
-Plus three runtime themes (cyan / crimson / violet), a full sound-design layer,
-and an ambient telemetry background.
+### Themes
+
+Three runtime themes, applied instantly and persisted per device.
+
+![Display profile — Detective, WayneTech and Nightfall theme options](docs/themes.png)
+
+Every colour in the app resolves through CSS custom properties, so a theme swap
+retints the entire console — including canvas-drawn visuals, which read their
+colours off the document rather than hardcoding them.
 
 ---
 
@@ -117,7 +182,7 @@ npm run dev
 
 Open <http://localhost:3000>. That's the whole setup.
 
-With no `.env`, the app runs **guest-only**: every tool works, and your board is
+With no `.env`, the app runs **guest-only**: every tool works and your board is
 stored locally in your browser. No account, no network, no configuration. That is
 the correct setup for a fork or a public demo.
 
@@ -142,9 +207,9 @@ plenty.
    off *Enable sign-ups*. Accounts are provisioned by hand; this is the first
    line of defence.
 
-3. Run [`supabase/schema.sql`](supabase/schema.sql) in the SQL Editor. Creates
-   the tables, RLS policies, and the Realtime publication. Idempotent — safe to
-   re-run.
+3. Run [`supabase/schema.sql`](supabase/schema.sql) in the SQL Editor. It creates
+   the tables, the RLS policies, and the Realtime publication. Idempotent — safe
+   to re-run.
 
 4. Create a **private** bucket named `evidence` (Storage → New bucket, Public
    **off**), then run [`supabase/storage.sql`](supabase/storage.sql).
@@ -187,8 +252,8 @@ flowchart TD
     UI --> T["lib/tools/ — analysis engines"]
     T --> REG["registry.ts — 71 modules, live schemas"]
     S --> ST["lib/storage/ — storageFor(identity)"]
-    ST -->|"guest"| L["LocalBoardStorage<br/>(browser only)"]
-    ST -->|"knight"| SB["SupabaseBoardStorage<br/>(Realtime + RLS)"]
+    ST -->|"guest"| L["LocalBoardStorage<br/>browser only"]
+    ST -->|"knight"| SB["SupabaseBoardStorage<br/>Realtime + RLS"]
 ```
 
 ```
@@ -202,21 +267,24 @@ src/
   store/        Zustand app store
 supabase/       schema.sql and storage.sql — run these in your own project
 tools/          vendored OutGuess C source and its WASM build
-docs/           README mockups
+docs/           README screenshots
 ```
 
 **Tech stack** — React 19 · TypeScript · Vite 6 · Tailwind CSS 4 · Zustand ·
 Motion · MapLibre GL · Recharts · Supabase (auth, Postgres, Realtime, Storage) ·
 WebAssembly
 
+Analysis runs **entirely in the browser**. Files are never uploaded; the only
+network traffic is board sync and map tiles.
+
 ---
 
 ## Contributing
 
-Issues and pull requests are welcome. Two house rules that keep the UI coherent:
+Issues and pull requests are welcome. Two house rules keep the UI coherent:
 
-- **Never write a raw colour.** Everything goes through the theme variables in
-  `src/index.css`, or the runtime themes silently break.
+- **Never write a raw colour.** Everything resolves through the theme variables
+  in `src/index.css`, or the runtime themes silently break.
 - **Ambient visuals are per-module, not shared.** Each module gets its own idle
   state rather than reusing another's.
 
