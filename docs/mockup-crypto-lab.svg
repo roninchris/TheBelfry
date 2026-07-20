@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" role="img" aria-label="Mockup of The Belfry crypto lab: unknown ciphertext analysed, candidate ciphers ranked by confidence, and the recovered plaintext">
+  <defs>
+    <pattern id="grid2" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#70a2a8" stroke-opacity="0.07" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="vig2" cx="50%" cy="45%" r="75%">
+      <stop offset="55%" stop-color="#020912" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000305" stop-opacity="0.9"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="560" fill="#020912"/>
+  <rect width="1200" height="560" fill="url(#grid2)"/>
+
+  <!-- top bar -->
+  <rect x="0" y="0" width="1200" height="52" fill="#0a1a22" fill-opacity="0.75"/>
+  <line x1="0" y1="52" x2="1200" y2="52" stroke="#70a2a8" stroke-opacity="0.25"/>
+  <rect x="24" y="20" width="3" height="14" fill="#00f3ff"/>
+  <text x="38" y="32" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="600" letter-spacing="3" fill="#b3e2e6">THE BELFRY</text>
+  <text x="152" y="32" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="2" fill="#456c70">// THE CODEX</text>
+  <text x="290" y="32" font-family="ui-monospace, Menlo, monospace" font-size="10" letter-spacing="1.5" fill="#00f3ff">IDENTIFY → CRACK</text>
+
+  <!-- ── INPUT PANEL ─────────────────────────────────────────── -->
+  <rect x="32" y="84" width="330" height="230" fill="#0d1f27" fill-opacity="0.85" stroke="#70a2a8" stroke-opacity="0.3"/>
+  <path d="M32 84h12M32 84v12" stroke="#00f3ff" stroke-width="2" fill="none"/>
+  <path d="M362 314h-12M362 314v-12" stroke="#00f3ff" stroke-width="2" fill="none"/>
+  <rect x="32" y="84" width="330" height="22" fill="#00f3ff" fill-opacity="0.1"/>
+  <text x="44" y="99" font-family="ui-monospace, Menlo, monospace" font-size="9.5" letter-spacing="2" fill="#00f3ff">01 · UNKNOWN BUFFER</text>
+
+  <text x="46" y="136" font-family="ui-monospace, Menlo, monospace" font-size="11.5" fill="#e8f4f8">OLSSV DVYSK aopz pz</text>
+  <text x="46" y="156" font-family="ui-monospace, Menlo, monospace" font-size="11.5" fill="#e8f4f8">h zljyla tlzzhnl mvy</text>
+  <text x="46" y="176" font-family="ui-monospace, Menlo, monospace" font-size="11.5" fill="#e8f4f8">aol ipyk vm nvaoht</text>
+  <line x1="46" y1="196" x2="348" y2="196" stroke="#70a2a8" stroke-opacity="0.15"/>
+
+  <text x="46" y="222" font-family="ui-monospace, Menlo, monospace" font-size="9" letter-spacing="1.5" fill="#456c70">SHANNON ENTROPY</text>
+  <text x="240" y="222" font-family="ui-monospace, Menlo, monospace" font-size="9.5" fill="#b3e2e6">4.02 bits/char</text>
+  <text x="46" y="244" font-family="ui-monospace, Menlo, monospace" font-size="9" letter-spacing="1.5" fill="#456c70">INDEX OF COINCIDENCE</text>
+  <text x="240" y="244" font-family="ui-monospace, Menlo, monospace" font-size="9.5" fill="#b3e2e6">0.067</text>
+  <text x="46" y="266" font-family="ui-monospace, Menlo, monospace" font-size="9" letter-spacing="1.5" fill="#456c70">CHI² PER LETTER</text>
+  <text x="240" y="266" font-family="ui-monospace, Menlo, monospace" font-size="9.5" fill="#ff9d2e">HIGH</text>
+  <text x="46" y="288" font-family="ui-monospace, Menlo, monospace" font-size="9" letter-spacing="1.5" fill="#456c70">FAMILY</text>
+  <text x="240" y="288" font-family="ui-monospace, Menlo, monospace" font-size="9.5" fill="#2fffa8">MONOALPHABETIC</text>
+
+  <!-- flow arrow -->
+  <path d="M372 200 L 418 200" stroke="#00f3ff" stroke-opacity="0.6" stroke-width="1.5"/>
+  <path d="M418 200 l -7 -4 v 8 z" fill="#00f3ff" fill-opacity="0.8"/>
+
+  <!-- ── CANDIDATE RANKING ───────────────────────────────────── -->
+  <rect x="430" y="84" width="360" height="230" fill="#0d1f27" fill-opacity="0.85" stroke="#70a2a8" stroke-opacity="0.3"/>
+  <path d="M430 84h12M430 84v12" stroke="#00f3ff" stroke-width="2" fill="none"/>
+  <path d="M790 314h-12M790 314v-12" stroke="#00f3ff" stroke-width="2" fill="none"/>
+  <rect x="430" y="84" width="360" height="22" fill="#00f3ff" fill-opacity="0.1"/>
+  <text x="442" y="99" font-family="ui-monospace, Menlo, monospace" font-size="9.5" letter-spacing="2" fill="#00f3ff">02 · CANDIDATE REGISTER</text>
+
+  <!-- row 1 (winner) -->
+  <rect x="442" y="120" width="336" height="34" fill="#2fffa8" fill-opacity="0.08" stroke="#2fffa8" stroke-opacity="0.45"/>
+  <text x="454" y="141" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="1" fill="#2fffa8">CAESAR · SHIFT 7</text>
+  <rect x="622" y="131" width="96" height="6" fill="#0a1a22" stroke="#70a2a8" stroke-opacity="0.2"/>
+  <rect x="623" y="132" width="90" height="4" fill="#2fffa8"/>
+  <text x="730" y="141" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#2fffa8">0.94</text>
+
+  <!-- row 2 -->
+  <rect x="442" y="162" width="336" height="30" fill="#0a1a22" fill-opacity="0.5" stroke="#70a2a8" stroke-opacity="0.18"/>
+  <text x="454" y="181" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="1" fill="#b3e2e6">VIGENERE</text>
+  <rect x="622" y="173" width="96" height="6" fill="#0a1a22" stroke="#70a2a8" stroke-opacity="0.2"/>
+  <rect x="623" y="174" width="34" height="4" fill="#70a2a8"/>
+  <text x="730" y="181" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#70a2a8">0.35</text>
+
+  <!-- row 3 -->
+  <rect x="442" y="200" width="336" height="30" fill="#0a1a22" fill-opacity="0.5" stroke="#70a2a8" stroke-opacity="0.18"/>
+  <text x="454" y="219" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="1" fill="#b3e2e6">ATBASH</text>
+  <rect x="622" y="211" width="96" height="6" fill="#0a1a22" stroke="#70a2a8" stroke-opacity="0.2"/>
+  <rect x="623" y="212" width="21" height="4" fill="#70a2a8"/>
+  <text x="730" y="219" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#70a2a8">0.22</text>
+
+  <!-- row 4 -->
+  <rect x="442" y="238" width="336" height="30" fill="#0a1a22" fill-opacity="0.5" stroke="#70a2a8" stroke-opacity="0.18"/>
+  <text x="454" y="257" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="1" fill="#b3e2e6">SUBSTITUTION</text>
+  <rect x="622" y="249" width="96" height="6" fill="#0a1a22" stroke="#70a2a8" stroke-opacity="0.2"/>
+  <rect x="623" y="250" width="14" height="4" fill="#70a2a8"/>
+  <text x="730" y="257" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#70a2a8">0.14</text>
+
+  <text x="442" y="292" font-family="ui-monospace, Menlo, monospace" font-size="8.5" letter-spacing="1" fill="#456c70">A CLAIM MUST SURVIVE ITS OWN DECODE — GIBBERISH IS DEMOTED</text>
+
+  <!-- flow arrow -->
+  <path d="M800 200 L 846 200" stroke="#00f3ff" stroke-opacity="0.6" stroke-width="1.5"/>
+  <path d="M846 200 l -7 -4 v 8 z" fill="#00f3ff" fill-opacity="0.8"/>
+
+  <!-- ── OUTPUT ──────────────────────────────────────────────── -->
+  <rect x="858" y="84" width="310" height="230" fill="#0d1f27" fill-opacity="0.85" stroke="#2fffa8" stroke-opacity="0.4"/>
+  <path d="M858 84h12M858 84v12" stroke="#2fffa8" stroke-width="2" fill="none"/>
+  <path d="M1168 314h-12M1168 314v-12" stroke="#2fffa8" stroke-width="2" fill="none"/>
+  <rect x="858" y="84" width="310" height="22" fill="#2fffa8" fill-opacity="0.12"/>
+  <text x="870" y="99" font-family="ui-monospace, Menlo, monospace" font-size="9.5" letter-spacing="2" fill="#2fffa8">03 · RECOVERED PLAINTEXT</text>
+
+  <text x="872" y="140" font-family="ui-monospace, Menlo, monospace" font-size="12.5" fill="#e8f4f8">HELLO WORLD this is</text>
+  <text x="872" y="162" font-family="ui-monospace, Menlo, monospace" font-size="12.5" fill="#e8f4f8">a secret message for</text>
+  <text x="872" y="184" font-family="ui-monospace, Menlo, monospace" font-size="12.5" fill="#e8f4f8">the bird of gotham</text>
+
+  <line x1="872" y1="212" x2="1154" y2="212" stroke="#70a2a8" stroke-opacity="0.15"/>
+  <text x="872" y="238" font-family="ui-monospace, Menlo, monospace" font-size="9" letter-spacing="1.5" fill="#456c70">ENGLISH SCORE</text>
+  <text x="1060" y="238" font-family="ui-monospace, Menlo, monospace" font-size="9.5" fill="#2fffa8">0.94</text>
+  <text x="872" y="260" font-family="ui-monospace, Menlo, monospace" font-size="9" letter-spacing="1.5" fill="#456c70">KEY RECOVERED</text>
+  <text x="1060" y="260" font-family="ui-monospace, Menlo, monospace" font-size="9.5" fill="#b3e2e6">SHIFT = 7</text>
+  <rect x="872" y="278" width="140" height="22" fill="#2fffa8" fill-opacity="0.14" stroke="#2fffa8" stroke-opacity="0.5"/>
+  <text x="884" y="293" font-family="ui-monospace, Menlo, monospace" font-size="9" letter-spacing="1.5" fill="#2fffa8">PIN TO BOARD</text>
+
+  <!-- ── bottom tool strip ───────────────────────────────────── -->
+  <text x="32" y="368" font-family="ui-monospace, Menlo, monospace" font-size="9" letter-spacing="2" fill="#456c70">TOOL REGISTRY · 71 MODULES</text>
+  <line x1="32" y1="378" x2="1168" y2="378" stroke="#70a2a8" stroke-opacity="0.2"/>
+
+  <g font-family="ui-monospace, Menlo, monospace" font-size="9.5" letter-spacing="1">
+    <rect x="32" y="396" width="132" height="46" fill="#0a1a22" fill-opacity="0.6" stroke="#70a2a8" stroke-opacity="0.22"/>
+    <text x="44" y="416" fill="#00f3ff">CIPHERS</text><text x="44" y="432" fill="#456c70">52 modules</text>
+
+    <rect x="176" y="396" width="132" height="46" fill="#0a1a22" fill-opacity="0.6" stroke="#70a2a8" stroke-opacity="0.22"/>
+    <text x="188" y="416" fill="#00f3ff">ENCODINGS</text><text x="188" y="432" fill="#456c70">17 modules</text>
+
+    <rect x="320" y="396" width="132" height="46" fill="#0a1a22" fill-opacity="0.6" stroke="#70a2a8" stroke-opacity="0.22"/>
+    <text x="332" y="416" fill="#00f3ff">IMAGE STEGO</text><text x="332" y="432" fill="#456c70">LSB · steghide</text>
+
+    <rect x="464" y="396" width="132" height="46" fill="#0a1a22" fill-opacity="0.6" stroke="#70a2a8" stroke-opacity="0.22"/>
+    <text x="476" y="416" fill="#00f3ff">OUTGUESS</text><text x="476" y="432" fill="#456c70">WebAssembly</text>
+
+    <rect x="608" y="396" width="132" height="46" fill="#0a1a22" fill-opacity="0.6" stroke="#70a2a8" stroke-opacity="0.22"/>
+    <text x="620" y="416" fill="#00f3ff">AUDIO</text><text x="620" y="432" fill="#456c70">spectrogram</text>
+
+    <rect x="752" y="396" width="132" height="46" fill="#0a1a22" fill-opacity="0.6" stroke="#70a2a8" stroke-opacity="0.22"/>
+    <text x="764" y="416" fill="#00f3ff">FILE CARVING</text><text x="764" y="432" fill="#456c70">magic + entropy</text>
+
+    <rect x="896" y="396" width="132" height="46" fill="#0a1a22" fill-opacity="0.6" stroke="#70a2a8" stroke-opacity="0.22"/>
+    <text x="908" y="416" fill="#00f3ff">SIGNAL CHAIN</text><text x="908" y="432" fill="#456c70">pipeline</text>
+
+    <rect x="1040" y="396" width="128" height="46" fill="#0a1a22" fill-opacity="0.6" stroke="#70a2a8" stroke-opacity="0.22"/>
+    <text x="1052" y="416" fill="#00f3ff">MAP</text><text x="1052" y="432" fill="#456c70">MapLibre GL</text>
+  </g>
+
+  <!-- ambient telemetry strip -->
+  <g font-family="ui-monospace, Menlo, monospace" font-size="8" fill="#70a2a8" fill-opacity="0.35" letter-spacing="2">
+    <text x="32" y="486">E8B A813 EF59 182D DB4C 8BA6 1EC0 4803 9248 73DB D639 FC86 03EA B22C C985 EE1F 26AF 6CDF 7008 050F AD15 C739</text>
+    <text x="32" y="504">A2B9 EB2B 8967 038C 8B1B C575 A6B1 AF15 FAF7 F211 F3E1 48BB 3A15 9B9F 34E7 EAA1 0D64 CBED 9801 C321 950B 7A22</text>
+    <text x="32" y="522">FD21 1A9D 89E6 5091 773D E632 10B1 3188 F1E1 EAE0 B075 FC0E FC92 89EB 1D0C D4BC 6AC1 2BB0 24CF 0BCA 86BD E330</text>
+  </g>
+
+  <rect width="1200" height="560" fill="url(#vig2)"/>
+  <rect x="0.5" y="0.5" width="1199" height="559" fill="none" stroke="#70a2a8" stroke-opacity="0.2"/>
+</svg>
