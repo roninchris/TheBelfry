@@ -16,6 +16,10 @@ a realtime **multiplayer evidence board**
 ![WebAssembly](https://img.shields.io/badge/WebAssembly-OutGuess-70a2a8?style=flat-square)
 ![Runs offline](https://img.shields.io/badge/runs-offline%20%2F%20zero%20config-2fffa8?style=flat-square)
 
+### [▶ Try the live demo](https://roninchris.github.io/TheBelfry/)
+
+<sub>Runs guest-only — every tool works, and your evidence board stays in your own browser.</sub>
+
 <img src="docs/loading.png" width="100%" alt="The Belfry boot sequence — a dot-matrix belfry mark resolving out of noise">
 
 </div>
@@ -174,8 +178,8 @@ colours off the document rather than hardcoding them.
 ## Quick start
 
 ```bash
-git clone https://github.com/roninchris/thebelfry
-cd thebelfry
+git clone https://github.com/roninchris/TheBelfry
+cd TheBelfry
 npm install
 npm run dev
 ```
