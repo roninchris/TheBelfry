@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { KNIGHTS, getKnight } from "../../lib/identity";
+import { assetUrl } from "../../lib/assetUrl";
 import { signInAsKnight, signOutKnight } from "../../lib/session";
 import { useAppStore } from "../../store/appStore";
 import {
@@ -194,7 +195,7 @@ export default function CredentialChallenge({ onClose }: CredentialChallengeProp
             <>
               <header className="text-center space-y-3 mb-7">
                 <img
-                  src="/assets/icons/iconbelfry.png"
+                  src={assetUrl("/assets/icons/iconbelfry.png")}
                   alt=""
                   className="w-12 h-12 mx-auto object-contain filter drop-shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.5)]"
                 />
@@ -344,7 +345,7 @@ function RestoringPanel({ reduce }: { reduce: boolean }) {
   return (
     <div className="py-10 flex flex-col items-center gap-4 text-center">
       <motion.img
-        src="/assets/icons/iconbelfry.png"
+        src={assetUrl("/assets/icons/iconbelfry.png")}
         alt=""
         animate={reduce ? { opacity: 0.8 } : { opacity: [0.35, 1, 0.35] }}
         transition={{ duration: 1.6, repeat: Infinity }}

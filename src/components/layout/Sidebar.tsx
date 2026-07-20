@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAppStore } from "../../store/appStore";
 import { playNavTick, playHoverBlip } from "../../lib/soundEngine";
+import { assetUrl } from "../../lib/assetUrl";
 import ShinyText from "../react-bits/ShinyText";
 import MapModuleIcon from "../ui/MapModuleIcon";
 import {
@@ -151,7 +152,7 @@ export default function Sidebar() {
             currentIdentity ? "cursor-default" : "cursor-pointer hover:shadow-[0_0_12px_rgb(var(--rgb-primary) / 0.35)]"
           }`}
         >
-          <img src="/assets/icons/belfry_sidebar.png" alt="" className="w-10 h-10 object-contain filter drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
+          <img src={assetUrl("/assets/icons/belfry_sidebar.png")} alt="" className="w-10 h-10 object-contain filter drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]" />
           <div className="absolute inset-0 border border-dashed border-cyan-primary/10 rounded-full animate-radar-sweep" />
         </button>
         {!isMinimized && (

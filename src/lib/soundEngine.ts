@@ -1,3 +1,5 @@
+import { assetUrl } from "./assetUrl";
+
 let audioCtx: AudioContext | null = null;
 let masterGainNode: GainNode | null = null;
 let compressor: DynamicsCompressorNode | null = null;
@@ -104,7 +106,7 @@ async function loadSamples(ctx: AudioContext) {
   try {
     const bootUrl = soundFiles.systemBoot;
     if (bootUrl) {
-      const response = await fetch(encodeURI(bootUrl));
+      const response = await fetch(encodeURI(assetUrl(bootUrl)));
       if (!response.ok) {
         throw new Error(`Failed to fetch systemBoot: ${response.status} ${response.statusText}`);
       }
@@ -125,7 +127,7 @@ async function loadSamples(ctx: AudioContext) {
   for (const [key, rawUrl] of Object.entries(soundFiles)) {
     if (key === "systemBoot") continue;
     try {
-      const url = encodeURI(rawUrl);
+      const url = encodeURI(assetUrl(rawUrl));
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
@@ -142,7 +144,7 @@ async function loadSamples(ctx: AudioContext) {
   for (let i = 0; i < ambientFiles.length; i++) {
     const rawUrl = ambientFiles[i];
     try {
-      const url = encodeURI(rawUrl);
+      const url = encodeURI(assetUrl(rawUrl));
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch ambient: ${response.status} ${response.statusText}`);

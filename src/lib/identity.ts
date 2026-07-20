@@ -10,6 +10,8 @@
  * single author, attribution is noise.
  */
 
+import { assetUrl } from "./assetUrl";
+
 export type KnightId = "redhood" | "redrobin" | "nightwing" | "batgirl";
 
 export interface Knight {
@@ -38,7 +40,7 @@ export const KNIGHTS: Record<KnightId, Knight> = {
     id: "redhood",
     callsign: "RED HOOD",
     label: "Red Hood",
-    sigil: "/assets/Logos/sigil-redhood.png",
+    sigil: assetUrl("/assets/Logos/sigil-redhood.png"),
     accent: "var(--color-red-threat)",
     // Widest, flattest mark of the four — needs the most correction.
     sigilScale: 1.3,
@@ -47,21 +49,21 @@ export const KNIGHTS: Record<KnightId, Knight> = {
     id: "redrobin",
     callsign: "RED ROBIN",
     label: "Red Robin",
-    sigil: "/assets/Logos/sigil-redrobin.png",
+    sigil: assetUrl("/assets/Logos/sigil-redrobin.png"),
     accent: "#ffd12e",
   },
   nightwing: {
     id: "nightwing",
     callsign: "NIGHTWING",
     label: "Nightwing",
-    sigil: "/assets/Logos/sigil-nightwing.png",
+    sigil: assetUrl("/assets/Logos/sigil-nightwing.png"),
     accent: "#2f6dff",
   },
   batgirl: {
     id: "batgirl",
     callsign: "BATGIRL",
     label: "Batgirl",
-    sigil: "/assets/Logos/sigil-batgirl.png",
+    sigil: assetUrl("/assets/Logos/sigil-batgirl.png"),
     accent: "#ff9ee5",
   },
 };
