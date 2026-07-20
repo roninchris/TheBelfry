@@ -230,7 +230,7 @@ export default function DashboardPage() {
           <div className="bg-bg-void/40 border border-border-hairline/10 p-2 flex flex-col justify-center relative">
             <DatabaseTag text="NETWORK SECTOR" className="mb-1.5 self-start" />
             <div className="flex items-baseline space-x-1.5 mt-1">
-              <span className="font-mono text-[13px] text-amber-alert font-bold uppercase leading-none truncate">SECTOR_NORTH_09</span>
+              <span className="font-mono text-[13px] text-amber-alert font-bold uppercase leading-none truncate">GOTHAM_NORTH_09</span>
             </div>
           </div>
         </div>
