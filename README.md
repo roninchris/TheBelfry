@@ -80,8 +80,8 @@ ambient telemetry background, and a searchable tool database.
 ## Quick start
 
 ```bash
-git clone https://github.com/roninchris/thebelfryprototype
-cd thebelfryprototype
+git clone https://github.com/roninchris/thebelfry
+cd thebelfry
 npm install
 npm run dev
 ```
