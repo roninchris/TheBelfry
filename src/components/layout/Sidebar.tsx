@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAppStore } from "../../store/appStore";
 import { playNavTick, playHoverBlip } from "../../lib/soundEngine";
 import ShinyText from "../react-bits/ShinyText";
-import MapPlaneIcon from "../ui/MapPlaneIcon";
+import MapModuleIcon from "../ui/MapModuleIcon";
 import {
   Activity,
   Network,
@@ -43,23 +43,44 @@ export default function Sidebar() {
   const wasAutoCollapsedRef = React.useRef(false);
   const prevModuleRef = React.useRef(currentModule);
 
+  /**
+   * Current collapse state, readable without becoming an effect dependency.
+   *
+   * This is the whole fix. The auto-collapse effect used to depend on
+   * `isMinimized`, so re-opening the rail inside a canvas module re-ran it,
+   * found the rail open on a module that wants it shut, and closed it again —
+   * making the rail impossible to reopen without leaving the module. Reading
+   * the value through a ref keeps the effect keyed on navigation alone.
+   */
+  const isMinimizedRef = React.useRef(isMinimized);
+  isMinimizedRef.current = isMinimized;
+
   React.useEffect(() => {
     const prevModule = prevModuleRef.current;
+    // Only a genuine navigation should move the rail. Anything else is the
+    // user's own doing and must be left alone.
+    if (prevModule === currentModule) return;
     prevModuleRef.current = currentModule;
 
-    if (CANVAS_MODULES.has(currentModule)) {
-      if (!isMinimized) {
+    const arriving = CANVAS_MODULES.has(currentModule);
+    const departing = CANVAS_MODULES.has(prevModule);
+
+    if (arriving && !departing) {
+      // Collapse on arrival, and remember that the collapse was ours so it can
+      // be handed back on the way out.
+      if (!isMinimizedRef.current) {
         setIsMinimized(true);
         wasAutoCollapsedRef.current = true;
       }
-    } else if (CANVAS_MODULES.has(prevModule)) {
-      // Auto-restore sidebar when leaving ONLY if we auto-collapsed it
+    } else if (departing && !arriving) {
       if (wasAutoCollapsedRef.current) {
         setIsMinimized(false);
         wasAutoCollapsedRef.current = false;
       }
     }
-  }, [currentModule, isMinimized]);
+    // Moving between two canvas modules deliberately does nothing: whatever
+    // state the rail is in at that point is the state the user chose.
+  }, [currentModule]);
 
   const sections = [
     {
@@ -84,7 +105,7 @@ export default function Sidebar() {
       title: "TOOLS",
       items: [
         { id: "cyberchef-pipeline", label: "Signal Chain", icon: GitBranch },
-        { id: "map", label: "Map", icon: MapPlaneIcon },
+        { id: "map", label: "Map", icon: MapModuleIcon },
         { id: "tool-database", label: "Tool Database", icon: Database },
         { id: "settings", label: "Settings", icon: Sliders },
       ],
