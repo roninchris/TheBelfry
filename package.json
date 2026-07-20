@@ -1,8 +1,15 @@
 {
-	"name": "react-example",
+	"name": "belfry",
 	"private": true,
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"type": "module",
+	"description": "A Batcomputer-styled cryptanalysis and digital-forensics workbench, with a realtime multiplayer evidence board.",
+	"license": "MIT",
+	"author": "roninchris",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/roninchris/thebelfryprototype"
+	},
 	"scripts": {
 		"dev": "vite --port=3000 --host=0.0.0.0",
 		"build": "vite build",

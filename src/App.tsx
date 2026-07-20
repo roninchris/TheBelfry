@@ -1,6 +1,8 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * The Belfry — a Batcomputer-styled cryptanalysis and forensics workbench.
+ *
+ * Copyright (c) 2026 roninchris
+ * SPDX-License-Identifier: MIT
  */
 
 import React from "react";
