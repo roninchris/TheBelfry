@@ -480,11 +480,11 @@ export default function MapModule() {
                       {placeTitle(t)}
                     </span>
                   </div>
-                  {/* Region and country under the settlement, so a fix reads as
+                  {/* Category / settlement under the title, so a fix reads as
                       a place before it reads as a number. */}
-                  {t.place && (regionOf(t.place) || t.place.country) && (
+                  {t.place && placeSubtitle(t.place) && (
                     <div className="font-share text-[11px] text-cyan-text/50 pl-4.5 truncate">
-                      {[regionOf(t.place), t.place.country].filter(Boolean).join(" · ")}
+                      {placeSubtitle(t.place)}
                     </div>
                   )}
                   <div className="font-mono text-[11px] text-text-dim/70 pl-4.5 truncate">
@@ -620,9 +620,9 @@ export default function MapModule() {
             <div className="font-display text-[13px] font-black tracking-[0.18em] text-cyan-text uppercase truncate">
               {active ? placeTitle(active) : DEFAULT_VIEW.label}
             </div>
-            {active?.place && (regionOf(active.place) || active.place.country) && (
+            {active?.place && placeSubtitle(active.place) && (
               <div className="font-share text-[11px] text-cyan-text/55 truncate">
-                {[regionOf(active.place), active.place.country].filter(Boolean).join(" · ")}
+                {placeSubtitle(active.place)}
               </div>
             )}
             <div className="font-mono text-[12px] text-cyan-text/70 tracking-wider mt-0.5">
@@ -664,7 +664,10 @@ function closeTo(a: number, b: number): boolean {
  */
 function placeTitle(t: PlottedTarget): string {
   const p = t.place;
-  const name = p?.locality ?? p?.region ?? p?.country;
+  // A named feature at the point wins — "what is here" is answered by the
+  // premises before the settlement, which is the whole point of naming a
+  // zoomed-in coordinate.
+  const name = p?.poi ?? p?.locality ?? p?.region ?? p?.country;
   // Administrative boilerplate ("City of …") is noise on a pin, and stripping
   // it is also what lets the surface recognise the basemap's own label as the
   // same place.
@@ -675,4 +678,18 @@ function placeTitle(t: PlottedTarget): string {
 function regionOf(p: PlaceDescription): string | undefined {
   if (!p.region) return undefined;
   return p.region === p.locality ? undefined : p.region;
+}
+
+/**
+ * The secondary line under the title. When the title is a POI, this places it
+ * in context — its category and the settlement it sits in ("Supermarket ·
+ * Manhattan"); otherwise it falls back to region · country.
+ */
+function placeSubtitle(p: PlaceDescription): string | undefined {
+  if (p.poi) {
+    const parts = [p.poiKind, p.locality ?? regionOf(p) ?? p.country].filter(Boolean);
+    return parts.length ? parts.join(" · ") : undefined;
+  }
+  const parts = [regionOf(p), p.country].filter(Boolean);
+  return parts.length ? parts.join(" · ") : undefined;
 }

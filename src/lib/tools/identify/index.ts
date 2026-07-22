@@ -8,6 +8,7 @@ import { calculateIC } from "./index-of-coincidence";
 import { crackCaesar, detectVigenere, detectAtbash, englishChiPerLetter } from "./frequency-crack";
 import { estimateXorKeyLength } from "../crypto-utils";
 import { detectFamilyCiphers } from "./family-detect";
+import { readsAsWords } from "../languages";
 
 export interface IdentificationResult {
   toolId: string;
@@ -17,33 +18,20 @@ export interface IdentificationResult {
   isMatch: boolean; // true for the top result
 }
 
-const COMMON_WORDS = new Set([
-  "THE", "AND", "THAT", "HAVE", "FOR", "NOT", "WITH", "YOU", "THIS", "BUT",
-  "FROM", "THEY", "HER", "SHE", "WILL", "ONE", "ALL", "WOULD", "THERE", "WHAT",
-  "OUT", "ABOUT", "WHO", "GET", "WHICH", "WHEN", "MAKE", "CAN", "LIKE", "TIME",
-  "JUST", "HIM", "KNOW", "TAKE", "INTO", "YEAR", "YOUR", "GOOD", "SOME", "THEM",
-  "SEE", "OTHER", "THAN", "THEN", "NOW", "LOOK", "ONLY", "OVER", "ALSO", "BACK",
-  "AFTER", "USE", "TWO", "HOW", "OUR", "WORK", "FIRST", "WELL", "WAY", "EVEN",
-  "NEW", "WANT", "ANY", "ARE", "WAS", "ATTACK", "DAWN", "EAST", "WEST", "NORTH",
-  "SOUTH", "MEET", "BRIDGE", "SECRET", "MESSAGE", "QUICK", "BROWN", "JUMPS",
-  "LAZY", "OVER", "AT", "ON", "IN", "IT", "IS", "OF", "TO", "BE", "AS", "BY"
-]);
-
 /**
- * Does this read as English *words*, as opposed to merely having English letter
- * frequencies?
+ * Does this read as real *words* (in English, Portuguese or Latin), as opposed
+ * to merely having language-like letter frequencies?
  *
  * This distinction is what separates plaintext from a transposition cipher.
  * Transposition only reorders letters, so the frequency profile and index of
- * coincidence stay perfectly English while the words are destroyed — which is
- * why rail fence, scytale, route, AMSCO and double transposition were all being
- * reported as "plaintext" with 0.95 confidence.
+ * coincidence stay perfectly language-shaped while the words are destroyed —
+ * which is why rail fence, scytale, route, AMSCO and double transposition were
+ * all being reported as "plaintext" with 0.95 confidence. Delegates to the
+ * multilingual assessor so a solved Portuguese or Latin message reads as
+ * plaintext too, not only English.
  */
 function readsAsEnglishWords(text: string): boolean {
-  const words = text.toUpperCase().split(/[^A-Z]+/).filter(w => w.length >= 2);
-  if (words.length === 0) return false;
-  const hits = words.filter(w => COMMON_WORDS.has(w)).length;
-  return hits >= Math.max(1, Math.ceil(words.length * 0.12));
+  return readsAsWords(text);
 }
 
 export function identifyInput(text: string): IdentificationResult[] {

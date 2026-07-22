@@ -108,6 +108,25 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
     securityClassification: "LEGACY",
     forensicValue: "Resistant to simple single-letter frequency analysis. Analyzed forensically by finding repeating letter blocks to estimate key length (Kasiski examination), followed by split frequency cracking."
   },
+  alberti: {
+    id: "alberti",
+    name: "Alberti Disk",
+    category: "cipher",
+    icon: Settings,
+    summary: "The first polyalphabetic cipher (c. 1467), worked with two concentric alphabet disks.",
+    howItWorks: "A fixed outer disk carries the plaintext alphabet; a movable inner disk carries a mixed cipher alphabet. Each plaintext letter is found on the outer ring and enciphered as the inner-ring letter beneath it. Crucially, the inner disk is turned periodically as the message is written, so the same plaintext letter maps to different ciphertext letters at different points — which is what breaks flat frequency analysis. Here the inner ring is built from a keyword, an index letter sets the starting alignment, and the disk turns by a chosen step after a set number of letters.",
+    tutorialSteps: [
+      "Build the mixed inner alphabet from the keyword (keyword letters first, then the rest of the alphabet).",
+      "Rotate the inner disk to the index letter — its starting alignment against the outer 'A'.",
+      "For each plaintext letter, read the inner-ring letter sitting beneath it on the outer ring.",
+      "After every 'period' letters, turn the inner disk by the 'step' amount and continue.",
+      "To decrypt, reverse the lookup (inner ring to outer ring) using the identical disk schedule."
+    ],
+    exampleInput: "ATTACK AT DAWN",
+    exampleOutput: "ASSAEH LU TBYN (Keyword: ALBERTI, Index: A, Period: 4)",
+    securityClassification: "HISTORICAL",
+    forensicValue: "The conceptual ancestor of Vigenère and the rotor machines. Attacked by isolating each disk setting into its own monoalphabetic segment, then frequency-cracking the segments — the period and turn schedule are the parameters to recover first."
+  },
   rot13: {
     id: "rot13",
     name: "ROT13",

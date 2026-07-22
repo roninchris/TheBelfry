@@ -134,7 +134,11 @@ export async function geocodePlace(query: string, limit = 5): Promise<GeocodeRes
         box && box.length === 4 && box.every(Number.isFinite)
           ? [box[0], box[1], box[2], box[3]]
           : undefined,
-      place: describeAddress((row.address ?? {}) as Record<string, string>, name),
+      place: describeAddress((row.address ?? {}) as Record<string, string>, name, {
+        name: row.name,
+        category: row.category ?? row.class,
+        type: row.type,
+      }),
     });
   }
 
@@ -143,6 +147,10 @@ export async function geocodePlace(query: string, limit = 5): Promise<GeocodeRes
 
 /** Structured place description for a position. */
 export interface PlaceDescription {
+  /** Named feature at the point: a business, institution or landmark, when one exists. */
+  poi?: string;
+  /** Human-readable category of that feature, e.g. "Restaurant", "Supermarket". */
+  poiKind?: string;
   /** Settlement: city, town, village or suburb, whichever OSM has. */
   locality?: string;
   /** State, province or county. */
@@ -150,6 +158,36 @@ export interface PlaceDescription {
   country?: string;
   /** Full comma-separated description, as OSM writes it. */
   full: string;
+}
+
+/**
+ * Feature classes that count as a "point of interest" — a named thing at a
+ * spot, as opposed to the administrative geography around it. Only these get
+ * promoted to `poi`, so a plain city coordinate does not turn its own name into
+ * a bogus business.
+ */
+const POI_CATEGORIES = new Set([
+  "amenity", "shop", "tourism", "leisure", "historic", "office", "building",
+  "man_made", "craft", "healthcare", "aeroway", "railway", "aerialway",
+  "emergency", "club", "military",
+]);
+
+/** "fast_food" -> "Fast Food"; falls back to the category when type is generic. */
+function humanizeKind(category?: string, type?: string): string | undefined {
+  const raw = type && type !== "yes" ? type : category;
+  if (!raw) return undefined;
+  return raw
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+/** A named feature carried on a Nominatim row/response, if it is a real POI. */
+interface FeatureHint {
+  name?: unknown;
+  category?: unknown;
+  type?: unknown;
 }
 
 const REVERSE_ENDPOINT = "https://nominatim.openstreetmap.org/reverse";
@@ -170,9 +208,13 @@ const REVERSE_ENDPOINT = "https://nominatim.openstreetmap.org/reverse";
 export async function reverseGeocode(lat: number, lon: number): Promise<PlaceDescription | null> {
   await throttle();
 
+  // zoom=18 asks Nominatim for building/POI-level detail rather than the
+  // suburb-level answer zoom=14 gave — this is what lets a close-in coordinate
+  // come back named after the specific premises at that spot (a shop, a
+  // landmark, a named house) instead of just the neighbourhood.
   const url =
     `${REVERSE_ENDPOINT}?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}` +
-    `&format=jsonv2&addressdetails=1&zoom=14`;
+    `&format=jsonv2&addressdetails=1&zoom=18`;
 
   let response: Response;
   try {
@@ -194,7 +236,11 @@ export async function reverseGeocode(lat: number, lon: number): Promise<PlaceDes
   // Open water and unmapped areas come back as an error object, not a record.
   if (!payload || typeof payload.display_name !== "string") return null;
 
-  return describeAddress((payload.address ?? {}) as Record<string, string>, payload.display_name);
+  return describeAddress((payload.address ?? {}) as Record<string, string>, payload.display_name, {
+    name: payload.name,
+    category: payload.category ?? (payload as Record<string, unknown>).class,
+    type: payload.type,
+  });
 }
 
 /**
@@ -206,7 +252,11 @@ export async function reverseGeocode(lat: number, lon: number): Promise<PlaceDes
  * comma-separated components stand in: OSM writes them coarsest-last, so the
  * final segment is reliably the country.
  */
-function describeAddress(address: Record<string, string>, full: string): PlaceDescription {
+function describeAddress(
+  address: Record<string, string>,
+  full: string,
+  feature?: FeatureHint,
+): PlaceDescription {
   const locality =
     address.city ??
     address.town ??
@@ -218,12 +268,29 @@ function describeAddress(address: Record<string, string>, full: string): PlaceDe
   const region = address.state ?? address.province ?? address.county;
   const country = address.country;
 
-  if (locality || region || country) {
-    return { locality, region, country, full };
+  // A named feature is only surfaced as a POI when its class is one of the
+  // point-of-interest categories — this keeps a city's own name (category
+  // "place") or an administrative boundary from masquerading as a business.
+  let poi: string | undefined;
+  let poiKind: string | undefined;
+  if (feature) {
+    const category = typeof feature.category === "string" ? feature.category : undefined;
+    const type = typeof feature.type === "string" ? feature.type : undefined;
+    const name = typeof feature.name === "string" ? feature.name.trim() : "";
+    if (name && category && POI_CATEGORIES.has(category)) {
+      poi = name;
+      poiKind = humanizeKind(category, type);
+    }
+  }
+
+  if (poi || locality || region || country) {
+    return { poi, poiKind, locality, region, country, full };
   }
 
   const parts = full.split(",").map((p) => p.trim()).filter(Boolean);
   return {
+    poi,
+    poiKind,
     locality: parts.length > 1 ? parts[0] : undefined,
     region: parts.length > 2 ? parts[parts.length - 2] : undefined,
     country: parts.length > 1 ? parts[parts.length - 1] : undefined,

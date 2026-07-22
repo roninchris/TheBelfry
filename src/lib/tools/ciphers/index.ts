@@ -48,3 +48,4 @@ export { oneTimePadEncode, oneTimePadDecode } from "./onetimepad";
 export { rotNEncode, rotNDecode, rot5Encode, rot5Decode, rot18Encode, rot18Decode } from "./rotn";
 export { rsaEncode, rsaDecode } from "./rsa";
 export { cicadaEncode, cicadaDecode } from "./cicada";
+export { albertiEncode, albertiDecode } from "./alberti";

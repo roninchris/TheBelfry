@@ -130,6 +130,8 @@ import {
   rsaDecode,
   cicadaEncode,
   cicadaDecode,
+  albertiEncode,
+  albertiDecode,
 } from "./ciphers";
 import {
   rsaFactorizeEncode,
@@ -803,6 +805,19 @@ const tools: ToolEntry[] = [
     decode: cicadaDecode,
     optionsSchema: [
       { name: "seed", type: "number", label: "Starting Prime Seed", defaultValue: 2, min: 2, max: 10000 }
+    ]
+  },
+  {
+    id: "alberti",
+    label: "Alberti Disk",
+    category: "cipher",
+    encode: albertiEncode,
+    decode: albertiDecode,
+    optionsSchema: [
+      { name: "keyword", type: "text", label: "Inner-Ring Keyword", defaultValue: "ALBERTI" },
+      { name: "index", type: "text", label: "Index Letter (initial setting)", defaultValue: "A" },
+      { name: "period", type: "number", label: "Letters per Disk Turn", defaultValue: 4, min: 1, max: 99 },
+      { name: "step", type: "number", label: "Disk Turn Amount", defaultValue: 1, min: 1, max: 25 }
     ]
   },
 ];

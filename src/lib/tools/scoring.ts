@@ -2,6 +2,7 @@
 /**
  * Plaintext heuristics scoring engine.
  */
+import { assessPlaintext } from "./languages";
 
 /** Any decode/chain failure marker used across tool implementations — always worth zero. */
 function isErrorText(text: string): boolean {
@@ -54,75 +55,16 @@ export function scoreEncodedLikelihood(text: string): number {
 }
 
 /**
- * Scores a candidate *decode output* purely on English-plaintext heuristics — no "still looks
+ * Scores a candidate *decode output* on natural-language plaintext heuristics — no "still looks
  * encoded" shortcuts, since brute-force/pipeline candidates for letters-only ciphers (Rail Fence,
  * Atbash, Affine, substitution, columnar transposition, etc.) are themselves letters-only and would
  * otherwise all tie at the same inflated "still base64/hex/base58-shaped" score regardless of
  * whether the parameters used were actually correct.
+ *
+ * Now delegates to the multilingual assessor (English / Portuguese / Latin) and returns its best
+ * score, so a correct decode in any of those three languages ranks above the noise instead of only
+ * English doing so. See {@link assessPlaintext} for the language breakdown.
  */
 export function scoreDecodedPlaintext(text: string): number {
-  if (!text || text.trim().length === 0) return 0;
-  if (isErrorText(text)) return 0;
-
-  const clean = text.toUpperCase();
-  const total = clean.length;
-  
-  // Count printable characters (alphanumeric, spaces, common punctuation)
-  const printableMatches = clean.match(/[A-Z0-9\s.,!?'"\-()]/g);
-  const printableCount = printableMatches ? printableMatches.length : 0;
-  const printableRatio = printableCount / total;
-  
-  // Heavily penalize non-printable characters or gibberish symbols
-  if (printableRatio < 0.8) {
-    return Math.max(0, Math.round(printableRatio * 20));
-  }
-  
-  let score = 0;
-  
-  // 1. Space frequency (English is typically 12% - 18% spaces)
-  const spaceCount = (clean.match(/ /g) || []).length;
-  const spaceRatio = spaceCount / total;
-  if (spaceRatio >= 0.10 && spaceRatio <= 0.22) {
-    score += 25;
-  } else if (spaceRatio > 0.05 && spaceRatio < 0.30) {
-    score += 12;
-  }
-  
-  // 2. Letter frequency check (vowels density should be ~35-45% of alphabetic characters)
-  const vowelMatches = clean.match(/[AEIOU]/g);
-  const letterMatches = clean.match(/[A-Z]/g);
-  const vowelCount = vowelMatches ? vowelMatches.length : 0;
-  const letterCount = letterMatches ? letterMatches.length : 0;
-  
-  if (letterCount > 0) {
-    const vowelRatio = vowelCount / letterCount;
-    if (vowelRatio >= 0.30 && vowelRatio <= 0.48) {
-      score += 25;
-    } else if (vowelRatio >= 0.20 && vowelRatio <= 0.60) {
-      score += 10;
-    }
-  }
-  
-  // 3. Common English words check (case-insensitive)
-  const commonWords = [
-    "THE", "AND", "THAT", "HAVE", "FOR", "NOT", "WITH", "YOU", "THIS", "BUT",
-    "FROM", "TARGET", "ACCESS", "SAFE", "COORDINATES", "SECRET", "SECURED",
-    "EAST", "WEST", "NORTH", "SOUTH", "MEET", "NINE", "SEVEN", "ZERO", "FOUR",
-    "SIGNAL", "SECTOR", "PACKET", "CLOCK", "CODE", "CIPHER", "DECODE"
-  ];
-  
-  let wordPoints = 0;
-  for (const word of commonWords) {
-    const regex = new RegExp(`\\b${word}\\b`, 'g');
-    const matches = clean.match(regex);
-    if (matches) {
-      wordPoints += matches.length * 15;
-    } else if (clean.includes(word)) {
-      wordPoints += 5; // Substring match
-    }
-  }
-  
-  score += Math.min(wordPoints, 50);
-  
-  return Math.min(Math.round(score), 100);
+  return assessPlaintext(text).score;
 }

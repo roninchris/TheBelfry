@@ -1027,6 +1027,14 @@ export default function CryptoLab() {
                       <div className="absolute inset-y-0 left-0 w-[1.5px] bg-transparent group-hover:bg-cyan-primary transition-colors duration-200" />
                       <span className="text-cyan-primary font-bold z-10 truncate max-w-[120px]">{c.label}:</span>
                       <span className="truncate flex-1 ml-2 text-left lowercase z-10 text-[12px]">{c.output.slice(0, 50)}</span>
+                      {c.language && (
+                        <span
+                          title={`Reads as ${c.languageName}`}
+                          className="text-[10px] font-share font-bold uppercase tracking-wider ml-1 z-10 px-1 py-px border border-amber-alert/40 text-amber-alert/90 bg-amber-alert/10 whitespace-nowrap"
+                        >
+                          {c.language}
+                        </span>
+                      )}
                       <span className="text-[12px] font-share uppercase opacity-60 text-cyan-dim ml-1 z-10 group-hover:opacity-100 transition-opacity whitespace-nowrap">APPLY</span>
                     </button>
                   )) : (

@@ -1,6 +1,7 @@
 import { getTool, asResult } from "./registry";
-import { scoreDecodedPlaintext } from "./scoring";
+import { assessPlaintext } from "./languages";
 import { estimateXorKeyLength, gcd } from "./crypto-utils";
+import type { LanguageCode } from "./languages";
 
 export interface BruteForceResult {
   label: string;
@@ -8,6 +9,9 @@ export interface BruteForceResult {
   options: any;
   output: string;
   score: number;
+  /** Best-matching natural language for this candidate, when one is recognised. */
+  language: LanguageCode | null;
+  languageName: string | null;
 }
 
 export interface BruteForceOutcome {
@@ -65,12 +69,15 @@ export function bruteForceTool(
     try {
       const res = tool.decode(input, options);
       const output = asResult(res).text;
+      const assessment = assessPlaintext(output);
       results.push({
         label,
         parameter,
         options,
         output,
-        score: scoreDecodedPlaintext(output)
+        score: assessment.score,
+        language: assessment.language,
+        languageName: assessment.languageName,
       });
     } catch (e) {
       failedCount++;

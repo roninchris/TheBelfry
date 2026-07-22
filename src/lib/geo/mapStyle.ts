@@ -60,9 +60,27 @@ export interface MapStyleOptions {
   extruded: boolean;
 }
 
+/**
+ * POI classes worth surfacing. The OpenMapTiles `poi` layer carries hundreds of
+ * subclasses; this is the set an analyst actually cares about — named premises,
+ * institutions and landmarks — with pure-infrastructure noise (bollards, gates,
+ * waste baskets) left off so a zoomed-in view reads like a target board rather
+ * than clutter.
+ */
+const POI_CLASSES = [
+  "shop", "grocery", "supermarket", "convenience", "restaurant", "fast_food",
+  "cafe", "bar", "pub", "food", "lodging", "hotel", "hospital", "pharmacy",
+  "police", "fire_station", "bank", "post", "school", "college", "university",
+  "library", "attraction", "museum", "art_gallery", "place_of_worship",
+  "town_hall", "office", "government", "fuel", "parking", "bus", "railway",
+  "airport", "aerodrome", "stadium", "cemetery", "park", "monument", "castle",
+  "information", "embassy", "prison", "harbor",
+] as const;
+
 export function buildMapStyle({ extruded }: MapStyleOptions): StyleSpecification {
   const void_ = themeColor("--color-bg-void", "#020912");
   const text = themeColor("--color-cyan-text", "#c8f4f9");
+  const amber = themeColor("--color-amber-alert", "#f5b642");
 
   return {
     version: 8,
@@ -256,6 +274,55 @@ export function buildMapStyle({ extruded }: MapStyleOptions): StyleSpecification
           "text-opacity": 0.65,
           "text-halo-color": void_,
           "text-halo-width": 1.6,
+        },
+      },
+
+      // Points of interest — the "what's actually here" layer, off until the
+      // camera is close enough (z15) that named premises matter, the way a
+      // street map only reveals businesses once you zoom in. Drawn in amber so
+      // they read as marked targets, distinct from the cyan place names, and
+      // left to MapLibre's own label collision so density self-limits instead
+      // of blanketing a dense block. The small amber node is drawn first so the
+      // text sits above it.
+      {
+        id: "poi-dot",
+        type: "circle",
+        source: "openmaptiles",
+        "source-layer": "poi",
+        minzoom: 15,
+        filter: ["all", ["has", "name"], ["in", ["get", "class"], ["literal", POI_CLASSES]]],
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 15, 1.6, 18, 3.2],
+          "circle-color": amber,
+          "circle-opacity": ["interpolate", ["linear"], ["zoom"], 15, 0, 15.6, 0.85],
+          "circle-stroke-color": void_,
+          "circle-stroke-width": 0.6,
+        },
+      },
+      {
+        id: "poi-label",
+        type: "symbol",
+        source: "openmaptiles",
+        "source-layer": "poi",
+        minzoom: 15,
+        filter: ["all", ["has", "name"], ["in", ["get", "class"], ["literal", POI_CLASSES]]],
+        layout: {
+          "text-field": ["coalesce", ["get", "name:latin"], ["get", "name"]],
+          "text-font": LABEL_FONT,
+          "text-transform": "uppercase",
+          "text-letter-spacing": 0.1,
+          "text-size": ["interpolate", ["linear"], ["zoom"], 15, 9, 18, 12],
+          "text-max-width": 7,
+          "text-anchor": "top",
+          "text-offset": [0, 0.7],
+          "text-optional": true,
+          "symbol-sort-key": ["coalesce", ["get", "rank"], 99],
+        },
+        paint: {
+          "text-color": amber,
+          "text-opacity": ["interpolate", ["linear"], ["zoom"], 15, 0, 15.6, 0.8],
+          "text-halo-color": void_,
+          "text-halo-width": 1.5,
         },
       },
     ],
