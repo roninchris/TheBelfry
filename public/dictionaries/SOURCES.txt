@@ -1,0 +1,16 @@
+Anagram Solver dictionaries — provenance
+========================================
+
+These word lists back The Codex's Anagram Solver. Each was reduced to lowercase
+a-z, one word per line, with accents folded onto their base letter (á→a, ç→c,
+ã→a) and one-letter entries dropped. They are fetched lazily at runtime.
+
+en.txt — English (~172k words)
+  Source: ENABLE word list (public domain), via dolph/dictionary (enable1.txt).
+
+pt.txt — Portuguese (~315k words)
+  Source: pythonprobr/palavras (palavras.txt).
+
+la.txt — Latin (~265k inflected forms)
+  Source: form column of bbloomf/verbalatina (latin-analyses.txt), derived from
+  Whitaker's Words / Lewis & Short.

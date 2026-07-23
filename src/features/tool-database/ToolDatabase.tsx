@@ -127,6 +127,25 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
     securityClassification: "HISTORICAL",
     forensicValue: "The conceptual ancestor of Vigenère and the rotor machines. Attacked by isolating each disk setting into its own monoalphabetic segment, then frequency-cracking the segments — the period and turn schedule are the parameters to recover first."
   },
+  anagram: {
+    id: "anagram",
+    name: "Anagram Solver",
+    category: "cipher",
+    icon: Shuffle,
+    summary: "Unscrambles a jumble of letters against full English, Portuguese or Latin dictionaries, revealing the real words hidden inside.",
+    howItWorks: "A scrambled intercept is normalised to its bare letters — folding accents so Portuguese and Latin match — then checked against a full dictionary. In EXACT mode it returns every word that is a full rearrangement of the input (words sharing the same sorted-letter signature) — the classic anagram. In SUBWORDS mode it returns every word that can be spelled from some of the input letters, longest first, which is how a hidden word or Scrabble-style play is pulled out of a longer scramble. It searches English, Portuguese or Latin — or all three at once, tagging each hit with the language it belongs to — and accepts a custom dictionary to override the built-ins.",
+    tutorialSteps: [
+      "Strip the input to its letters, folding accents (á→a, ç→c) so all three languages match.",
+      "Compute each candidate's letter multiset — its 'signature' — by sorting its letters.",
+      "EXACT: return dictionary words whose signature equals the input's (every letter reused once).",
+      "SUBWORDS: return dictionary words whose letter counts all fit within the input's, ranked longest first.",
+      "Pick a language (or All), or paste a custom dictionary to target a specific domain."
+    ],
+    exampleInput: "LISTEN",
+    exampleOutput: "SILENT (Exact anagram, English)",
+    securityClassification: "STANDARD",
+    forensicValue: "Cracks transposition-style word puzzles and letter-jumble intercepts where the payload is a real word hidden by rearrangement, across English, Portuguese and Latin. Also surfaces embedded words inside a longer scramble — a fast first pass before committing to a heavier transposition analysis."
+  },
   rot13: {
     id: "rot13",
     name: "ROT13",

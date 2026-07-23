@@ -138,6 +138,8 @@ import {
   rsaFactorizeDecode,
   hashLabEncode,
   hashLabDecode,
+  anagramEncode,
+  anagramDecode,
 } from "./utility";
 
 const tools: ToolEntry[] = [
@@ -654,6 +656,27 @@ const tools: ToolEntry[] = [
     encode: hashLabEncode,
     decode: hashLabDecode,
     optionsSchema: []
+  },
+  {
+    id: "anagram",
+    label: "Anagram Solver",
+    category: "cipher",
+    encode: anagramEncode,
+    decode: anagramDecode,
+    optionsSchema: [
+      { name: "language", type: "enum", label: "Dictionary", defaultValue: "en", enumValues: [
+        { value: "en", label: "English" },
+        { value: "pt", label: "Portuguese" },
+        { value: "la", label: "Latin" },
+        { value: "all", label: "All (English + Portuguese + Latin)" }
+      ]},
+      { name: "mode", type: "enum", label: "Mode", defaultValue: "exact", enumValues: [
+        { value: "exact", label: "Exact anagrams (use all letters)" },
+        { value: "subwords", label: "Subwords (spell from any letters)" }
+      ]},
+      { name: "minLength", type: "number", label: "Min Word Length (Subwords)", defaultValue: 3, min: 2, max: 20 },
+      { name: "dictionary", type: "textarea", label: "Custom Dictionary (optional, overrides language)", defaultValue: "" }
+    ]
   },
   {
     id: "adfgx",

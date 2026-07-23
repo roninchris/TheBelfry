@@ -94,6 +94,7 @@ const ID_TO_GROUP: Record<string, CipherGroupId> = {
   pollux: "symbolic",
   cicada: "symbolic",
   bookcipher: "symbolic",
+  anagram: "symbolic",
 };
 
 export function groupForCipher(id: string): CipherGroupId {
