@@ -14,7 +14,8 @@ import {
   Activity,
   Zap,
   Layers,
-  Search
+  Search,
+  ScanLine
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import GlassPanel from "../../components/ui/GlassPanel";
@@ -23,6 +24,7 @@ import Badge from "../../components/ui/Badge";
 import { useAppStore } from "../../store/appStore";
 import ShinyText from "../../components/react-bits/ShinyText";
 import FactoryThroughputBar from "../../components/ui/FactoryThroughputBar";
+import ImageIntakePanel from "../../components/ui/ImageIntakePanel";
 import { playSuccessChime, playFailBuzz, playTypeKey, playHoverEvidence, playPinClick, playHoverBlip } from "../../lib/soundEngine";
 import { getTool, asText, pipelineLayerIds } from "../../lib/tools/registry";
 import { textToBigInteger, bigIntegerToText } from "../../lib/tools/utility/bigInteger";
@@ -188,6 +190,7 @@ function analyseSource(text: string) {
 
 export default function EncodingLab() {
   const [inputText, setInputText] = useState<string>("");
+  const [showImageIntake, setShowImageIntake] = useState<boolean>(false);
   const [isDecodeMode, setIsDecodeMode] = useState<boolean>(true);
   const [isPipelineDecode, setIsPipelineDecode] = useState<boolean>(true);
 
@@ -429,8 +432,38 @@ export default function EncodingLab() {
             >
               CLEAR
             </button>
+            <button
+              onClick={() => {
+                setShowImageIntake((v) => !v);
+                setIsDecodeMode(true);
+                playPinClick();
+              }}
+              onMouseEnter={() => playHoverEvidence()}
+              className={`hud-target flex items-center gap-1.5 border px-2.5 py-1 transition-colors uppercase cursor-pointer ${
+                showImageIntake
+                  ? "border-cyan-primary text-cyan-text bg-cyan-primary/[0.06]"
+                  : "border-border-hairline/15 bg-bg-void/40 hover:text-cyan-text hover:border-cyan-primary/45"
+              }`}
+            >
+              <ScanLine className="w-3 h-3" />
+              IMAGE INTAKE
+            </button>
           </div>
         </GlassPanel>
+
+        {/* Optical intake — decode an encoding presented as an image */}
+        {showImageIntake && (
+          <ImageIntakePanel
+            cipherId="binary"
+            schemes={[
+              { id: "binary", label: "Binary — bars / dots (I O)" },
+              { id: "hex", label: "Printed hex (OCR)" },
+              { id: "base64", label: "Printed Base64 (OCR)" },
+            ]}
+            onDecoded={(notation) => setInputText(notation)}
+            onClose={() => setShowImageIntake(false)}
+          />
+        )}
 
         {/* SOURCE SIGNATURE — replaces the 8-bit bus monitor that used to sit
             here. That showed an LED register readout of the first eight bytes

@@ -3,6 +3,45 @@
  * and extracting depth maps through autocorrelation and shift-analysis.
  */
 
+/**
+ * The piellardj-style interactive reveal: superimpose the image with a copy of
+ * itself shifted horizontally by `offset`, the copy at partial opacity. When the
+ * offset matches the stereogram's repeat period, the flat background self-aligns
+ * while the depth-displaced (hidden) region ghosts out of register — the shape
+ * pops. Cheap enough to run live on every slider tick.
+ */
+export function renderStereogramOverlay(
+  canvas: HTMLCanvasElement,
+  offset: number,
+  opacity = 0.5
+): HTMLCanvasElement {
+  const out = document.createElement("canvas");
+  out.width = canvas.width;
+  out.height = canvas.height;
+  const ctx = out.getContext("2d")!;
+  ctx.drawImage(canvas, 0, 0);
+  ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
+  // Shift the duplicate both ways so the reveal is symmetric around the seam.
+  ctx.drawImage(canvas, offset, 0);
+  ctx.drawImage(canvas, -offset, 0);
+  ctx.globalAlpha = 1;
+  return out;
+}
+
+/** Downscale a canvas so live previews stay responsive on large carriers. */
+export function downscaleCanvas(canvas: HTMLCanvasElement, maxWidth = 720): HTMLCanvasElement {
+  if (canvas.width <= maxWidth) return canvas;
+  const scale = maxWidth / canvas.width;
+  const out = document.createElement("canvas");
+  out.width = maxWidth;
+  out.height = Math.round(canvas.height * scale);
+  const ctx = out.getContext("2d")!;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(canvas, 0, 0, out.width, out.height);
+  return out;
+}
+
 export function extractStereogramDepth(canvas: HTMLCanvasElement, patternWidth?: number): HTMLCanvasElement {
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error("Could not get canvas context");
@@ -62,6 +101,15 @@ export function extractStereogramDepth(canvas: HTMLCanvasElement, patternWidth?:
 
   outCtx.putImageData(outData, 0, 0);
   return outputCanvas;
+}
+
+/** Convenience: estimate the repeat period directly from a canvas. */
+export function estimatePatternWidthForCanvas(canvas: HTMLCanvasElement): number {
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return 100;
+  const { width, height } = canvas;
+  const data = ctx.getImageData(0, 0, width, height).data;
+  return estimatePatternWidth(data, width, height);
 }
 
 /**

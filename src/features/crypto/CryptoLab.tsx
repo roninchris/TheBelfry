@@ -15,12 +15,15 @@ import {
   Sliders,
   Sparkles,
   Disc,
-  BarChart2
+  BarChart2,
+  ScanLine
 } from "lucide-react";
 import GlassPanel from "../../components/ui/GlassPanel";
 import Badge from "../../components/ui/Badge";
 import ProgressBar from "../../components/ui/ProgressBar";
 import DecryptText from "../../components/ui/DecryptText";
+import ImageIntakePanel from "../../components/ui/ImageIntakePanel";
+import { supportsImageIntake } from "../../lib/tools/image-decode";
 import DataStream from "../../components/react-bits/DataStream";
 import { playSuccessChime, playFailBuzz, playTypeKey, playHoverEvidence, playReticleLock, playPinClick } from "../../lib/soundEngine";
 import HeroStat from "../../components/ui/HeroStat";
@@ -194,6 +197,7 @@ export default function CryptoLab() {
   const [flashOp, setFlashOp] = useState<number>(0);
   const [lastOp, setLastOp] = useState<"ENCRYPTED" | "DECRYPTED" | "">("");
   const [copied, setCopied] = useState(false);
+  const [showImageIntake, setShowImageIntake] = useState(false);
   const [bruteWordlist, setBruteWordlist] = useState<string[]>(DEFAULT_WORDLIST);
 
   const runCipher = (mode: "encode" | "decode") => {
@@ -802,8 +806,37 @@ export default function CryptoLab() {
               >
                 CLEAR INPUT
               </button>
+              {supportsImageIntake(selectedCipher) && (
+                <button
+                  onClick={() => {
+                    setShowImageIntake((v) => !v);
+                    playPinClick();
+                  }}
+                  onMouseEnter={() => playHoverEvidence()}
+                  className={`hud-target flex items-center gap-1.5 border px-2 py-1 transition-all uppercase ${
+                    showImageIntake
+                      ? "border-cyan-primary text-cyan-text bg-cyan-primary/[0.06]"
+                      : "border-border-hairline/15 bg-bg-void/30 hover:text-cyan-text hover:border-cyan-primary/45"
+                  }`}
+                >
+                  <ScanLine className="w-3 h-3" />
+                  IMAGE INTAKE
+                </button>
+              )}
             </div>
           </GlassPanel>
+
+          {/* Optical cipher intake — decode a cipher presented as an image */}
+          {showImageIntake && supportsImageIntake(selectedCipher) && (
+            <ImageIntakePanel
+              cipherId={selectedCipher}
+              onDecoded={(notation) => {
+                setInputText(notation);
+                setLastOp("");
+              }}
+              onClose={() => setShowImageIntake(false)}
+            />
+          )}
 
           {/* Decoder triggers / operator console */}
           <div className="flex space-x-3 items-stretch">

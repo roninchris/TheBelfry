@@ -40,7 +40,12 @@ import {
 } from "../../lib/tools/image-stego";
 import { carveEmbeddedFiles, CarvedFile } from "../../lib/tools/fileCarving";
 import { scanQrCode } from "../../lib/tools/image-stego/barcodeScanner";
-import { extractStereogramDepth } from "../../lib/tools/image-stego/stereogram";
+import {
+  extractStereogramDepth,
+  renderStereogramOverlay,
+  downscaleCanvas,
+  estimatePatternWidthForCanvas,
+} from "../../lib/tools/image-stego/stereogram";
 import { readContentCredentials } from "../../lib/tools/image-stego/c2paViewer";
 import { runStegdetect, StegdetectReport } from "../../lib/tools/image-stego/stegdetect";
 import { extractSteghide, SteghideExtractResult } from "../../lib/tools/image-stego/steghide";
@@ -257,9 +262,13 @@ export default function ImageForensicsLab() {
   const [qrResult, setQrResult] = useState<{ data: string; location: any } | null>(null);
   const [qrScanAttempted, setQrScanAttempted] = useState(false);
 
-  // Stereogram tab
-  const [isSolvingStereogram, setIsSolvingStereogram] = useState(false);
-  const [stereogramDepthPreview, setStereogramDepthPreview] = useState<string | null>(null);
+  // Stereogram tab — interactive autostereogram (Magic Eye) solver
+  const [stereoOffset, setStereoOffset] = useState(100);
+  // Default to the algorithmic auto-solve; "overlay" is the by-eye fallback.
+  const [stereoMode, setStereoMode] = useState<"overlay" | "depth">("depth");
+  const [stereoReady, setStereoReady] = useState(false);
+  const stereoSrcRef = useRef<HTMLCanvasElement | null>(null);
+  const stereoCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // C2PA tab
   const [isReadingC2pa, setIsReadingC2pa] = useState(false);
@@ -321,7 +330,9 @@ export default function ImageForensicsLab() {
     setInkConfidence(0);
     setQrResult(null);
     setQrScanAttempted(false);
-    setStereogramDepthPreview(null);
+    stereoSrcRef.current = null;
+    setStereoReady(false);
+    setStereoMode("depth");
     setC2paManifest(null);
     setC2paAttempted(false);
     setExifData(null);
@@ -586,21 +597,63 @@ export default function ImageForensicsLab() {
     }
   };
 
-  const handleStereogramSolver = async () => {
-    if (!activeFile) return;
-    setIsSolvingStereogram(true);
-    try {
-      const canvas = await loadImageAsCanvas(activeFile);
-      const depthCanvas = extractStereogramDepth(canvas);
-      setStereogramDepthPreview(depthCanvas.toDataURL("image/png"));
-      playFileAnalysisComplete();
-      addLog("STEREOGRAM DEPTH EXTRACTION COMPLETED", "success", "SYS");
-    } catch (e) {
-      console.error(e);
-      addLog("STEREOGRAM ANALYSIS FAILED", "warning", "SYS");
-    } finally {
-      setIsSolvingStereogram(false);
+  // Load the carrier into a downscaled working canvas when the Magic Eye tab
+  // opens, and seed the slider with the auto-estimated repeat period.
+  useEffect(() => {
+    if (activeTab !== "stereogram" || !activeFile) {
+      stereoSrcRef.current = null;
+      setStereoReady(false);
+      return;
     }
+    let cancelled = false;
+    (async () => {
+      try {
+        const full = await loadImageAsCanvas(activeFile);
+        if (cancelled) return;
+        stereoSrcRef.current = downscaleCanvas(full, 720);
+        setStereoOffset(estimatePatternWidthForCanvas(stereoSrcRef.current));
+        setStereoReady(true);
+        addLog("STEREOGRAM CARRIER LOADED — SLIDE TO ALIGN PARALLAX", "info", "SYS");
+      } catch (e) {
+        console.error(e);
+        addLog("STEREOGRAM CARRIER LOAD FAILED", "warning", "SYS");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, activeFile]);
+
+  // Re-render the reveal into the visible canvas whenever the offset/mode change.
+  useEffect(() => {
+    const src = stereoSrcRef.current;
+    const dst = stereoCanvasRef.current;
+    if (!stereoReady || !src || !dst) return;
+    const eff =
+      stereoMode === "overlay"
+        ? renderStereogramOverlay(src, stereoOffset)
+        : extractStereogramDepth(src, stereoOffset);
+    dst.width = eff.width;
+    dst.height = eff.height;
+    dst.getContext("2d")!.drawImage(eff, 0, 0);
+  }, [stereoReady, stereoOffset, stereoMode]);
+
+  const handleStereoAuto = () => {
+    const src = stereoSrcRef.current;
+    if (!src) return;
+    setStereoOffset(estimatePatternWidthForCanvas(src));
+    playPinClick();
+    addLog("PATTERN PERIOD RE-ESTIMATED", "info", "SYS");
+  };
+
+  const handleStereoExport = () => {
+    const dst = stereoCanvasRef.current;
+    if (!dst) return;
+    const a = document.createElement("a");
+    a.href = dst.toDataURL("image/png");
+    a.download = `stereogram_${stereoMode}_${stereoOffset}px.png`;
+    a.click();
+    playFileAnalysisComplete();
   };
 
   const handleC2paRead = async () => {
@@ -1304,32 +1357,78 @@ export default function ImageForensicsLab() {
 
           {activeTab === "stereogram" && (
             <div className="space-y-4">
-              <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-primary uppercase">AUTOSTEREOGRAM DEPTH RECONSTRUCTION</h3>
-              <button
-                disabled={!hasRealFile || isSolvingStereogram}
-                onClick={handleStereogramSolver}
-                className="w-full py-3 bg-cyan-primary text-bg-void font-display font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-40 flex items-center justify-center space-x-2"
-              >
-                <Layers className="w-4 h-4" />
-                <span>{isSolvingStereogram ? "ESTIMATING DEPTH..." : "RECONSTRUCT DEPTH MAP"}</span>
-              </button>
-              {!stereogramDepthPreview ? (
-                <div className="text-center py-8 text-text-dim italic">
-                  <p className="font-share text-[13px] uppercase tracking-widest">AWAITING DEPTH RECONSTRUCTION</p>
+              <div>
+                <h3 className="font-display text-[13px] font-black tracking-widest text-cyan-primary uppercase">
+                  AUTOSTEREOGRAM SOLVER // MAGIC EYE
+                </h3>
+              
+              </div>
+
+              {!hasRealFile ? (
+                <div className="text-center py-8 text-text-dim italic border border-dashed border-border-hairline/20 bg-bg-void/20">
+                  <Eye className="w-6 h-6 text-cyan-primary/40 mx-auto mb-2" />
+                  <p className="font-share text-[13px] uppercase tracking-widest">UPLOAD A CARRIER TO BEGIN</p>
                 </div>
               ) : (
-                <div className="space-y-3 animate-fade-in">
-                  <div className="aspect-video bg-bg-void border border-cyan-primary/20 overflow-hidden">
-                    <img src={stereogramDepthPreview} alt="Depth Map" className="w-full h-full object-contain" />
+                <div className="space-y-3">
+                  {/* Live reveal */}
+                  <div className="bg-bg-void border border-cyan-primary/20 overflow-hidden flex items-center justify-center min-h-[200px]">
+                    <canvas ref={stereoCanvasRef} className="max-w-full h-auto block" />
                   </div>
-                  <a
-                    href={stereogramDepthPreview}
-                    download="stereogram_depth_map.png"
-                    className="w-full py-2 bg-bg-void border border-cyan-primary/40 text-cyan-primary font-display text-[13px] font-bold tracking-widest uppercase hover:bg-cyan-primary hover:text-bg-void transition-all flex items-center justify-center space-x-2"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>EXPORT DEPTH MAP</span>
-                  </a>
+
+                  {/* Reveal mode — auto depth solve first, by-eye overlay as fallback */}
+                  <div className="flex gap-2">
+                    {(["depth", "overlay"] as const).map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => {
+                          setStereoMode(m);
+                          playPinClick();
+                        }}
+                        className={`flex-1 py-2 font-display text-[12px] font-bold tracking-widest uppercase border transition-all ${
+                          stereoMode === m
+                            ? "bg-cyan-primary text-bg-void border-cyan-primary"
+                            : "bg-bg-void border-cyan-primary/30 text-cyan-primary hover:border-cyan-primary/60"
+                        }`}
+                      >
+                        {m === "depth" ? "Auto Solve" : "Manual"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Parallax offset slider */}
+                  <div className="bg-bg-void/40 border border-border-hairline/15 p-3 space-y-2">
+                    <div className="flex justify-between items-center font-share text-[12px] uppercase tracking-widest text-text-dim">
+                      <span>Parallax Offset</span>
+                      <span className="font-mono text-cyan-primary font-bold">{stereoOffset}px</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={4}
+                      max={Math.max(40, Math.floor((stereoSrcRef.current?.width || 720) / 2))}
+                      value={stereoOffset}
+                      onChange={(e) => setStereoOffset(parseInt(e.target.value, 10))}
+                      className="w-full accent-cyan-primary"
+                    />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleStereoAuto}
+                      className="flex-1 py-2 bg-bg-void border border-cyan-primary/40 text-cyan-primary font-display text-[12px] font-bold tracking-widest uppercase hover:bg-cyan-primary hover:text-bg-void transition-all flex items-center justify-center gap-2"
+                    >
+                      <Compass className="w-3.5 h-3.5" />
+                      <span>AUTO-ESTIMATE</span>
+                    </button>
+                    <button
+                      onClick={handleStereoExport}
+                      className="flex-1 py-2 bg-bg-void border border-cyan-primary/40 text-cyan-primary font-display text-[12px] font-bold tracking-widest uppercase hover:bg-cyan-primary hover:text-bg-void transition-all flex items-center justify-center gap-2"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>EXPORT VIEW</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
