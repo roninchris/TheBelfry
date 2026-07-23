@@ -545,7 +545,7 @@ export default function CryptoLab() {
             })}
           </div>
 
-          <div className="space-y-1.5 flex-1 pr-1 overflow-y-auto scrollbar-thin max-h-[380px]">
+          <div className="space-y-1.5 flex-1 min-h-[120px] pr-1 overflow-y-auto scrollbar-thin max-h-[380px]">
             {filteredCiphers.length === 0 && (
               <div className="flex flex-col items-center justify-center py-10 gap-2 border border-dashed border-border-hairline/15 bg-bg-void/20">
                 {activeGroup === "favorites" ? (
@@ -585,8 +585,10 @@ export default function CryptoLab() {
               : filteredCiphers.map(renderCipherRow)}
           </div>
 
-          {/* Cipher settings controls */}
-          <div className="border-t border-border-hairline/25 pt-3 mt-3 space-y-3.5 bg-bg-void/30 p-2.5 border border-border-hairline/10 relative">
+          {/* Cipher settings controls — min-h-0 + overflow lets a tall config (e.g.
+              the Anagram Solver's five fields) scroll internally instead of
+              squeezing the cipher list above it down to zero height. */}
+          <div className="border-t border-border-hairline/25 pt-3 mt-3 space-y-3.5 bg-bg-void/30 p-2.5 border border-border-hairline/10 relative min-h-0 overflow-y-auto scrollbar-thin">
             <DatabaseTag text="ALGORITHM KEY CONFIGURATION" className="mb-2.5 self-start" />
 
             {selectedCipher === "caesar" && (
