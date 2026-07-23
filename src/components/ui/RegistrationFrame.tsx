@@ -4,17 +4,25 @@ interface RegistrationFrameProps {
   children?: React.ReactNode;
   className?: string;
   glow?: boolean;
+  /**
+   * Extra classes for the inner content wrapper. Default is a plain block; pass
+   * `flex flex-col min-h-0` when a child needs to bound its own scroll against
+   * the frame's height (otherwise the block wrapper makes any inner `flex-1`
+   * inert and the child grows past the frame instead of scrolling).
+   */
+  contentClassName?: string;
 }
 
 export default function RegistrationFrame({
   children,
   className = "",
   glow = false,
+  contentClassName = "",
 }: RegistrationFrameProps) {
   return (
     <div className={`relative ${className}`} id="registration-frame-wrapper">
       {/* Content wrapper */}
-      <div className="relative z-10 w-full h-full">{children}</div>
+      <div className={`relative z-10 w-full h-full ${contentClassName}`}>{children}</div>
 
       {/* Decorative view-finder overlays (pointer-events-none) */}
       <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden" id="registration-decorators">

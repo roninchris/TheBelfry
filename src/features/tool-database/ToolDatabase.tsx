@@ -132,14 +132,14 @@ const TOOL_DOCS_REGISTRY: Record<string, ToolDoc> = {
     name: "Anagram Solver",
     category: "cipher",
     icon: Shuffle,
-    summary: "Unscrambles a jumble of letters against full English, Portuguese or Latin dictionaries, revealing the real words hidden inside.",
-    howItWorks: "A scrambled intercept is normalised to its bare letters — folding accents so Portuguese and Latin match — then checked against a full dictionary. In EXACT mode it returns every word that is a full rearrangement of the input (words sharing the same sorted-letter signature) — the classic anagram. In SUBWORDS mode it returns every word that can be spelled from some of the input letters, longest first, which is how a hidden word or Scrabble-style play is pulled out of a longer scramble. It searches English, Portuguese or Latin — or all three at once, tagging each hit with the language it belongs to — and accepts a custom dictionary to override the built-ins.",
+    summary: "Unscrambles a jumble of letters against full English, Portuguese or Latin dictionaries — single words or multi-word phrases.",
+    howItWorks: "A scrambled intercept is normalised to its bare letters — folding accents so Portuguese and Latin match — then checked against a full dictionary. EXACT mode returns every word that is a full rearrangement of the input (words sharing the same sorted-letter signature) — the classic anagram. PHRASE mode goes further, finding every combination of dictionary words that together consume all the letters ('stlunei' → 'LET IN US'), up to a chosen word count. SUBWORDS mode returns every word that can be spelled from some of the letters, longest first. It searches English, Portuguese or Latin — or all three at once, tagging each hit with its language — and accepts a custom dictionary to override the built-ins.",
     tutorialSteps: [
       "Strip the input to its letters, folding accents (á→a, ç→c) so all three languages match.",
       "Compute each candidate's letter multiset — its 'signature' — by sorting its letters.",
       "EXACT: return dictionary words whose signature equals the input's (every letter reused once).",
-      "SUBWORDS: return dictionary words whose letter counts all fit within the input's, ranked longest first.",
-      "Pick a language (or All), or paste a custom dictionary to target a specific domain."
+      "PHRASE: search combinations of words that together use exactly the input letters, up to Max Words.",
+      "SUBWORDS: return dictionary words whose letter counts all fit within the input's, ranked longest first."
     ],
     exampleInput: "LISTEN",
     exampleOutput: "SILENT (Exact anagram, English)",

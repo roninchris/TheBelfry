@@ -671,10 +671,12 @@ const tools: ToolEntry[] = [
         { value: "all", label: "All (English + Portuguese + Latin)" }
       ]},
       { name: "mode", type: "enum", label: "Mode", defaultValue: "exact", enumValues: [
-        { value: "exact", label: "Exact anagrams (use all letters)" },
+        { value: "exact", label: "Exact anagram (single word)" },
+        { value: "phrase", label: "Phrase anagram (multi-word)" },
         { value: "subwords", label: "Subwords (spell from any letters)" }
       ]},
-      { name: "minLength", type: "number", label: "Min Word Length (Subwords)", defaultValue: 3, min: 2, max: 20 },
+      { name: "maxWords", type: "number", label: "Max Words (Phrase)", defaultValue: 3, min: 1, max: 6 },
+      { name: "minLength", type: "number", label: "Min Word Length (Subwords / Phrase)", defaultValue: 2, min: 2, max: 20 },
       { name: "dictionary", type: "textarea", label: "Custom Dictionary (optional, overrides language)", defaultValue: "" }
     ]
   },

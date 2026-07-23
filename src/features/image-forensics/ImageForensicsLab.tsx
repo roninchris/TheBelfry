@@ -1372,7 +1372,7 @@ export default function ImageForensicsLab() {
               ) : (
                 <div className="space-y-3">
                   {/* Live reveal */}
-                  <div className="bg-bg-void border border-cyan-primary/20 overflow-hidden flex items-center justify-center min-h-[200px]">
+                  <div className="bg-bg-void border boarder-cyan-primary/20 overflow-hidden flex items-center justify-center min-h-[200px]">
                     <canvas ref={stereoCanvasRef} className="max-w-full h-auto block" />
                   </div>
 

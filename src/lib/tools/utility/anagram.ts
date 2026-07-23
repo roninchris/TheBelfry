@@ -144,6 +144,118 @@ function solveExact(input: string, dicts: Dict[]): Candidate[] {
     .sort((a, b) => (a.word < b.word ? -1 : a.word > b.word ? 1 : 0));
 }
 
+/**
+ * Multi-word phrase anagrams: every way to spell the input using one OR MORE
+ * dictionary words that together consume exactly the input letters ("stlunei"
+ * -> "UTENSIL", "LET IN US"). A single-word solution is just a one-word phrase,
+ * so this subsumes exact mode when maxWords ≥ 1.
+ *
+ * Approach: collect the words that individually fit the input multiset, then
+ * DFS over them, subtracting letter counts, emitting whenever nothing is left.
+ * Selecting words in non-decreasing index order counts each word-set once
+ * instead of once per ordering. A step budget guards against a long input with
+ * many short candidates exploding.
+ */
+function solvePhrases(
+  input: string,
+  dicts: Dict[],
+  minWordLength: number,
+  maxWords: number,
+): { candidates: Candidate[]; bailed: boolean } {
+  const target = letterCounts(input);
+  const totalLetters = input.length;
+
+  // Candidate pool: distinct fitting words. One reusable scratch vector keeps
+  // this a single allocation-light pass over the (large) dictionaries.
+  const scratch = new Int16Array(26);
+  const seen = new Set<string>();
+  const rawWords: string[] = [];
+  const rawCounts: Int16Array[] = [];
+  const rawLens: number[] = [];
+  for (const dict of dicts) {
+    for (const w of dict.words) {
+      const len = w.length;
+      if (len < minWordLength || len > totalLetters || seen.has(w)) continue;
+      let fits = true;
+      for (let j = 0; j < len; j++) {
+        const idx = w.charCodeAt(j) - 97;
+        if (++scratch[idx] > target[idx]) fits = false;
+      }
+      if (fits) {
+        seen.add(w);
+        rawWords.push(w);
+        rawCounts.push(scratch.slice());
+        rawLens.push(len);
+      }
+      for (let j = 0; j < len; j++) scratch[w.charCodeAt(j) - 97] = 0; // reset touched letters
+    }
+  }
+
+  // Longer words first so fewer-word phrases surface first; then alphabetical.
+  const order = rawWords
+    .map((_, i) => i)
+    .sort((a, b) => rawLens[b] - rawLens[a] || (rawWords[a] < rawWords[b] ? -1 : 1));
+  const words = order.map((i) => rawWords[i]);
+  const counts = order.map((i) => rawCounts[i]);
+  const lens = order.map((i) => rawLens[i]);
+  const n = words.length;
+
+  const remaining = Int16Array.from(target);
+  const path: string[] = [];
+  const phrases: string[] = [];
+  const BUDGET = 400000;
+  const GATHER = MAX_RESULTS * 4;
+  let steps = 0;
+  let bailed = false;
+
+  const dfs = (startIdx: number, remCount: number, wordsLeft: number): void => {
+    if (remCount === 0) {
+      phrases.push(path.join(" ").toUpperCase());
+      return;
+    }
+    if (wordsLeft === 0) return;
+    for (let i = startIdx; i < n; i++) {
+      if (++steps > BUDGET) {
+        bailed = true;
+        return;
+      }
+      if (lens[i] > remCount) continue;
+      const c = counts[i];
+      let fits = true;
+      for (let k = 0; k < 26; k++) {
+        if (c[k] > remaining[k]) {
+          fits = false;
+          break;
+        }
+      }
+      if (!fits) continue;
+      for (let k = 0; k < 26; k++) remaining[k] -= c[k];
+      path.push(words[i]);
+      dfs(i, remCount - lens[i], wordsLeft - 1);
+      path.pop();
+      for (let k = 0; k < 26; k++) remaining[k] += c[k];
+      if (bailed || phrases.length >= GATHER) return;
+    }
+  };
+  dfs(0, totalLetters, maxWords);
+
+  // Fewer words first (single-word anagrams, then 2-word, …), then alphabetical.
+  const seenP = new Set<string>();
+  const candidates: Candidate[] = [];
+  for (const p of phrases) {
+    if (seenP.has(p)) continue;
+    seenP.add(p);
+    candidates.push({ word: p, langs: [] });
+  }
+  candidates.sort((a, b) => {
+    const wa = a.word.split(" ").length;
+    const wb = b.word.split(" ").length;
+    return wa - wb || (a.word < b.word ? -1 : a.word > b.word ? 1 : 0);
+  });
+
+  return { candidates, bailed };
+}
+
 function solveSubwords(input: string, dicts: Dict[], minLength: number): Candidate[] {
   const available = letterCounts(input);
   const byWord = new Map<string, Set<string>>();
@@ -193,13 +305,19 @@ function resolveLanguages(options?: ToolOptions): LangCode[] {
 function formatOutput(
   input: string,
   candidates: Candidate[],
-  mode: "exact" | "subwords",
+  mode: "exact" | "subwords" | "phrase",
   minLength: number,
+  maxWords: number,
   sourceLabel: string,
   showTags: boolean,
 ): string {
   const upper = input.toUpperCase();
-  const modeLabel = mode === "exact" ? "EXACT ANAGRAMS" : `SUBWORDS (MIN ${minLength})`;
+  const modeLabel =
+    mode === "exact"
+      ? "EXACT ANAGRAMS"
+      : mode === "phrase"
+        ? `PHRASE ANAGRAMS (≤${maxWords} WORDS)`
+        : `SUBWORDS (MIN ${minLength})`;
 
   const header = [
     `▓ ANAGRAM SOLVER · ${modeLabel}`,
@@ -210,9 +328,11 @@ function formatOutput(
     const reason =
       mode === "exact"
         ? "No dictionary word is an exact rearrangement of these letters."
-        : "No dictionary word can be spelled from these letters.";
+        : mode === "phrase"
+          ? "No combination of dictionary words uses exactly these letters."
+          : "No dictionary word can be spelled from these letters.";
     header.push(`▪ NO MATCHES · ${reason}`);
-    if (mode === "exact") header.push("▪ Try SUBWORDS mode, or switch language / paste a custom dictionary.");
+    if (mode === "exact") header.push("▪ Try PHRASE or SUBWORDS mode, or switch language / paste a custom dictionary.");
     return header.join("\n");
   }
 
@@ -239,9 +359,21 @@ function solve(text: string, options?: ToolOptions): string {
     return "▓ ANAGRAM SOLVER\n▪ NO LETTERS · Enter letters (A–Z) to unscramble.";
   }
 
-  const mode = options?.mode === "subwords" ? "subwords" : "exact";
+  const mode: "exact" | "subwords" | "phrase" =
+    options?.mode === "subwords" ? "subwords" : options?.mode === "phrase" ? "phrase" : "exact";
   const rawMin = Number(options?.minLength);
-  const minLength = Number.isFinite(rawMin) && rawMin >= 2 ? Math.floor(rawMin) : 3;
+  const minLength = Number.isFinite(rawMin) && rawMin >= 2 ? Math.floor(rawMin) : 2;
+  const rawMax = Number(options?.maxWords);
+  const maxWords = Number.isFinite(rawMax) && rawMax >= 1 ? Math.min(8, Math.floor(rawMax)) : 3;
+
+  // Run the active mode against a set of dictionaries; only phrase mode can bail.
+  const run = (dicts: Dict[]): { candidates: Candidate[]; bailed: boolean } => {
+    if (mode === "phrase") return solvePhrases(input, dicts, minLength, maxWords);
+    if (mode === "subwords") return { candidates: solveSubwords(input, dicts, minLength), bailed: false };
+    return { candidates: solveExact(input, dicts), bailed: false };
+  };
+  const BAIL_NOTE =
+    "\n\n▪ SEARCH CAPPED · Too many combinations — raise the minimum word length or lower max words for a complete sweep.";
 
   // A custom dictionary overrides the language selection entirely.
   const customRaw = typeof options?.dictionary === "string" ? options.dictionary.trim() : "";
@@ -259,8 +391,9 @@ function solve(text: string, options?: ToolOptions): string {
       return "▓ ANAGRAM SOLVER\n▪ EMPTY DICTIONARY · The custom dictionary contained no usable words.";
     }
     const dicts: Dict[] = [{ code: "CUSTOM", name: "Custom Dictionary", words }];
-    const candidates = mode === "exact" ? solveExact(input, dicts) : solveSubwords(input, dicts, minLength);
-    return formatOutput(input, candidates, mode, minLength, "CUSTOM DICTIONARY", false);
+    const { candidates, bailed } = run(dicts);
+    const out = formatOutput(input, candidates, mode, minLength, maxWords, "CUSTOM DICTIONARY", false);
+    return bailed ? out + BAIL_NOTE : out;
   }
 
   const codes = resolveLanguages(options);
@@ -291,8 +424,9 @@ function solve(text: string, options?: ToolOptions): string {
   const sourceLabel = codes.length === 1 ? `${LANG_META[codes[0]].name.toUpperCase()} DICTIONARY` : "ALL LANGUAGES";
   const showTags = codes.length > 1;
 
-  const candidates = mode === "exact" ? solveExact(input, dicts) : solveSubwords(input, dicts, minLength);
-  return formatOutput(input, candidates, mode, minLength, sourceLabel, showTags);
+  const { candidates, bailed } = run(dicts);
+  const out = formatOutput(input, candidates, mode, minLength, maxWords, sourceLabel, showTags);
+  return bailed ? out + BAIL_NOTE : out;
 }
 
 export function anagramEncode(text: string, options?: ToolOptions): TransformOutput {

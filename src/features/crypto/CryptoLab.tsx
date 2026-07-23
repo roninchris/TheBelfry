@@ -759,7 +759,7 @@ export default function CryptoLab() {
       </div>
 
       {/* ================= CENTER COLUMN: BUFFER & CONTROLS ================= */}
-      <RegistrationFrame className="col-span-12 xl:col-span-5 flex flex-col p-2 bg-bg-void/10 border border-cyan-primary/10 relative overflow-hidden" glow={true}>
+      <RegistrationFrame className="col-span-12 xl:col-span-5 flex flex-col p-2 bg-bg-void/10 border border-cyan-primary/10 relative overflow-hidden" contentClassName="flex flex-col min-h-0" glow={true}>
         <VignetteBackdrop intensity="medium" className="z-0" />
         
         {/* `flex-1 min-h-0`, no `h-full`: h-full resolved against the frame's
@@ -894,7 +894,7 @@ export default function CryptoLab() {
                 </button>
               </div>
 
-              <div className="w-full flex-1 bg-bg-void/40 border border-border-hairline/15 p-3.5 font-mono text-[14px] md:text-sm leading-relaxed text-text-primary overflow-y-auto scrollbar-thin">
+              <div className="w-full flex-1 min-h-0 bg-bg-void/40 border border-border-hairline/15 p-3.5 font-mono text-[14px] md:text-sm leading-relaxed text-text-primary overflow-y-auto scrollbar-thin">
                 {outputText ? (
                   <div className="space-y-4 select-text">
                     <HeroStat
