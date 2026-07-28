@@ -50,6 +50,206 @@ export function decodeMessage(
   }
 }
 
+// ---------------------------------------------------------------------------
+// steganography.js / stylesuxx-compatible alpha-channel extraction
+// ---------------------------------------------------------------------------
+
+function nextPrime(n: number): number {
+  const isPrime = (x: number) => {
+    if (x < 2) return false;
+    if (x % 2 === 0) return x === 2;
+    for (let i = 3; i * i <= x; i += 2) if (x % i === 0) return false;
+    return true;
+  };
+  let c = n;
+  while (!isPrime(c)) c += 1;
+  return c;
+}
+
+/**
+ * Pulls URLs out of a noisy decoded string. The reconstructed payload from an
+ * alpha-channel stego carrier is typically a short readable core followed by a
+ * long run of 0xFF padding (the "Ã¿" wall). A URL is made only of characters in
+ * the RFC 3986 set, so this regex halts cleanly at the first padding byte and
+ * lifts the link out of the surrounding garbage â€” the thing users actually want.
+ */
+export function extractUrls(raw: string): string[] {
+  const matches = raw.match(/https?:\/\/[A-Za-z0-9\-._~:/?#[\]@!$&'()*+,;=%]+/gi);
+  if (!matches) return [];
+  // Trim trailing punctuation that regex greedily grabbed, and dedupe.
+  const cleaned = matches.map((u) => u.replace(/[.,;:!)]+$/, ""));
+  return Array.from(new Set(cleaned));
+}
+
+/**
+ * Reduces a raw decoded stego payload to its readable core. Strips control
+ * bytes, collapses any run of a single repeated character longer than 6 (the
+ * padding wall), and trims. Returns "" when nothing legible survives.
+ */
+export function cleanStegPayload(raw: string): string {
+  if (!raw) return "";
+  // Keep only printable ASCII (plus tab/newline). An alpha reconstruction past
+  // the real payload decodes to a wall of 0xFF ("\u00FF") padding and, where the
+  // padding value overflows the code range, to high-codepoint junk (\u6DB4\uB6DB\u2026);
+  // this strips both while preserving readable text and URLs.
+  let s = raw.replace(/[^\x09\x0A\x20-\x7E]+/g, " ");
+  // Collapse any run of a single repeated character (6+) \u2014 the padding wall.
+  s = s.replace(/(.)\1{5,}/g, " ");
+  // Squeeze whitespace.
+  s = s.replace(/\s{2,}/g, " ").trim();
+  return s;
+}
+
+/**
+ * True when a decoded string is repetitive filler rather than a real message.
+ * A UNIFORM alpha channel (an image with no hidden payload) reconstructs to a
+ * single symbol tiled over and over — "mmmm" or "m m m m m" — which must not be
+ * surfaced as a finding. A genuine payload has varied characters and is not
+ * dominated by one symbol. URLs are checked separately and bypass this.
+ */
+export function isLowVarietyNoise(text: string): boolean {
+  const compact = text.replace(/\s+/g, "");
+  if (compact.length < 4) return true;
+  const freq = new Map<string, number>();
+  for (const ch of compact) freq.set(ch, (freq.get(ch) ?? 0) + 1);
+  // Two or fewer distinct glyphs is never a real message.
+  if (freq.size <= 2) return true;
+  // A real message is never more than half one repeated symbol.
+  const maxFreq = Math.max(...freq.values());
+  return maxFreq / compact.length > 0.5;
+}
+
+/**
+ * Exact decoder for the scheme used by stylesuxx.github.io/steganography
+ * (per script.js in the stylesuxx/steganography repo). The message lives in the
+ * LSBs of the RGB channels — ALPHA is never touched — read pixel by pixel in row
+ * order as R, G, B, R, G, B…, with every 8 bits forming one byte MSB-first
+ * (`c = (c << 1) | bit`, exactly matching the site's decode loop).
+ *
+ * The site's encoder first clears every RGB LSB to 0, so the payload is followed
+ * by a run of NUL bytes; we stop the reconstruction once a sustained NUL run
+ * appears and then lift out any URL / readable core. This is the primary decode
+ * for "I hid it with that website" — it is what recovers the YouTube link.
+ *
+ * @returns the recovered payload, or null if nothing legible is found
+ */
+export function decodeStylesuxx(
+  canvas: HTMLCanvasElement
+): { text: string; urls: string[] } | null {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  const maxBytes = 20000; // ample for a hidden note or link
+  let out = "";
+  let bitBuf = 0;
+  let bitCount = 0;
+  let nulRun = 0;
+  for (let i = 0; i < data.length && out.length < maxBytes; i += 4) {
+    for (let off = 0; off < 3; off += 1) {
+      // Read the LSB of R, then G, then B (alpha at i+3 is skipped), packing
+      // MSB-first — the inverse of the site's encoder.
+      bitBuf = (bitBuf << 1) | (data[i + off] & 1);
+      bitCount += 1;
+      if (bitCount === 8) {
+        const c = bitBuf & 0xff;
+        bitBuf = 0;
+        bitCount = 0;
+        if (c === 0) {
+          // The nulled tail after the message: 8 NUL bytes ends the payload.
+          nulRun += 1;
+          if (nulRun >= 8) {
+            i = data.length;
+            break;
+          }
+        } else {
+          nulRun = 0;
+          out += String.fromCharCode(c);
+        }
+      }
+    }
+  }
+
+  const urls = extractUrls(out);
+  const cleaned = cleanStegPayload(out);
+  if (!urls.length && (cleaned.length < 4 || isLowVarietyNoise(cleaned))) return null;
+  const joined = urls.join(" ");
+  const text = urls.length
+    ? urls.join("\n") + (cleaned && cleaned !== joined ? `\n\n${cleaned}` : "")
+    : cleaned;
+  return { text, urls };
+}
+
+/**
+ * Secondary decode for the OTHER common JS library — Peter Eigenschink's
+ * steganography.js — which instead hides in the ALPHA channel with a `t`-bit /
+ * `codeUnitSize` scheme. Kept as a fallback for carriers made with that library
+ * rather than the stylesuxx site. Reads the whole alpha stream and reconstructs
+ * across the common parameter set, returning the cleaned core plus any URL.
+ *
+ * @returns the best readable candidate, or null if nothing legible is found
+ */
+export function decodeStegJs(
+  canvas: HTMLCanvasElement
+): { text: string; urls: string[]; codeUnitSize: number; t: number } | null {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  // Reading the entire alpha channel is enough to expose the payload; cap the
+  // sample count so a large carrier stays responsive (a hidden note or link is
+  // short and always sits at the front of the stream).
+  const maxSamples = Math.min(data.length / 4, 60000);
+
+  const reconstruct = (t: number, codeUnitSize: number): string => {
+    const prime = nextPrime(1 << t);
+    const offset = 255 - prime + 1;
+    const mask = (1 << codeUnitSize) - 1;
+    let message = "";
+    let charCode = 0;
+    let bitCount = 0;
+    for (let s = 0; s < maxSamples; s += 1) {
+      let v = data[s * 4 + 3] - offset; // alpha channel
+      if (v < 0) v = 0; // untouched (original) alpha sits above the payload range
+      charCode += v << bitCount;
+      bitCount += t;
+      if (bitCount >= codeUnitSize) {
+        message += String.fromCharCode(charCode & mask);
+        bitCount %= codeUnitSize;
+        charCode = v >> (t - bitCount);
+      }
+    }
+    return message;
+  };
+
+  let best: { text: string; urls: string[]; codeUnitSize: number; t: number; score: number } | null = null;
+
+  // stylesuxx defaults are t=3, codeUnitSize=16, but sweep the practical set so
+  // a carrier written with 8-bit code units or a different bit depth still reads.
+  for (const codeUnitSize of [16, 8] as const) {
+    for (const t of [3, 1, 2, 4]) {
+      const raw = reconstruct(t, codeUnitSize);
+      const urls = extractUrls(raw);
+      const cleaned = cleanStegPayload(raw);
+      // No URL and no legible, varied text — this parameter set found nothing.
+      // A uniform (payload-free) alpha channel tiles one symbol ("m m m m…"),
+      // which isLowVarietyNoise rejects so it never surfaces as a finding.
+      if (!urls.length && (cleaned.length < 4 || isLowVarietyNoise(cleaned))) continue;
+      // A recovered URL is decisive; otherwise score the readable core.
+      const score = (urls.length ? 1000 : 0) + scoreDecodedPlaintext(cleaned) + cleaned.length * 0.01;
+      if (!best || score > best.score) {
+        const text = urls.length
+          ? urls.join("\n") + (cleaned && cleaned !== urls.join(" ") ? `\n\n${cleaned}` : "")
+          : cleaned;
+        best = { text, urls, codeUnitSize, t, score };
+      }
+    }
+  }
+
+  if (!best) return null;
+  return { text: best.text, urls: best.urls, codeUnitSize: best.codeUnitSize, t: best.t };
+}
+
 /**
  * Load an image from a file and return it as a canvas
  * @param file - Image file to load
@@ -118,7 +318,7 @@ export function decodeRgbLsb(canvas: HTMLCanvasElement): StegoSweepResult[] {
   };
 
   // Scores on real English-plaintext heuristics (space/vowel ratio, dictionary hits) rather than
-  // raw "printable ratio" — bytesToText() below only ever returns strings it has already filtered
+  // raw "printable ratio" â€” bytesToText() below only ever returns strings it has already filtered
   // down to printable characters, so a printable-ratio-based score is structurally guaranteed to
   // sit near 1.0 for *any* short coincidental run of noise that happens to land in ASCII range,
   // which is exactly what was producing high-confidence false positives on real images.
@@ -137,11 +337,11 @@ export function decodeRgbLsb(canvas: HTMLCanvasElement): StegoSweepResult[] {
       }
     }
 
-    if (result.length >= 6) {
-      const uniqueChars = new Set(result.split(""));
-      if (uniqueChars.size > 1 && !/^[\s]+$/.test(result)) {
-        return result;
-      }
+    // Require real variety: reject all-whitespace and repetitive filler like
+    // "m m m m" that a flat channel yields (isLowVarietyNoise catches ≤2-glyph
+    // and single-symbol-dominated runs the old size>1 check let through).
+    if (result.length >= 6 && !/^[\s]+$/.test(result) && !isLowVarietyNoise(result)) {
+      return result;
     }
     return null;
   };
@@ -153,6 +353,16 @@ export function decodeRgbLsb(canvas: HTMLCanvasElement): StegoSweepResult[] {
       result[i] = bytes[i] ^ keyBytes[i % keyBytes.length];
     }
     return result;
+  };
+
+  // True when `text` is mostly `key` tiled over and over (e.g. "THERETHERETHERE"
+  // or "P(FRETHERETHERE"), which is what XOR against a near-constant plane
+  // yields. Removing the key leaves little behind. The check is case-sensitive
+  // and the wordlist is uppercase, so a real lowercase message that merely
+  // contains the word is not affected.
+  const isRepeatedKey = (text: string, key: string): boolean => {
+    const stripped = text.split(key).join("").replace(/\s+/g, "");
+    return stripped.length < text.length * 0.5;
   };
 
   const results: StegoSweepResult[] = [];
@@ -206,7 +416,7 @@ export function decodeRgbLsb(canvas: HTMLCanvasElement): StegoSweepResult[] {
         // "lsb-first" treats the first sampled bit as bit 0 of the byte; "msb-first" treats it as
         // bit 7. Real-world LSB encoders split roughly evenly between these two conventions, and
         // testing only one (as this sweep previously did) silently misses every message written
-        // with the other — it doesn't fail loudly, it just reconstructs plausible-looking noise.
+        // with the other â€” it doesn't fail loudly, it just reconstructs plausible-looking noise.
         const packLsbFirst = (): Uint8Array => {
           const out = new Uint8Array(byteCount);
           for (let i = 0; i < byteCount; i++) {
@@ -242,22 +452,33 @@ export function decodeRgbLsb(canvas: HTMLCanvasElement): StegoSweepResult[] {
             });
           }
 
-          // Try XOR Decode with Wordlist
-          for (const key of DEFAULT_WORDLIST.slice(0, 30)) {
-            const xored = xorBytes(rawBytes, key);
-            const xorText = bytesToText(xored);
-            if (xorText) {
-              const confidence = calculateConfidence(xorText);
-              if (confidence > 0.4) {
-                results.push({
-                  bitPlane: plane,
-                  channelOrder: perm.name.toUpperCase(),
-                  direction: dir,
-                  bitOrder,
-                  decodedText: xorText,
-                  confidence,
-                  xorKey: key
-                });
+          // Try XOR Decode with Wordlist.
+          // Skip near-constant planes: XOR of a constant byte with a key just
+          // echoes the key, which produced phantom hits like "THERETHERETHERE"
+          // (the word "THERE" is in the wordlist) on flat/saturated regions.
+          const distinctBytes = new Set(rawBytes.slice(0, 512)).size;
+          if (distinctBytes > 2) {
+            for (const key of DEFAULT_WORDLIST.slice(0, 30)) {
+              const xored = xorBytes(rawBytes, key);
+              const xorText = bytesToText(xored);
+              // Reject output that is just the key repeated (the constant-plane
+              // failure mode above, in case a plane is only mostly-constant).
+              if (xorText && !isRepeatedKey(xorText, key)) {
+                const confidence = calculateConfidence(xorText);
+                // High bar: XOR-against-wordlist is speculative and prone to
+                // spelling short dictionary words out of noise, so only surface
+                // genuinely strong plaintext.
+                if (confidence > 0.75) {
+                  results.push({
+                    bitPlane: plane,
+                    channelOrder: perm.name.toUpperCase(),
+                    direction: dir,
+                    bitOrder,
+                    decodedText: xorText,
+                    confidence,
+                    xorKey: key
+                  });
+                }
               }
             }
           }
@@ -416,13 +637,39 @@ export async function detectHiddenMessageInFile(
 ): Promise<StegoForensicResult[]> {
   const results: StegoForensicResult[] = [];
 
-  // 1. Vendor steganography.js detection
-  const alphaMsg = decodeMessage(canvas);
-  if (alphaMsg && alphaMsg.trim().length > 0) {
+  // 1. Hidden-message detection, in order of specificity.
+  //  (a) stylesuxx.github.io/steganography — RGB-LSB, MSB-first. This is the
+  //      exact scheme behind "I hid it with that website"; tried FIRST so the
+  //      real payload (e.g. a YouTube link) always ranks at the top.
+  //  (b) steganography.js (Eigenschink) — the ALPHA-channel variant.
+  //  (c) the vendored reference decoder's raw output, cleaned.
+  const styleSuxx = decodeStylesuxx(canvas);
+  const stegJs = decodeStegJs(canvas);
+  const vendorRaw = decodeMessage(canvas);
+  const vendorCleanUrls = vendorRaw ? extractUrls(vendorRaw) : [];
+  const vendorClean = vendorRaw ? cleanStegPayload(vendorRaw) : "";
+
+  if (styleSuxx) {
     results.push({
       type: "Vendor",
-      decodedText: alphaMsg,
-      confidence: 1.0 // High confidence if it matches vendor's exact pattern
+      decodedText: styleSuxx.text,
+      confidence: styleSuxx.urls.length > 0 ? 1.0 : 0.92
+    });
+  }
+  if (stegJs && (stegJs.urls.length > 0 || (stegJs.text.length >= 4 && !isLowVarietyNoise(stegJs.text)))) {
+    results.push({
+      type: "Vendor",
+      decodedText: stegJs.text,
+      confidence: stegJs.urls.length > 0 ? 0.98 : 0.9
+    });
+  } else if (vendorCleanUrls.length > 0 || (vendorClean.length >= 4 && !isLowVarietyNoise(vendorClean))) {
+    const text = vendorCleanUrls.length > 0
+      ? vendorCleanUrls.join("\n") + (vendorClean ? `\n\n${vendorClean}` : "")
+      : vendorClean;
+    results.push({
+      type: "Vendor",
+      decodedText: text,
+      confidence: vendorCleanUrls.length > 0 ? 0.98 : 0.85
     });
   }
 
