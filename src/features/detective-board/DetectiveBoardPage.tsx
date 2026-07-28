@@ -28,6 +28,7 @@ import BlurText from "../../components/react-bits/BlurText";
 import SplitText from "../../components/react-bits/SplitText";
 import DataWall from "../../components/ui/DataWall";
 import { detectCoordinates, formatDecimal, formatDMS } from "../../lib/geo/coordinates";
+import { compressBoardImage } from "../../lib/image/compressBoardImage";
 import {
   Network,
   Plus,
@@ -50,7 +51,10 @@ import {
   Pencil,
   MoveDiagonal2,
   Crosshair,
-  Map as MapIcon
+  Map as MapIcon,
+  MousePointer2,
+  ArrowUpRight,
+  Type as TypeIcon
 } from "lucide-react";
 
 // Default card footprint per evidence type, used whenever a node has no explicit width/height
@@ -61,8 +65,43 @@ const DEFAULT_NODE_SIZE: Record<EvidenceNode["type"], { width: number; height: n
   photo: { width: 240, height: 220 },
   text: { width: 210, height: 150 },
   link: { width: 210, height: 120 },
-  file: { width: 210, height: 120 }
+  file: { width: 210, height: 120 },
+  // Free board elements. For an arrow, width/height are the signed delta to the
+  // tip (the default points down-right); for a label they are the text box.
+  arrow: { width: 160, height: 90 },
+  label: { width: 200, height: 52 }
 };
+
+/**
+ * Themed palette for free board elements (arrows and text labels).
+ *
+ * Literal hex on purpose — these are deliberate per-element choices the operative
+ * makes, not theme tokens, so they must stay fixed across theme switches. The
+ * cyan/amber/red/blue/pink values echo the HUD accent and the four knight sigils
+ * so a drawn arrow always reads as part of the Batcomputer palette.
+ */
+const BOARD_ELEMENT_COLORS: { key: string; hex: string; label: string }[] = [
+  { key: "cyan", hex: "#09efaf", label: "Signal Cyan" },
+  { key: "amber", hex: "#ffd12e", label: "Alert Amber" },
+  { key: "red", hex: "#ff3b4e", label: "Threat Red" },
+  { key: "blue", hex: "#2f6dff", label: "Nightwing Blue" },
+  { key: "pink", hex: "#ff9ee5", label: "Batgirl Pink" },
+  { key: "green", hex: "#3ef07a", label: "Verified Green" },
+  { key: "violet", hex: "#b06dff", label: "Cipher Violet" }
+];
+
+/** Resolves a stored element color key (or legacy hex) to a hex string. */
+function elementHex(color: string | undefined): string {
+  if (!color) return BOARD_ELEMENT_COLORS[0].hex;
+  if (color.startsWith("#")) return color;
+  return BOARD_ELEMENT_COLORS.find((c) => c.key === color)?.hex ?? BOARD_ELEMENT_COLORS[0].hex;
+}
+
+/** A label's font size scales with its box so resizing the box resizes the text. */
+function labelFontSize(node: EvidenceNode): number {
+  const h = node.height ?? DEFAULT_NODE_SIZE.label.height;
+  return Math.max(11, Math.min(64, Math.round(h * 0.42)));
+}
 const MIN_NODE_WIDTH = 150;
 // Below this the body area collapses to nothing and the card is all chrome.
 const MIN_NODE_HEIGHT = 110;
@@ -161,6 +200,10 @@ export default function DetectiveBoardPage() {
   const activeCase = cases.find(c => c.id === activeCaseId);
   const boardNodes = evidenceNodes.filter(n => n.caseId === activeCaseId);
   const boardConnections = evidenceConnections.filter(c => c.caseId === activeCaseId);
+  // Split the free elements out of the clue cards — each renders in its own layer.
+  const cardNodes = boardNodes.filter(n => n.type !== "arrow" && n.type !== "label");
+  const arrowNodes = boardNodes.filter(n => n.type === "arrow");
+  const labelNodes = boardNodes.filter(n => n.type === "label");
 
   // Hover, relationship and motion settings
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
@@ -181,6 +224,40 @@ export default function DetectiveBoardPage() {
       playCloseFile();
     }
   }, [activeCaseId]);
+
+  // Free-element authoring: the active tool, the chosen palette color, the
+  // currently-selected element (for handles/delete), and the live arrow being
+  // drawn (a local-only preview until pointer-up commits it as a node).
+  const [activeTool, setActiveTool] = useState<"select" | "arrow" | "label">("select");
+  const [activeColor, setActiveColor] = useState<string>(BOARD_ELEMENT_COLORS[0].key);
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [drawingArrow, setDrawingArrow] = useState<
+    { x1: number; y1: number; x2: number; y2: number } | null
+  >(null);
+
+  // Board keyboard shortcuts: Escape drops the active tool and any selection;
+  // Delete/Backspace removes the selected free element (arrow/label). Both bow
+  // out while typing so they never eat a keystroke in an input.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement;
+      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || (el as HTMLElement).isContentEditable);
+      if (e.key === "Escape") {
+        setActiveTool("select");
+        setSelectedElementId(null);
+        setDrawingArrow(null);
+        return;
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && !typing && selectedElementId) {
+        e.preventDefault();
+        deleteEvidenceNode(selectedElementId);
+        setSelectedElementId(null);
+        playUnpinTear();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedElementId, deleteEvidenceNode]);
 
   const relatedNodeIds = React.useMemo(() => {
     if (!hoveredNodeId) return new Set<string>();
@@ -289,26 +366,107 @@ export default function DetectiveBoardPage() {
     setShowNewCaseModal(false);
   };
 
+  // Screen point → canvas coordinates, undoing the current pan and zoom.
+  const clientToCanvas = (clientX: number, clientY: number) => {
+    const rect = workspaceRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    return {
+      x: (clientX - rect.left - pan.x) / zoom,
+      y: (clientY - rect.top - pan.y) / zoom
+    };
+  };
+
+  // Arrow tool: press-drag on the canvas draws a directional arrow from the
+  // press point to the release point. A local preview follows the pointer, and
+  // only pointer-up commits it as a node (so no half-drawn arrow is persisted).
+  const startDrawingArrow = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = clientToCanvas(e.clientX, e.clientY);
+    setDrawingArrow({ x1: start.x, y1: start.y, x2: start.x, y2: start.y });
+
+    const move = (ev: PointerEvent) => {
+      const p = clientToCanvas(ev.clientX, ev.clientY);
+      setDrawingArrow((d) => (d ? { ...d, x2: p.x, y2: p.y } : d));
+    };
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      const end = clientToCanvas(ev.clientX, ev.clientY);
+      let dx = end.x - start.x;
+      let dy = end.y - start.y;
+      // A click without a real drag gets a default arrow so the tool never
+      // produces a zero-length, invisible element.
+      if (Math.hypot(dx, dy) < 12) {
+        dx = DEFAULT_NODE_SIZE.arrow.width;
+        dy = DEFAULT_NODE_SIZE.arrow.height;
+      }
+      const id = addEvidenceNode({
+        type: "arrow",
+        content: "",
+        title: "",
+        x: start.x,
+        y: start.y,
+        width: dx,
+        height: dy,
+        color: activeColor
+      });
+      setDrawingArrow(null);
+      setSelectedElementId(id || null);
+      setActiveTool("select");
+      playPinClick();
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  // Text tool: a click drops a chrome-less label and opens it for editing.
+  const createLabelAt = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = clientToCanvas(e.clientX, e.clientY);
+    const { width, height } = DEFAULT_NODE_SIZE.label;
+    const id = addEvidenceNode({
+      type: "label",
+      content: "",
+      title: "",
+      x: p.x - width / 2,
+      y: p.y - height / 2,
+      width,
+      height,
+      color: activeColor
+    });
+    if (id) {
+      setSelectedElementId(id);
+      setEditingNodeId(id);
+      setEditingText("");
+    }
+    setActiveTool("select");
+    playPinClick();
+  };
+
   // Dragging Canvas background
   const handleBgPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     // If clicking a context menu, a button, input, or inside a node card, do not start panning
     const target = e.target as HTMLElement;
     if (
-      target.closest(".nocanvasdrag") || 
-      target.closest(".group") || 
-      target.closest("button") || 
-      target.closest("input") || 
-      target.closest("textarea") || 
+      target.closest(".nocanvasdrag") ||
+      target.closest(".group") ||
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("textarea") ||
       target.closest("a")
     ) {
       return;
     }
-    if (e.button !== 0) return; // Only left-click pans
-    
+    if (e.button !== 0) return; // Only left-click pans / draws
+
+    // With a drawing tool active, a canvas press authors an element instead of
+    // panning. Clicking empty canvas with the select tool clears any selection.
+    if (activeTool === "arrow") { startDrawingArrow(e); return; }
+    if (activeTool === "label") { createLabelAt(e); return; }
+    setSelectedElementId(null);
+
     setIsPanning(true);
     setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     e.currentTarget.setPointerCapture(e.pointerId);
-    
+
     // Close menus
     setBgMenu(null);
     setNodeMenu(null);
@@ -446,6 +604,82 @@ export default function DetectiveBoardPage() {
     window.addEventListener("pointerup", handlePointerUp);
   };
 
+  // Drag handler for free elements (arrows and labels). `mode` selects what the
+  // gesture edits: "move" slides the whole element; "start"/"end" drag an arrow's
+  // tail or tip. Position/size are memory-only during the drag and persisted on
+  // release, mirroring the card drag/resize contract.
+  const startElementDrag = (
+    e: React.PointerEvent,
+    nodeId: string,
+    mode: "move" | "start" | "end"
+  ) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const node = boardNodes.find((n) => n.id === nodeId);
+    if (!node) return;
+
+    setSelectedElementId(nodeId);
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const n0 = { x: node.x, y: node.y, w: node.width ?? 0, h: node.height ?? 0 };
+    setDraggingNode(nodeId);
+    setDraggingNodeId(nodeId);
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const dx = (moveEvent.clientX - startX) / zoom;
+      const dy = (moveEvent.clientY - startY) / zoom;
+      if (mode === "move") {
+        updateEvidenceNodePosition(nodeId, n0.x + dx, n0.y + dy);
+        broadcastDrag(nodeId, n0.x + dx, n0.y + dy);
+      } else if (mode === "start") {
+        // Tail moves; tip stays put, so the delta shrinks by the same amount.
+        updateEvidenceNodePosition(nodeId, n0.x + dx, n0.y + dy);
+        resizeEvidenceNode(nodeId, n0.w - dx, n0.h - dy);
+      } else {
+        resizeEvidenceNode(nodeId, n0.w + dx, n0.h + dy);
+      }
+    };
+
+    const handlePointerUp = () => {
+      setDraggingNode(null);
+      setDraggingNodeId(null);
+      commitEvidenceNode(nodeId);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  };
+
+  // Resize handle for a text label — scales the box (and, via labelFontSize, the
+  // text) from the bottom-right corner, with a smaller floor than clue cards.
+  const startLabelResize = (e: React.PointerEvent, nodeId: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const node = boardNodes.find((n) => n.id === nodeId);
+    if (!node) return;
+    setSelectedElementId(nodeId);
+    const sx = e.clientX, sy = e.clientY;
+    const w0 = node.width ?? DEFAULT_NODE_SIZE.label.width;
+    const h0 = node.height ?? DEFAULT_NODE_SIZE.label.height;
+    setResizingNodeId(nodeId);
+
+    const move = (ev: PointerEvent) => {
+      const dx = (ev.clientX - sx) / zoom;
+      const dy = (ev.clientY - sy) / zoom;
+      resizeEvidenceNode(nodeId, Math.max(60, Math.round(w0 + dx)), Math.max(28, Math.round(h0 + dy)));
+    };
+    const up = () => {
+      setResizingNodeId(null);
+      commitEvidenceNode(nodeId);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
   // Canvas Right Click Context Menu
   const handleBgContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -564,28 +798,30 @@ export default function DetectiveBoardPage() {
     playPinClick();
   };
 
-  // File uploading for photos
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    // Reset the input so the same file can be re-picked after an error.
-    e.target.value = "";
-
-    const x = (bgMenu?.canvasX) ?? 150;
-    const y = (bgMenu?.canvasY) ?? 150;
-    setBgMenu(null);
+  // Shared photo intake: compress, store, and drop a photo node at a canvas
+  // point. Used by the file picker, the context menu, and drag-and-drop.
+  const addPhotoFromFile = async (file: File, canvasX: number, canvasY: number) => {
+    if (!file.type.startsWith("image/")) {
+      addLog("REJECTED // TARGET IS NOT AN IMAGE CARRIER", "warning", "BOARD");
+      return;
+    }
     setIsUploadingPhoto(true);
-
     try {
+      // Board clues are reference thumbnails, so shrink oversized carriers before
+      // they hit Storage — keeps the shared cloud board light. (The forensics lab
+      // stays byte-exact; this only applies to the board.)
+      const prepared = await compressBoardImage(file);
       // The backend decides what "content" means: a data URL for a guest, or a
       // Storage object path for a knight — the bytes never enter the synced row.
-      const content = await uploadEvidenceImage(file);
+      const content = await uploadEvidenceImage(prepared);
+      // Centre the photo on the drop point rather than hanging it off the corner.
+      const { width, height } = DEFAULT_NODE_SIZE.photo;
       addEvidenceNode({
         type: "photo",
-        title: file.name.toUpperCase(),
+        title: file.name.replace(/\.[^.]+$/, "").toUpperCase(),
         content,
-        x,
-        y,
+        x: canvasX - width / 2,
+        y: canvasY - height / 2,
         color: "cyan"
       });
       playPinClick();
@@ -598,6 +834,66 @@ export default function DetectiveBoardPage() {
       );
     } finally {
       setIsUploadingPhoto(false);
+    }
+  };
+
+  // File-picker path (context menu "Add Photo" / quick-add button).
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset the input so the same file can be re-picked after an error.
+    e.target.value = "";
+
+    const x = (bgMenu?.canvasX) ?? 150;
+    const y = (bgMenu?.canvasY) ?? 150;
+    setBgMenu(null);
+    await addPhotoFromFile(file, x, y);
+  };
+
+  // Drag-and-drop path: an image dragged from the desktop lands exactly where
+  // it is dropped. dragDepth guards against child dragleave events flicking the
+  // overlay off while the pointer is still over the canvas.
+  const [isImageDragOver, setIsImageDragOver] = useState(false);
+  const dragDepth = useRef(0);
+
+  const dropCarriesFiles = (e: React.DragEvent) =>
+    Array.from(e.dataTransfer.types || []).includes("Files");
+
+  const handleImageDragEnter = (e: React.DragEvent) => {
+    if (!activeCaseId || !dropCarriesFiles(e)) return;
+    e.preventDefault();
+    dragDepth.current += 1;
+    setIsImageDragOver(true);
+  };
+
+  const handleImageDragOver = (e: React.DragEvent) => {
+    if (!activeCaseId || !dropCarriesFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleImageDragLeave = (e: React.DragEvent) => {
+    if (!dropCarriesFiles(e)) return;
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setIsImageDragOver(false);
+  };
+
+  const handleImageDrop = async (e: React.DragEvent) => {
+    dragDepth.current = 0;
+    setIsImageDragOver(false);
+    if (!activeCaseId) return;
+    const files = Array.from(e.dataTransfer.files || []).filter((f) => f.type.startsWith("image/"));
+    if (files.length === 0) return;
+    e.preventDefault();
+
+    const rect = workspaceRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const dropCanvasX = (e.clientX - rect.left - pan.x) / zoom;
+    const dropCanvasY = (e.clientY - rect.top - pan.y) / zoom;
+
+    // Multiple images fan out slightly so they don't stack pixel-perfectly.
+    for (let i = 0; i < files.length; i++) {
+      await addPhotoFromFile(files[i], dropCanvasX + i * 24, dropCanvasY + i * 24);
     }
   };
 
@@ -913,13 +1209,17 @@ export default function DetectiveBoardPage() {
       {/* RIGHT: Main Interactive Canvas */}
       <div 
         ref={workspaceRef}
-        className="flex-1 bg-bg-void/45 relative overflow-hidden h-[500px] lg:h-full cursor-grab active:cursor-grabbing border-t lg:border-t-0 border-border-hairline/15"
+        className={`flex-1 bg-bg-void/45 relative overflow-hidden h-[500px] lg:h-full border-t lg:border-t-0 border-border-hairline/15 ${activeTool === "select" ? "cursor-grab active:cursor-grabbing" : "cursor-crosshair"}`}
         onPointerDown={handleBgPointerDown}
         onPointerMove={handleBgPointerMove}
         onPointerUp={handleBgPointerUp}
         onWheel={handleWheel}
         onContextMenu={handleBgContextMenu}
         onDoubleClick={handleBgDoubleClick}
+        onDragEnter={handleImageDragEnter}
+        onDragOver={handleImageDragOver}
+        onDragLeave={handleImageDragLeave}
+        onDrop={handleImageDrop}
       >
         {/* Ambient character field behind the mesh — texture only, and it does
             not pan or scale so it reads as the surface the board sits on. */}
@@ -947,8 +1247,50 @@ export default function DetectiveBoardPage() {
           </div>
         )}
 
+        {/* Floating authoring toolbar — Miro-style tools that sit above the
+            panned/zoomed content so they stay put while the board moves. */}
+        {activeCaseId && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-auto nocanvasdrag flex items-center gap-1.5 bg-bg-void/90 border border-cyan-primary/25 px-2 py-1.5 backdrop-blur-md shadow-[0_0_18px_rgb(var(--rgb-accent)/0.15)]"
+            style={{ clipPath: "polygon(3% 0, 97% 0, 100% 22%, 100% 100%, 0 100%, 0 22%)" }}
+          >
+            {([
+              { id: "select", label: "Select / move", Icon: MousePointer2 },
+              { id: "arrow", label: "Draw arrow", Icon: ArrowUpRight },
+              { id: "label", label: "Add text", Icon: TypeIcon }
+            ] as const).map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                title={label}
+                onClick={() => { playPinClick(); setActiveTool(id); setSelectedElementId(null); }}
+                className={`p-1.5 rounded-sm transition-all ${
+                  activeTool === id
+                    ? "bg-cyan-primary text-bg-void shadow-[0_0_10px_var(--color-accent-primary)]"
+                    : "text-text-dim hover:text-cyan-text hover:bg-cyan-primary/10"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+              </button>
+            ))}
+
+            <div className="w-px h-5 bg-border-hairline/30 mx-0.5" />
+
+            {/* Themed color palette for the next arrow / label */}
+            <div className="flex items-center gap-1">
+              {BOARD_ELEMENT_COLORS.map((c) => (
+                <button
+                  key={c.key}
+                  title={c.label}
+                  onClick={() => { playPinClick(); setActiveColor(c.key); if (selectedElementId) { updateEvidenceNodeContent(selectedElementId, { color: c.key }); } }}
+                  className={`w-4 h-4 rounded-full transition-transform hover:scale-125 ${activeColor === c.key ? "ring-2 ring-offset-1 ring-offset-bg-void" : ""}`}
+                  style={{ backgroundColor: c.hex, boxShadow: `0 0 6px ${c.hex}`, ...(activeColor === c.key ? { ["--tw-ring-color" as any]: c.hex } : {}) }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Dynamic Zoom/Pan Workspace Content Container */}
-        <div 
+        <div
           className="absolute inset-0 origin-top-left pointer-events-none"
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
@@ -1104,9 +1446,152 @@ export default function DetectiveBoardPage() {
             })}
           </svg>
 
+          {/* Free-drawn arrows layer (plus the live drawing preview) */}
+          <svg className="absolute top-0 left-0 w-[5000px] h-[5000px] overflow-visible">
+            {arrowNodes.map((node) => {
+              const hex = elementHex(node.color);
+              const x1 = node.x, y1 = node.y;
+              const x2 = node.x + (node.width ?? 0), y2 = node.y + (node.height ?? 0);
+              const ang = Math.atan2(y2 - y1, x2 - x1);
+              const headLen = 16, headHalf = 9;
+              const bx = x2 - headLen * Math.cos(ang);
+              const by = y2 - headLen * Math.sin(ang);
+              const lx = bx - headHalf * Math.sin(ang), ly = by + headHalf * Math.cos(ang);
+              const rx = bx + headHalf * Math.sin(ang), ry = by - headHalf * Math.cos(ang);
+              const isSel = selectedElementId === node.id;
+              const midX = (x1 + x2) / 2, midY = (y1 + y2) / 2;
+              return (
+                <g key={node.id} className="nocanvasdrag" style={{ filter: `drop-shadow(0 0 5px ${hex}) drop-shadow(0 0 2px ${hex})` }}>
+                  {/* Wide invisible hit-line for selecting / moving the arrow */}
+                  <line
+                    x1={x1} y1={y1} x2={x2} y2={y2}
+                    stroke="transparent" strokeWidth={18}
+                    style={{ pointerEvents: "stroke", cursor: "move" }}
+                    onPointerDown={(e) => startElementDrag(e, node.id, "move")}
+                    onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedElementId(node.id); }}
+                  />
+                  <line x1={x1} y1={y1} x2={bx} y2={by} stroke={hex} strokeWidth={isSel ? 3 : 2.2} strokeLinecap="round" style={{ pointerEvents: "none" }} />
+                  <polygon points={`${x2},${y2} ${lx},${ly} ${rx},${ry}`} fill={hex} style={{ pointerEvents: "none" }} />
+
+                  {isSel && (
+                    <>
+                      {/* Endpoint reshape handles */}
+                      <circle cx={x1} cy={y1} r={6} fill="var(--color-bg-void)" stroke={hex} strokeWidth={2}
+                        style={{ pointerEvents: "all", cursor: "crosshair" }}
+                        onPointerDown={(e) => startElementDrag(e, node.id, "start")} />
+                      <circle cx={x2} cy={y2} r={6} fill="var(--color-bg-void)" stroke={hex} strokeWidth={2}
+                        style={{ pointerEvents: "all", cursor: "crosshair" }}
+                        onPointerDown={(e) => startElementDrag(e, node.id, "end")} />
+                      {/* Delete affordance at the midpoint */}
+                      <foreignObject x={midX - 11} y={midY - 11} width={22} height={22} style={{ overflow: "visible", pointerEvents: "all" }}>
+                        <button
+                          title="Delete arrow"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteEvidenceNode(node.id);
+                            setSelectedElementId(null);
+                            playUnpinTear();
+                          }}
+                          className="nocanvasdrag w-[22px] h-[22px] flex items-center justify-center bg-bg-void/90 border border-red-threat/50 text-red-threat hover:bg-red-threat hover:text-bg-void rounded-full transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </foreignObject>
+                    </>
+                  )}
+                </g>
+              );
+            })}
+
+            {/* Live preview while drawing an arrow */}
+            {drawingArrow && (() => {
+              const hex = elementHex(activeColor);
+              const { x1, y1, x2, y2 } = drawingArrow;
+              return (
+                <g style={{ filter: `drop-shadow(0 0 5px ${hex})` }}>
+                  <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={hex} strokeWidth={2.4} strokeDasharray="6 6" strokeLinecap="round" />
+                  <circle cx={x2} cy={y2} r={4} fill={hex} />
+                </g>
+              );
+            })()}
+          </svg>
+
+          {/* Text labels layer */}
+          <div className="absolute top-0 left-0 w-full h-full">
+            {labelNodes.map((node) => {
+              const hex = elementHex(node.color);
+              const isSel = selectedElementId === node.id;
+              const isEditingLabel = editingNodeId === node.id;
+              const fontSize = labelFontSize(node);
+              return (
+                <div
+                  key={node.id}
+                  className={`absolute pointer-events-auto group/label ${(draggingNodeId === node.id || resizingNodeId === node.id) ? "" : "transition-shadow"}`}
+                  style={{ left: node.x, top: node.y, width: node.width ?? 200, height: node.height ?? 52 }}
+                  onPointerDown={(e) => { if (!isEditingLabel) startElementDrag(e, node.id, "move"); }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedElementId(node.id);
+                    setEditingNodeId(node.id);
+                    setEditingText(node.content);
+                  }}
+                >
+                  <div
+                    className={`w-full h-full flex items-center justify-center text-center px-1.5 rounded-sm ${isSel ? "outline outline-1 outline-dashed" : ""}`}
+                    style={{ outlineColor: isSel ? `${hex}aa` : "transparent" }}
+                  >
+                    {isEditingLabel ? (
+                      <textarea
+                        autoFocus
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onBlur={() => { updateEvidenceNodeContent(node.id, { content: editingText }); setEditingNodeId(null); }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); updateEvidenceNodeContent(node.id, { content: editingText }); setEditingNodeId(null); }
+                          if (e.key === "Escape") { e.preventDefault(); setEditingNodeId(null); }
+                        }}
+                        className="nocanvasdrag w-full h-full bg-transparent text-center resize-none outline-none font-display font-black tracking-wide uppercase leading-tight overflow-hidden"
+                        style={{ color: hex, fontSize, textShadow: `0 0 8px ${hex}90` }}
+                      />
+                    ) : (
+                      <span
+                        className="font-display font-black tracking-wide uppercase leading-tight break-words select-none"
+                        style={{ color: hex, fontSize, textShadow: `0 0 8px ${hex}90` }}
+                      >
+                        {node.content || "TEXT"}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Tools shown on hover / selection */}
+                  <div className={`absolute -top-2 -right-2 flex items-center gap-1 nocanvasdrag transition-opacity ${isSel ? "opacity-100" : "opacity-0 group-hover/label:opacity-100"}`}>
+                    <button
+                      title="Delete text"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); deleteEvidenceNode(node.id); setSelectedElementId(null); playUnpinTear(); }}
+                      className="w-5 h-5 flex items-center justify-center bg-bg-void/90 border border-red-threat/50 text-red-threat hover:bg-red-threat hover:text-bg-void rounded-full transition-colors"
+                    >
+                      <Trash2 className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+
+                  {/* Resize handle (drag to scale box + font) */}
+                  <div
+                    className={`nocanvasdrag absolute -bottom-1 -right-1 w-3.5 h-3.5 flex items-end justify-end cursor-nwse-resize transition-opacity ${isSel ? "opacity-100" : "opacity-0 group-hover/label:opacity-100"}`}
+                    style={{ color: hex }}
+                    onPointerDown={(e) => startLabelResize(e, node.id)}
+                  >
+                    <MoveDiagonal2 className="w-3 h-3" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
           {/* Evidence Nodes */}
           <div className="absolute top-0 left-0 w-full h-full">
-            {boardNodes.map((node, index) => {
+            {cardNodes.map((node, index) => {
               const Icon = getNodeIcon(node.type);
               const isEditing = editingNodeId === node.id;
               const isLinkingFrom = linkingFromId === node.id;
@@ -1171,10 +1656,10 @@ export default function DetectiveBoardPage() {
                   {/* Authorship mark — absent on guest boards */}
                   <KnightSigil knightId={node.createdBy} reducedMotion={prefersReducedMotion} />
 
-                  <GlassPanel 
-                    className={`p-2.5 h-full flex flex-col justify-between transition-all duration-300 relative ${
-                      isLinkingFrom 
-                        ? "border-amber-alert/60 shadow-[0_0_12px_rgb(var(--rgb-amber) / 0.3)] bg-amber-alert/[0.04]" 
+                  <GlassPanel
+                    className={`${node.type === "photo" ? "p-1.5" : "p-2.5"} h-full flex flex-col justify-between transition-all duration-300 relative ${
+                      isLinkingFrom
+                        ? "border-amber-alert/60 shadow-[0_0_12px_rgb(var(--rgb-amber) / 0.3)] bg-amber-alert/[0.04]"
                         : "bg-bg-panel/95 hover:bg-cyan-primary/[0.02]"
                     }`}
                     clipSize="sm"
@@ -1186,6 +1671,79 @@ export default function DetectiveBoardPage() {
                       <div className="w-0.5 h-0.5 bg-white rounded-full" />
                     </div>
 
+                    {node.type === "photo" ? (
+                      // Photo clue: image fills the frame edge-to-edge, the title
+                      // rides a gradient at the bottom (centred), and the tools
+                      // float in only on hover — no header bar, no coordinates.
+                      // Double-click still opens the detail view like any card.
+                      <div className="relative w-full h-full overflow-hidden select-none">
+                        {node.content ? (
+                          <EvidenceImage
+                            refValue={node.content}
+                            alt={node.title}
+                            className="absolute inset-0 w-full h-full object-cover select-none"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center bg-bg-void/40">
+                            <Image className="w-6 h-6 text-border-hairline/45" />
+                          </div>
+                        )}
+
+                        {/* Floating tools, revealed on hover */}
+                        <div className="absolute top-1 right-1 flex items-center gap-1 nocanvasdrag pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <button
+                            title="Rename Evidence"
+                            onClick={(e) => { e.stopPropagation(); startRenaming(node); }}
+                            className="p-1 bg-bg-void/80 border border-cyan-primary/20 hover:bg-cyan-primary/25 text-cyan-dim hover:text-cyan-text rounded transition-all cursor-pointer"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                          <button
+                            title="Correlate/Link Clue"
+                            onClick={(e) => { e.stopPropagation(); setLinkingFromId(node.id); }}
+                            className="p-1 bg-bg-void/80 border border-cyan-primary/20 hover:bg-cyan-primary/25 text-cyan-dim hover:text-cyan-text rounded transition-all cursor-pointer"
+                          >
+                            <Link2 className="w-3 h-3" />
+                          </button>
+                          <button
+                            title="Delete Clue"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteEvidenceNode(node.id);
+                              addLog("CLUE PURGED FROM DETECTIVE BOARD MATRIX", "warning", "BELFRY");
+                              playUnpinTear();
+                            }}
+                            className="p-1 bg-bg-void/80 border border-red-threat/20 hover:bg-red-threat/30 text-text-dim hover:text-red-threat rounded transition-all cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        {/* Title, centred over a bottom gradient */}
+                        <div className="absolute bottom-0 inset-x-0 pt-6 pb-1.5 px-2 bg-gradient-to-t from-bg-void/95 via-bg-void/55 to-transparent">
+                          {isRenaming ? (
+                            <input
+                              autoFocus
+                              value={renamingTitle}
+                              onChange={(e) => setRenamingTitle(e.target.value)}
+                              onBlur={() => commitRename(node.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") { e.preventDefault(); commitRename(node.id); }
+                                if (e.key === "Escape") { e.preventDefault(); setRenamingNodeId(null); }
+                              }}
+                              className="nocanvasdrag w-full text-center font-display text-[12px] font-black text-cyan-text tracking-widest uppercase bg-bg-void/70 border border-cyan-primary/40 outline-none px-1 py-0.5"
+                            />
+                          ) : (
+                            <span
+                              className="block text-center font-display text-[12px] font-black text-cyan-text tracking-wider uppercase truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
+                              title={node.title}
+                            >
+                              {node.title}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
                     <div className="flex flex-col h-full justify-between pt-1 select-none">
                       {/* Node Header with interactive click actions */}
                       <div className="flex items-center justify-between border-b border-border-hairline/15 pb-1 mb-1.5 shrink-0 select-none">
@@ -1264,19 +1822,7 @@ export default function DetectiveBoardPage() {
 
                       {/* Node Body Content */}
                       <div className="flex-1 overflow-hidden min-h-0 text-[13px] text-text-dim leading-snug select-none">
-                        {node.type === "photo" ? (
-                          <div className="w-full h-full min-h-0 bg-bg-void/40 border border-border-hairline/10 rounded-sm relative overflow-hidden flex items-center justify-center">
-                            {node.content ? (
-                              <EvidenceImage
-                                refValue={node.content}
-                                alt={node.title}
-                                className="w-full h-full object-contain select-none"
-                              />
-                            ) : (
-                              <Image className="w-6 h-6 text-border-hairline/45" />
-                            )}
-                          </div>
-                        ) : isEditing ? (
+                        {isEditing ? (
                           <textarea
                             value={editingText}
                             onChange={(e) => setEditingText(e.target.value)}
@@ -1296,7 +1842,7 @@ export default function DetectiveBoardPage() {
                             <p className="line-clamp-1 italic text-text-primary text-[12px]">
                               {node.content || "UNNAMED LINK"}
                             </p>
-                            <a 
+                            <a
                               href={node.content?.startsWith("http") ? node.content : `https://${node.content}`}
                               target="_blank"
                               rel="noreferrer"
@@ -1322,6 +1868,7 @@ export default function DetectiveBoardPage() {
                         <span>{node.type.toUpperCase()}</span>
                       </div>
                     </div>
+                    )}
                   </GlassPanel>
 
                   {/* Resize handle: bottom-right corner drag grip */}
@@ -1337,6 +1884,19 @@ export default function DetectiveBoardPage() {
             })}
           </div>
         </div>
+
+        {/* Drag-and-drop image target overlay — appears while a file is dragged
+            over the canvas, and the image lands exactly where it is dropped. */}
+        {isImageDragOver && (
+          <div className="absolute inset-0 z-[60] pointer-events-none flex items-center justify-center bg-cyan-primary/[0.06] backdrop-blur-[1px] border-2 border-dashed border-cyan-primary/60 animate-fade-in">
+            <div className="flex flex-col items-center gap-2 px-6 py-4 bg-bg-void/80 border border-cyan-primary/40" style={{ clipPath: "polygon(4% 0, 96% 0, 100% 15%, 100% 100%, 0 100%, 0 15%)" }}>
+              <Image className="w-8 h-8 text-cyan-primary animate-hex-pulse-flicker" />
+              <span className="font-display text-xs font-black tracking-[0.25em] text-cyan-text uppercase">
+                Release to pin evidence here
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Empty Canvas Prompt */}
         {!activeCaseId ? (

@@ -20,8 +20,16 @@ export interface Knight {
   callsign: string;
   /** Display name, uppercased at render sites. */
   label: string;
-  /** Public path to the sigil badge. */
+  /** Public path to the sigil badge (compact mark, used for card attribution). */
   sigil: string;
+  /**
+   * Public path to the full character logo.
+   *
+   * Shown when the knight is present on the board — as the live cursor marker
+   * and the signed-in identity badge — where the fuller silhouette reads better
+   * than the compact sigil.
+   */
+  fullLogo: string;
   /**
    * Identity color: sigil glow, presence ring, cursors.
    *
@@ -48,6 +56,7 @@ export const KNIGHTS: Record<KnightId, Knight> = {
     callsign: "RED HOOD",
     label: "Red Hood",
     sigil: assetUrl("/assets/Logos/sigil-redhood.png"),
+    fullLogo: assetUrl("/assets/Logos/RedHoodFull.png"),
     accent: "#ff3b4e",
     // Widest, flattest mark of the four — needs the most correction.
     sigilScale: 1.3,
@@ -57,6 +66,7 @@ export const KNIGHTS: Record<KnightId, Knight> = {
     callsign: "RED ROBIN",
     label: "Red Robin",
     sigil: assetUrl("/assets/Logos/sigil-redrobin.png"),
+    fullLogo: assetUrl("/assets/Logos/RedRobinFull.png"),
     accent: "#ffd12e",
   },
   nightwing: {
@@ -64,6 +74,7 @@ export const KNIGHTS: Record<KnightId, Knight> = {
     callsign: "NIGHTWING",
     label: "Nightwing",
     sigil: assetUrl("/assets/Logos/sigil-nightwing.png"),
+    fullLogo: assetUrl("/assets/Logos/NightwingFull.png"),
     accent: "#2f6dff",
   },
   batgirl: {
@@ -71,6 +82,7 @@ export const KNIGHTS: Record<KnightId, Knight> = {
     callsign: "BATGIRL",
     label: "Batgirl",
     sigil: assetUrl("/assets/Logos/sigil-batgirl.png"),
+    fullLogo: assetUrl("/assets/Logos/BatgirlFull.png"),
     accent: "#ff9ee5",
   },
 };

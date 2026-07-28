@@ -75,7 +75,9 @@ end $$;
 create table if not exists public.evidence_nodes (
   id         text primary key,
   case_id    text not null references public.cases(id) on delete cascade,
-  type       text not null check (type in ('photo', 'text', 'link', 'file')),
+  -- 'arrow' and 'label' are free board elements (see the app's EvidenceNode);
+  -- the migration below widens this constraint on databases created earlier.
+  type       text not null check (type in ('photo', 'text', 'link', 'file', 'arrow', 'label')),
   content    text not null default '',
   title      text,
   notes      text not null default '',
@@ -87,6 +89,17 @@ create table if not exists public.evidence_nodes (
   created_at timestamptz not null default now(),
   created_by text
 );
+
+-- Migration for databases created before free board elements (arrow/label)
+-- existed: drop the old narrow check and re-add the widened one. `if not exists`
+-- and the duplicate_object guard make this a no-op on a fresh database.
+do $$
+begin
+  alter table public.evidence_nodes drop constraint if exists evidence_nodes_type_check;
+  alter table public.evidence_nodes add constraint evidence_nodes_type_check
+    check (type in ('photo', 'text', 'link', 'file', 'arrow', 'label'));
+exception when duplicate_object then null;
+end $$;
 
 create table if not exists public.evidence_connections (
   id           text primary key,

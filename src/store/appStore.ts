@@ -46,7 +46,12 @@ export interface Case {
 export interface EvidenceNode {
   id: string;
   caseId: string;            // which case this belongs to
-  type: "photo" | "text" | "link" | "file";
+  // Card clues: photo/text/link/file. Free board elements (Phase 2): "arrow"
+  // draws a directional connector from (x,y) to (x+width, y+height) — width and
+  // height are the signed delta to the tip, not a box; "label" is a chrome-less
+  // free-text element whose font scales with its box. Both reuse this entity so
+  // they inherit the whole node CRUD / sync / realtime pipeline.
+  type: "photo" | "text" | "link" | "file" | "arrow" | "label";
   content: string;           // text content, image data URL, or URL
   title?: string;
   notes: string;             // freeform notes for the evidence
@@ -54,6 +59,8 @@ export interface EvidenceNode {
   y: number;
   width?: number;
   height?: number;
+  // A palette key ("cyan", "redhood", …) for arrows/labels, resolved to a hex +
+  // glow at render (see BOARD_ELEMENT_COLORS). Legacy card nodes store "cyan".
   color?: string;
   createdAt: string;
   createdBy?: KnightId;      // absent = authored by a guest on their local board
@@ -204,7 +211,8 @@ interface AppState {
   deleteCase: (caseId: string) => void;
   
   // Evidence Board actions
-  addEvidenceNode: (node: Omit<EvidenceNode, "id" | "createdAt" | "caseId" | "notes">) => void;
+  /** Returns the new node's id (or "" if there is no active case). */
+  addEvidenceNode: (node: Omit<EvidenceNode, "id" | "createdAt" | "caseId" | "notes">) => string;
   /** Stores an image and returns the reference to save in a node's content. */
   uploadEvidenceImage: (file: File) => Promise<string>;
   /** Resolves stored content to a displayable URL (signed, for cloud images). */
@@ -758,7 +766,7 @@ export const useAppStore = create<AppState>()(
 
       addEvidenceNode: (node) => {
         const activeCaseId = get().activeCaseId;
-        if (!activeCaseId) return;
+        if (!activeCaseId) return "";
         const id = `node-${Math.random().toString(36).substring(7)}`;
         const newNode: EvidenceNode = {
           ...node,
@@ -772,7 +780,12 @@ export const useAppStore = create<AppState>()(
           evidenceNodes: [...state.evidenceNodes, newNode]
         }));
         persistWrite(id, get().boardStorage.putNode(newNode), `NODE ${node.title || "UNNAMED"}`, get().addLog);
-        get().addLog(`ADDED EVIDENCE NODE: ${node.title || "UNNAMED"}`, "success", "BOARD");
+        // Arrows and labels are self-evident on the board; only clue cards
+        // announce themselves in the log.
+        if (node.type !== "arrow" && node.type !== "label") {
+          get().addLog(`ADDED EVIDENCE NODE: ${node.title || "UNNAMED"}`, "success", "BOARD");
+        }
+        return id;
       },
 
       uploadEvidenceImage: (file) => get().boardStorage.uploadAsset(file),
