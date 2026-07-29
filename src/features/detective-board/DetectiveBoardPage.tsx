@@ -29,7 +29,7 @@ import SplitText from "../../components/react-bits/SplitText";
 import DataWall from "../../components/ui/DataWall";
 import { detectCoordinates, formatDecimal, formatDMS } from "../../lib/geo/coordinates";
 import { compressBoardImage } from "../../lib/image/compressBoardImage";
-import { getKnight } from "../../lib/identity";
+import { KnightCursorsLayer, PresenceRoster } from "./BoardPresence";
 import {
   Network,
   Plus,
@@ -179,11 +179,11 @@ export default function DetectiveBoardPage() {
   const updateEvidenceConnectionLabel = useAppStore((state) => state.updateEvidenceConnectionLabel);
   const addCase = useAppStore((state) => state.addCase);
   const addLog = useAppStore((state) => state.addLog);
-  // Multiplayer presence: this knight's identity, who else is on the board, and
-  // their live cursor positions (all empty/no-op for a guest).
+  // Multiplayer presence: this knight's identity and the cursor broadcaster.
+  // The high-frequency cursor/presence STATE is deliberately not subscribed
+  // here — it lives in <KnightCursorsLayer>/<PresenceRoster> so incoming cursor
+  // frames re-render only that small overlay, not the whole board.
   const currentIdentity = useAppStore((state) => state.currentIdentity);
-  const presentKnights = useAppStore((state) => state.presentKnights);
-  const knightCursors = useAppStore((state) => state.knightCursors);
   const broadcastCursor = useAppStore((state) => state.broadcastCursor);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -212,6 +212,21 @@ export default function DetectiveBoardPage() {
   const arrowNodes = boardNodes.filter(n => n.type === "arrow");
   const labelNodes = boardNodes.filter(n => n.type === "label");
 
+  // O(1) node lookup for the connection layer — boardNodes.find per connection
+  // was O(nodes × connections), a real cost on a busy board.
+  const nodeById = React.useMemo(() => {
+    const map = new Map<string, EvidenceNode>();
+    boardNodes.forEach((n) => map.set(n.id, n));
+    return map;
+  }, [boardNodes]);
+
+  // On a large board the staggered entrance made everything trickle in over
+  // several seconds, which read as "lag to load". Past these thresholds we drop
+  // the stagger (cards/lines appear at once) and trim the perpetual per-line
+  // decoration so a dense board stays responsive.
+  const staggerEntrance = boardNodes.length <= 24;
+  const denseBoard = boardConnections.length > 30;
+
   // Hover, relationship and motion settings
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -237,34 +252,78 @@ export default function DetectiveBoardPage() {
   // drawn (a local-only preview until pointer-up commits it as a node).
   const [activeTool, setActiveTool] = useState<"select" | "arrow" | "label">("select");
   const [activeColor, setActiveColor] = useState<string>(BOARD_ELEMENT_COLORS[0].key);
-  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  // Selection is a set: Ctrl/Cmd-click toggles membership so several elements
+  // (arrows, text, notes) can be picked to resize or delete together. Handles
+  // for a single free element only show when exactly one thing is selected.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const singleSelectedId = selectedIds.length === 1 ? selectedIds[0] : null;
+  const isSelected = (id: string) => selectedIds.includes(id);
+  const selectSingle = (id: string | null) => setSelectedIds(id ? [id] : []);
+  const clearSelection = () => setSelectedIds([]);
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   const [drawingArrow, setDrawingArrow] = useState<
     { x1: number; y1: number; x2: number; y2: number } | null
   >(null);
 
+  const deleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    selectedIds.forEach((id) => deleteEvidenceNode(id));
+    clearSelection();
+    playUnpinTear();
+  };
+
+  // Scales every selected element by a factor, clamped to each type's bounds so
+  // a group resize can't blow a card past its max or shrink an arrow to nothing.
+  const scaleSelected = (factor: number) => {
+    if (selectedIds.length === 0) return;
+    selectedIds.forEach((id) => {
+      const node = boardNodes.find((n) => n.id === id);
+      if (!node) return;
+      if (node.type === "arrow") {
+        updateEvidenceNodeContent(id, {
+          width: (node.width ?? DEFAULT_NODE_SIZE.arrow.width) * factor,
+          height: (node.height ?? DEFAULT_NODE_SIZE.arrow.height) * factor
+        });
+        return;
+      }
+      if (node.type === "label") {
+        const h = node.height ?? DEFAULT_NODE_SIZE.label.height;
+        updateEvidenceNodeContent(id, {
+          width: Math.max(60, (node.width ?? DEFAULT_NODE_SIZE.label.width) * factor),
+          height: Math.max(28, Math.min(240, h * factor))
+        });
+        return;
+      }
+      const { width, height } = getNodeSize(node);
+      updateEvidenceNodeContent(id, {
+        width: Math.min(MAX_NODE_WIDTH, Math.max(MIN_NODE_WIDTH, Math.round(width * factor))),
+        height: Math.min(MAX_NODE_HEIGHT, Math.max(MIN_NODE_HEIGHT, Math.round(height * factor)))
+      });
+    });
+  };
+
   // Board keyboard shortcuts: Escape drops the active tool and any selection;
-  // Delete/Backspace removes the selected free element (arrow/label). Both bow
-  // out while typing so they never eat a keystroke in an input.
+  // Delete/Backspace removes every selected element. Both bow out while typing
+  // so they never eat a keystroke in an input.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = document.activeElement;
       const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || (el as HTMLElement).isContentEditable);
       if (e.key === "Escape") {
         setActiveTool("select");
-        setSelectedElementId(null);
+        clearSelection();
         setDrawingArrow(null);
         return;
       }
-      if ((e.key === "Delete" || e.key === "Backspace") && !typing && selectedElementId) {
+      if ((e.key === "Delete" || e.key === "Backspace") && !typing && selectedIds.length > 0) {
         e.preventDefault();
-        deleteEvidenceNode(selectedElementId);
-        setSelectedElementId(null);
-        playUnpinTear();
+        deleteSelected();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedElementId, deleteEvidenceNode]);
+  }, [selectedIds, deleteEvidenceNode]);
 
   const relatedNodeIds = React.useMemo(() => {
     if (!hoveredNodeId) return new Set<string>();
@@ -295,6 +354,20 @@ export default function DetectiveBoardPage() {
   // Node editing state
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+
+  // Whichever text editor is mounted (label or note body) registers here.
+  // autoFocus alone was unreliable when the element is created mid-pointer-event
+  // (the text tool: click T, click board), so a label came up needing a second
+  // double-click to type. This focuses the editor as soon as editing begins.
+  const editFocusRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!editingNodeId) return;
+    const el = editFocusRef.current;
+    if (!el) return;
+    el.focus();
+    const len = el.value.length;
+    el.setSelectionRange(len, len);
+  }, [editingNodeId]);
 
   // Node rename state (shared by the card's inline control and the detail modal)
   const [renamingNodeId, setRenamingNodeId] = useState<string | null>(null);
@@ -417,7 +490,7 @@ export default function DetectiveBoardPage() {
         color: activeColor
       });
       setDrawingArrow(null);
-      setSelectedElementId(id || null);
+      selectSingle(id || null);
       setActiveTool("select");
       playPinClick();
     };
@@ -440,7 +513,7 @@ export default function DetectiveBoardPage() {
       color: activeColor
     });
     if (id) {
-      setSelectedElementId(id);
+      selectSingle(id);
       setEditingNodeId(id);
       setEditingText("");
     }
@@ -468,7 +541,7 @@ export default function DetectiveBoardPage() {
     // panning. Clicking empty canvas with the select tool clears any selection.
     if (activeTool === "arrow") { startDrawingArrow(e); return; }
     if (activeTool === "label") { createLabelAt(e); return; }
-    setSelectedElementId(null);
+    clearSelection();
 
     setIsPanning(true);
     setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -532,6 +605,14 @@ export default function DetectiveBoardPage() {
     setBgMenu(null);
     setNodeMenu(null);
     setConnMenu(null);
+
+    // Ctrl/Cmd-click adds this card to the multi-selection instead of dragging,
+    // so notes can be grouped with arrows/text to resize or delete together.
+    if (e.ctrlKey || e.metaKey) {
+      toggleSelected(nodeId);
+      return;
+    }
+    selectSingle(nodeId);
 
     // If linking, handle target click
     if (linkingFromId) {
@@ -629,11 +710,17 @@ export default function DetectiveBoardPage() {
     mode: "move" | "start" | "end"
   ) => {
     e.stopPropagation();
+    // Ctrl/Cmd-click toggles this element in the multi-selection instead of
+    // dragging it, so a group can be assembled without moving anything.
+    if (mode === "move" && (e.ctrlKey || e.metaKey)) {
+      toggleSelected(nodeId);
+      return;
+    }
     e.preventDefault();
     const node = boardNodes.find((n) => n.id === nodeId);
     if (!node) return;
 
-    setSelectedElementId(nodeId);
+    selectSingle(nodeId);
     const startX = e.clientX;
     const startY = e.clientY;
     const n0 = { x: node.x, y: node.y, w: node.width ?? 0, h: node.height ?? 0 };
@@ -674,7 +761,7 @@ export default function DetectiveBoardPage() {
     e.preventDefault();
     const node = boardNodes.find((n) => n.id === nodeId);
     if (!node) return;
-    setSelectedElementId(nodeId);
+    selectSingle(nodeId);
     const sx = e.clientX, sy = e.clientY;
     const w0 = node.width ?? DEFAULT_NODE_SIZE.label.width;
     const h0 = node.height ?? DEFAULT_NODE_SIZE.label.height;
@@ -1242,15 +1329,16 @@ export default function DetectiveBoardPage() {
           <DataWall cell={17} intensity={0.09} />
         </div>
 
-        {/* Subtle grid mesh background that stretches with pan and scales with zoom */}
+        {/* Subtle grid mesh. The element always covers the viewport and only its
+            pattern is offset by pan and scaled by zoom, so the dot field is
+            effectively infinite — a transformed finite element would reveal its
+            own rectangular edge on pan/zoom. */}
         <div
           className="absolute inset-0 canvas-bg pointer-events-none"
           style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-            backgroundImage: `radial-gradient(rgb(var(--rgb-primary) / 0.1) 1.2px, transparent 1.2px)`,
-            backgroundSize: "28px 28px",
-            transformOrigin: "0 0",
-            transition: isPanning ? "none" : "transform 0.1s ease-out"
+            backgroundImage: `radial-gradient(rgb(var(--rgb-primary) / 0.1) ${1.2 * zoom}px, transparent ${1.2 * zoom}px)`,
+            backgroundSize: `${28 * zoom}px ${28 * zoom}px`,
+            backgroundPosition: `${pan.x}px ${pan.y}px`
           }}
         />
 
@@ -1276,7 +1364,7 @@ export default function DetectiveBoardPage() {
               <button
                 key={id}
                 title={label}
-                onClick={() => { playPinClick(); setActiveTool(id); setSelectedElementId(null); }}
+                onClick={() => { playPinClick(); setActiveTool(id); clearSelection(); }}
                 className={`p-1.5 rounded-sm transition-all ${
                   activeTool === id
                     ? "bg-cyan-primary text-bg-void shadow-[0_0_10px_var(--color-accent-primary)]"
@@ -1295,12 +1383,56 @@ export default function DetectiveBoardPage() {
                 <button
                   key={c.key}
                   title={c.label}
-                  onClick={() => { playPinClick(); setActiveColor(c.key); if (selectedElementId) { updateEvidenceNodeContent(selectedElementId, { color: c.key }); } }}
+                  onClick={() => { playPinClick(); setActiveColor(c.key); selectedIds.forEach((sid) => updateEvidenceNodeContent(sid, { color: c.key })); }}
                   className={`w-4 h-4 rounded-full transition-transform hover:scale-125 ${activeColor === c.key ? "ring-2 ring-offset-1 ring-offset-bg-void" : ""}`}
                   style={{ backgroundColor: c.hex, boxShadow: `0 0 6px ${c.hex}`, ...(activeColor === c.key ? { ["--tw-ring-color" as any]: c.hex } : {}) }}
                 />
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Multi-selection action bar — appears when two or more elements are
+            Ctrl/Cmd-selected, to resize or delete them as a group. Screen-space
+            so it stays put while the board pans. */}
+        {selectedIds.length >= 2 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-auto nocanvasdrag flex items-center gap-2 bg-bg-void/90 border border-cyan-primary/30 px-3 py-2 backdrop-blur-md shadow-[0_0_18px_rgb(var(--rgb-accent)/0.2)]"
+            style={{ clipPath: "polygon(2% 0, 98% 0, 100% 26%, 100% 100%, 0 100%, 0 26%)" }}
+          >
+            <span className="font-display text-[12px] font-black tracking-widest text-cyan-text uppercase">
+              {selectedIds.length} Selected
+            </span>
+            <div className="w-px h-5 bg-border-hairline/30" />
+            <button
+              title="Shrink all"
+              onClick={() => { scaleSelected(0.9); playPinClick(); }}
+              className="px-2 py-1 border border-cyan-primary/25 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all text-[13px] font-black"
+            >
+              A−
+            </button>
+            <button
+              title="Enlarge all"
+              onClick={() => { scaleSelected(1.1); playPinClick(); }}
+              className="px-2 py-1 border border-cyan-primary/25 text-cyan-text hover:bg-cyan-primary hover:text-bg-void transition-all text-[13px] font-black"
+            >
+              A+
+            </button>
+            <div className="w-px h-5 bg-border-hairline/30" />
+            <button
+              title="Delete all selected"
+              onClick={deleteSelected}
+              className="flex items-center gap-1 px-2 py-1 border border-red-threat/40 text-red-threat hover:bg-red-threat hover:text-bg-void transition-all text-[12px] font-black uppercase tracking-widest"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete
+            </button>
+            <button
+              title="Clear selection (Esc)"
+              onClick={clearSelection}
+              className="text-text-dim hover:text-text-primary transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
 
@@ -1315,9 +1447,14 @@ export default function DetectiveBoardPage() {
           {/* Infinite SVG Linking Overlay */}
           <svg className="absolute top-0 left-0 w-[5000px] h-[5000px] overflow-visible select-none">
             {boardConnections.map((conn, index) => {
-              const fromNode = boardNodes.find(n => n.id === conn.fromNodeId);
-              const toNode = boardNodes.find(n => n.id === conn.toNodeId);
+              const fromNode = nodeById.get(conn.fromNodeId);
+              const toNode = nodeById.get(conn.toNodeId);
               if (!fromNode || !toNode) return null;
+
+              // Clamped, stagger-aware draw-in delay (see staggerEntrance).
+              const drawDelay = prefersReducedMotion || !staggerEntrance
+                ? 0
+                : Math.min(boardNodes.length * 0.03 + index * 0.06, 1.2);
 
               // Calculate nodes centers based on size (respects per-node resize)
               const { width: fromWidth, height: fromHeight } = getNodeSize(fromNode);
@@ -1334,9 +1471,13 @@ export default function DetectiveBoardPage() {
 
               const isLabeling = labelingConnId === conn.id;
 
-              const isConnHighlighted = hoveredNodeId 
+              const isConnHighlighted = hoveredNodeId
                 ? (conn.fromNodeId === hoveredNodeId || conn.toNodeId === hoveredNodeId)
                 : false;
+
+              // The perpetual dashed-flow + travelling pulse are the priciest
+              // part of a dense board — keep them only where the eye is.
+              const showFlow = !denseBoard || isConnHighlighted;
 
               const dx = x2 - x1;
               const dy = y2 - y1;
@@ -1353,7 +1494,7 @@ export default function DetectiveBoardPage() {
                     animate={{ pathLength: 1 }}
                     transition={{
                       duration: prefersReducedMotion ? 0 : 0.8,
-                      delay: prefersReducedMotion ? 0 : (boardNodes.length * 0.05) + (index * 0.1),
+                      delay: drawDelay,
                       ease: "easeOut"
                     }}
                     className={`blur-[2px] transition-opacity duration-300 ${
@@ -1373,8 +1514,8 @@ export default function DetectiveBoardPage() {
                     initial={prefersReducedMotion ? { pathLength: 1, strokeDashoffset: 0 } : { pathLength: 0, strokeDashoffset: length }}
                     animate={{ pathLength: 1, strokeDashoffset: 0 }}
                     transition={{
-                      pathLength: { duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : (boardNodes.length * 0.05) + (index * 0.1), ease: "easeOut" },
-                      strokeDashoffset: { duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : (boardNodes.length * 0.05) + (index * 0.1), ease: "easeOut" }
+                      pathLength: { duration: prefersReducedMotion ? 0 : 0.8, delay: drawDelay, ease: "easeOut" },
+                      strokeDashoffset: { duration: prefersReducedMotion ? 0 : 0.8, delay: drawDelay, ease: "easeOut" }
                     }}
                     style={{ 
                       strokeDasharray: length,
@@ -1391,7 +1532,7 @@ export default function DetectiveBoardPage() {
                   />
 
                   {/* Secondary dashed flow overlay: Flows infinitely to guide eye tracking of connection paths */}
-                  {!prefersReducedMotion && (
+                  {!prefersReducedMotion && showFlow && (
                     <motion.path
                       d={`M ${x1} ${y1} L ${x2} ${y2}`}
                       stroke="var(--color-accent-primary)"
@@ -1414,19 +1555,18 @@ export default function DetectiveBoardPage() {
                     />
                   )}
 
-                  {/* Holographic data pulse: a glowing packet travels the link, faster/brighter when highlighted */}
-                  {!prefersReducedMotion && (
-                    <motion.circle
+                  {/* Holographic data pulse: a glowing packet travels the link.
+                      Driven by SVG animateMotion along the live path rather than
+                      framer cx/cy keyframes — keyframes interpolate from the
+                      packet's *current* point to a new endpoint set whenever the
+                      line moves, which is what made it cut across / leave the
+                      line. animateMotion is always evaluated ON the path, and a
+                      negative begin seeds each packet mid-flight (staggered)
+                      without a stray dot parking at the origin before it starts. */}
+                  {!prefersReducedMotion && showFlow && (
+                    <circle
                       r={isConnHighlighted ? 3.5 : 2.2}
                       fill="var(--color-accent-primary)"
-                      initial={{ cx: x1, cy: y1 }}
-                      animate={{ cx: [x1, x2], cy: [y1, y2] }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: isConnHighlighted ? 1.4 : 2.6,
-                        ease: "linear",
-                        delay: index * 0.35
-                      }}
                       style={{ filter: "drop-shadow(0 0 5px var(--color-accent-primary))" }}
                       className={`pointer-events-none transition-opacity duration-300 ${
                         hoveredNodeId
@@ -1435,7 +1575,14 @@ export default function DetectiveBoardPage() {
                             : "opacity-0"
                           : "opacity-45"
                       }`}
-                    />
+                    >
+                      <animateMotion
+                        dur={`${isConnHighlighted ? 1.4 : 2.6}s`}
+                        repeatCount="indefinite"
+                        path={`M ${x1} ${y1} L ${x2} ${y2}`}
+                        begin={`-${((index * 0.35) % (isConnHighlighted ? 1.4 : 2.6)).toFixed(2)}s`}
+                      />
+                    </circle>
                   )}
 
                   {/* Optional connection label container */}
@@ -1473,17 +1620,22 @@ export default function DetectiveBoardPage() {
               const by = y2 - headLen * Math.sin(ang);
               const lx = bx - headHalf * Math.sin(ang), ly = by + headHalf * Math.cos(ang);
               const rx = bx + headHalf * Math.sin(ang), ry = by - headHalf * Math.cos(ang);
-              const isSel = selectedElementId === node.id;
+              const isSel = singleSelectedId === node.id;
+              const inSel = isSelected(node.id);
               const midX = (x1 + x2) / 2, midY = (y1 + y2) / 2;
               return (
                 <g key={node.id} className="nocanvasdrag" style={{ filter: `drop-shadow(0 0 5px ${hex}) drop-shadow(0 0 2px ${hex})` }}>
+                  {/* Multi-selection halo (drawn behind the arrow) */}
+                  {inSel && !isSel && (
+                    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={hex} strokeWidth={7} strokeLinecap="round" opacity={0.35} style={{ pointerEvents: "none" }} />
+                  )}
                   {/* Wide invisible hit-line for selecting / moving the arrow */}
                   <line
                     x1={x1} y1={y1} x2={x2} y2={y2}
                     stroke="transparent" strokeWidth={18}
                     style={{ pointerEvents: "stroke", cursor: "move" }}
                     onPointerDown={(e) => startElementDrag(e, node.id, "move")}
-                    onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedElementId(node.id); }}
+                    onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); selectSingle(node.id); }}
                   />
                   <line x1={x1} y1={y1} x2={bx} y2={by} stroke={hex} strokeWidth={isSel ? 3 : 2.2} strokeLinecap="round" style={{ pointerEvents: "none" }} />
                   <polygon points={`${x2},${y2} ${lx},${ly} ${rx},${ry}`} fill={hex} style={{ pointerEvents: "none" }} />
@@ -1505,7 +1657,7 @@ export default function DetectiveBoardPage() {
                           onClick={(e) => {
                             e.stopPropagation();
                             deleteEvidenceNode(node.id);
-                            setSelectedElementId(null);
+                            clearSelection();
                             playUnpinTear();
                           }}
                           className="nocanvasdrag w-[22px] h-[22px] flex items-center justify-center bg-bg-void/90 border border-red-threat/50 text-red-threat hover:bg-red-threat hover:text-bg-void rounded-full transition-colors"
@@ -1536,7 +1688,8 @@ export default function DetectiveBoardPage() {
           <div className="absolute top-0 left-0 w-full h-full">
             {labelNodes.map((node) => {
               const hex = elementHex(node.color);
-              const isSel = selectedElementId === node.id;
+              const isSel = singleSelectedId === node.id;
+              const inSel = isSelected(node.id);
               const isEditingLabel = editingNodeId === node.id;
               const fontSize = labelFontSize(node);
               return (
@@ -1547,17 +1700,18 @@ export default function DetectiveBoardPage() {
                   onPointerDown={(e) => { if (!isEditingLabel) startElementDrag(e, node.id, "move"); }}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
-                    setSelectedElementId(node.id);
+                    selectSingle(node.id);
                     setEditingNodeId(node.id);
                     setEditingText(node.content);
                   }}
                 >
                   <div
-                    className={`w-full h-full flex items-center justify-center text-center px-1.5 rounded-sm ${isSel ? "outline outline-1 outline-dashed" : ""}`}
-                    style={{ outlineColor: isSel ? `${hex}aa` : "transparent" }}
+                    className={`w-full h-full flex items-center justify-center text-center px-1.5 rounded-sm ${(isSel || inSel) ? "outline outline-1 outline-dashed" : ""}`}
+                    style={{ outlineColor: (isSel || inSel) ? `${hex}aa` : "transparent" }}
                   >
                     {isEditingLabel ? (
                       <textarea
+                        ref={editFocusRef}
                         autoFocus
                         value={editingText}
                         onChange={(e) => setEditingText(e.target.value)}
@@ -1580,11 +1734,11 @@ export default function DetectiveBoardPage() {
                   </div>
 
                   {/* Tools shown on hover / selection */}
-                  <div className={`absolute -top-2 -right-2 flex items-center gap-1 nocanvasdrag transition-opacity ${isSel ? "opacity-100" : "opacity-0 group-hover/label:opacity-100"}`}>
+                  <div className={`absolute -top-2 -right-2 flex items-center gap-1 nocanvasdrag transition-opacity ${(isSel || inSel) ? "opacity-100" : "opacity-0 group-hover/label:opacity-100"}`}>
                     <button
                       title="Delete text"
                       onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => { e.stopPropagation(); deleteEvidenceNode(node.id); setSelectedElementId(null); playUnpinTear(); }}
+                      onClick={(e) => { e.stopPropagation(); deleteEvidenceNode(node.id); clearSelection(); playUnpinTear(); }}
                       className="w-5 h-5 flex items-center justify-center bg-bg-void/90 border border-red-threat/50 text-red-threat hover:bg-red-threat hover:text-bg-void rounded-full transition-colors"
                     >
                       <Trash2 className="w-2.5 h-2.5" />
@@ -1614,8 +1768,14 @@ export default function DetectiveBoardPage() {
               const isRenaming = renamingNodeId === node.id;
               const { width: cardWidthPx, height: cardHeightPx } = getNodeSize(node);
 
+              // Per-node colour: cyan is the neutral default, any other palette
+              // choice (set via right-click) tints the card's accents.
+              const nodeAccent = elementHex(node.color);
+              const isColored = !!node.color && node.color !== "cyan";
+              const isNodeSelected = isSelected(node.id);
+
               const isHighlighted = hoveredNodeId
-                ? relatedNodeIds.has(node.id) 
+                ? relatedNodeIds.has(node.id)
                 : false;
 
               const hoverEffectClass = hoveredNodeId
@@ -1631,7 +1791,7 @@ export default function DetectiveBoardPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{
                     duration: prefersReducedMotion ? 0 : 0.45,
-                    delay: prefersReducedMotion ? 0 : index * 0.08,
+                    delay: prefersReducedMotion || !staggerEntrance ? 0 : Math.min(index * 0.05, 0.8),
                     ease: "easeOut"
                   }}
                   style={{
@@ -1639,7 +1799,9 @@ export default function DetectiveBoardPage() {
                     top: node.y,
                     width: cardWidthPx,
                     height: cardHeightPx,
-                    position: "absolute"
+                    position: "absolute",
+                    outline: isNodeSelected ? `2px solid ${nodeAccent}` : undefined,
+                    outlineOffset: isNodeSelected ? 3 : undefined
                   }}
                   className={`pointer-events-auto group select-none ${(draggingNodeId === node.id || resizingNodeId === node.id) ? '' : 'transition-all duration-300'} ${hoverEffectClass}`}
                   onPointerDown={(e) => handleNodePointerDown(e, node.id)}
@@ -1670,6 +1832,22 @@ export default function DetectiveBoardPage() {
 
                   {/* Authorship mark — absent on guest boards */}
                   <KnightSigil knightId={node.createdBy} reducedMotion={prefersReducedMotion} />
+
+                  {/* Per-node colour accent: a left edge bar + soft glow, drawn
+                      over the cyan base so a recoloured card reads at a glance
+                      without having to re-theme the whole GlassPanel. */}
+                  {isColored && (
+                    <>
+                      <span
+                        className="pointer-events-none absolute left-0 top-2 bottom-2 w-[3px] z-[6] rounded-full"
+                        style={{ background: nodeAccent, boxShadow: `0 0 8px ${nodeAccent}` }}
+                      />
+                      <span
+                        className="pointer-events-none absolute inset-0 z-[1]"
+                        style={{ boxShadow: `inset 0 0 16px ${nodeAccent}22` }}
+                      />
+                    </>
+                  )}
 
                   <GlassPanel
                     className={`${node.type === "photo" ? "p-1.5" : "p-2.5"} h-full flex flex-col justify-between transition-all duration-300 relative ${
@@ -1750,8 +1928,9 @@ export default function DetectiveBoardPage() {
                             />
                           ) : (
                             <span
-                              className="block text-center font-display text-[12px] font-black text-cyan-text tracking-wider uppercase truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]"
-                              title={node.title}
+                              className="block text-center font-display text-[12px] font-black text-cyan-text tracking-wider uppercase truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] cursor-text"
+                              title={`${node.title} — double-click to rename`}
+                              onDoubleClick={(e) => { e.stopPropagation(); startRenaming(node); }}
                             >
                               {node.title}
                             </span>
@@ -1780,8 +1959,10 @@ export default function DetectiveBoardPage() {
                           // mid-character ("NURSERY R|") instead of ellipsising.
                           // flex-1/min-w-0 lets it use the width the buttons leave.
                           <span
-                            className="font-display text-[13px] font-black text-cyan-text tracking-wider uppercase truncate flex-1 min-w-0 mr-1.5"
-                            title={node.title}
+                            className="font-display text-[13px] font-black text-cyan-text tracking-wider uppercase truncate flex-1 min-w-0 mr-1.5 cursor-text"
+                            style={{ color: isColored ? nodeAccent : undefined }}
+                            title={`${node.title} — double-click to rename`}
+                            onDoubleClick={(e) => { e.stopPropagation(); startRenaming(node); }}
                           >
                             {node.title}
                           </span>
@@ -1839,6 +2020,7 @@ export default function DetectiveBoardPage() {
                       <div className="flex-1 overflow-hidden min-h-0 text-[13px] text-text-dim leading-snug select-none">
                         {isEditing ? (
                           <textarea
+                            ref={editFocusRef}
                             value={editingText}
                             onChange={(e) => setEditingText(e.target.value)}
                             onBlur={() => handleSaveTextEdit(node.id)}
@@ -1899,73 +2081,14 @@ export default function DetectiveBoardPage() {
             })}
           </div>
 
-          {/* Live knight cursors (multiplayer presence). Positioned in canvas
-              space so each marker sits on the same board point for everyone, and
-              counter-scaled by 1/zoom so it stays a constant on-screen size like
-              a real cursor. The knight's Full logo rides at the bottom of the
-              pointer in place of a name. Knights only — empty for a guest. */}
-          {Object.entries(knightCursors).map(([id, c]) => {
-            if (id === currentIdentity) return null;
-            if (!presentKnights.includes(id as any)) return null;
-            const knight = getKnight(id as any);
-            if (!knight) return null;
-            if (Date.now() - c.at > 10000) return null; // gone quiet — hide it
-            return (
-              <div key={id} className="absolute pointer-events-none z-[70]" style={{ left: c.x, top: c.y }}>
-                <div style={{ transform: `scale(${1 / zoom})`, transformOrigin: "top left" }}>
-                  <svg width="22" height="24" viewBox="0 0 22 24" style={{ filter: `drop-shadow(0 0 4px ${knight.accent})` }}>
-                    <path
-                      d="M3 2 L3 19 L8 14.4 L11.2 21 L14 19.7 L10.9 13.2 L17.5 13 Z"
-                      fill={knight.accent}
-                      stroke="var(--color-bg-void)"
-                      strokeWidth="1"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <div
-                    className="mt-[-2px] ml-3 inline-flex items-center h-6 px-1.5 rounded-full border backdrop-blur-sm"
-                    style={{ borderColor: `${knight.accent}`, background: "var(--color-bg-void)", boxShadow: `0 0 8px ${knight.accent}80` }}
-                  >
-                    <img
-                      src={knight.fullLogo}
-                      alt={knight.label}
-                      draggable={false}
-                      className="h-5 w-auto object-contain"
-                      style={{ filter: `drop-shadow(0 0 3px ${knight.accent})` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {/* Live knight cursors — isolated so cursor frames don't re-render
+              the board. Positioned in canvas space, counter-scaled by 1/zoom. */}
+          <KnightCursorsLayer zoom={zoom} />
         </div>
 
-        {/* Present-operatives roster — the Full logos of every knight on the
-            board (self included), so a signed-in knight always sees the roster. */}
-        {currentIdentity && presentKnights.length > 0 && (
-          <div className="absolute top-3 right-3 z-40 flex items-center gap-2 pointer-events-none">
-            {presentKnights.map((id) => {
-              const k = getKnight(id);
-              if (!k) return null;
-              const isSelf = id === currentIdentity;
-              return (
-                <div key={id} className="flex flex-col items-center" title={isSelf ? `${k.label} (You)` : k.label}>
-                  <div
-                    className="h-9 px-2 flex items-center rounded-md border bg-bg-void/80 backdrop-blur-sm"
-                    style={{ borderColor: `${k.accent}80`, boxShadow: `0 0 10px ${k.accent}55` }}
-                  >
-                    <img src={k.fullLogo} alt={k.label} draggable={false} className="h-6 w-auto object-contain" style={{ filter: `drop-shadow(0 0 4px ${k.accent})` }} />
-                  </div>
-                  {isSelf && (
-                    <span className="text-[9px] font-mono uppercase tracking-widest mt-0.5" style={{ color: k.accent }}>
-                      You
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {/* Present-operatives roster — isolated so presence updates don't
+            re-render the board canvas. Empty for a guest. */}
+        <PresenceRoster />
 
         {/* Drag-and-drop image target overlay — appears while a file is dragged
             over the canvas, and the image lands exactly where it is dropped. */}
@@ -2089,8 +2212,44 @@ export default function DetectiveBoardPage() {
                   EDIT CONTENT
                 </button>
               )}
+              <button
+                onClick={() => {
+                  const node = boardNodes.find(n => n.id === nodeMenu.nodeId);
+                  if (node) startRenaming(node);
+                  setNodeMenu(null);
+                }}
+                onMouseEnter={() => playHoverEvidence()}
+                className="w-full text-left p-1.5 hover:bg-cyan-primary/10 text-text-primary hover:text-cyan-text transition-colors flex items-center"
+              >
+                <Pencil className="w-3.5 h-3.5 mr-2 text-cyan-dim" />
+                RENAME CLUE
+              </button>
+
+              {/* Recolour the card (or the whole multi-selection if this card is
+                  part of one). */}
               <div className="border-t border-border-hairline/10 my-1" />
-              <button 
+              <div className="px-1.5 py-1">
+                <span className="block text-[10px] font-mono text-text-dim/70 uppercase tracking-widest mb-1.5">Card Colour</span>
+                <div className="flex items-center gap-1.5">
+                  {BOARD_ELEMENT_COLORS.map((c) => (
+                    <button
+                      key={c.key}
+                      title={c.label}
+                      onClick={() => {
+                        const targets = isSelected(nodeMenu.nodeId) && selectedIds.length > 1 ? selectedIds : [nodeMenu.nodeId];
+                        targets.forEach((id) => updateEvidenceNodeContent(id, { color: c.key }));
+                        setNodeMenu(null);
+                        playPinClick();
+                      }}
+                      className="w-4 h-4 rounded-full transition-transform hover:scale-125"
+                      style={{ backgroundColor: c.hex, boxShadow: `0 0 6px ${c.hex}` }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-border-hairline/10 my-1" />
+              <button
                 onClick={() => {
                   deleteEvidenceNode(nodeMenu.nodeId);
                   setNodeMenu(null);
@@ -2227,7 +2386,11 @@ export default function DetectiveBoardPage() {
                         />
                       ) : (
                         <div className="flex items-center space-x-2">
-                          <h2 className="font-display text-base font-black text-cyan-text tracking-widest uppercase">
+                          <h2
+                            className="font-display text-base font-black text-cyan-text tracking-widest uppercase cursor-text"
+                            title="Double-click to rename"
+                            onDoubleClick={() => startRenaming(detailNode)}
+                          >
                             {detailNode.title}
                           </h2>
                           <button
@@ -2270,24 +2433,38 @@ export default function DetectiveBoardPage() {
                   {detailNode.type === "text" && (
                     <div className="space-y-2">
                       <label className="text-[13px] font-display font-bold text-cyan-dim uppercase tracking-widest">Text Content</label>
-                      <div className="bg-bg-void/40 border border-border-hairline/20 p-4 rounded-sm font-share text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
-                        {detailNode.content}
-                      </div>
+                      {/* Editable in place — content edits persist through the same
+                          store path the inline card editor uses. */}
+                      <textarea
+                        value={detailNode.content}
+                        onChange={(e) => { updateEvidenceNodeContent(detailNode.id, { content: e.target.value }); playTypeKey(); }}
+                        placeholder="Enter recovered text, cipher fragments, or notes…"
+                        className="w-full h-40 bg-bg-void/40 border border-border-hairline/20 p-4 rounded-sm font-share text-sm text-text-primary leading-relaxed focus:outline-none focus:border-cyan-primary/50 transition-all resize-none whitespace-pre-wrap"
+                      />
                     </div>
                   )}
 
                   {detailNode.type === "link" && (
                     <div className="space-y-2">
                       <label className="text-[13px] font-display font-bold text-cyan-dim uppercase tracking-widest">Source Link</label>
-                      <a 
-                        href={detailNode.content} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center space-x-2 bg-bg-void/40 border border-border-hairline/20 p-4 rounded-sm text-cyan-text hover:bg-cyan-primary/10 transition-all truncate"
-                      >
-                        <Link className="w-4 h-4 shrink-0" />
-                        <span className="truncate">{detailNode.content}</span>
-                      </a>
+                      <input
+                        type="text"
+                        value={detailNode.content}
+                        onChange={(e) => { updateEvidenceNodeContent(detailNode.id, { content: e.target.value }); playTypeKey(); }}
+                        placeholder="www.domain.com/lead"
+                        className="w-full bg-bg-void/40 border border-border-hairline/20 p-3 rounded-sm font-mono text-sm text-cyan-text focus:outline-none focus:border-cyan-primary/50 transition-all"
+                      />
+                      {detailNode.content && (
+                        <a
+                          href={detailNode.content?.startsWith("http") ? detailNode.content : `https://${detailNode.content}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center space-x-2 text-cyan-text hover:text-cyan-primary transition-all text-[13px] font-mono"
+                        >
+                          <Link className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">VISIT SITE</span>
+                        </a>
+                      )}
                     </div>
                   )}
 

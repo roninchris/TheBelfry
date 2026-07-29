@@ -4,7 +4,7 @@ let audioCtx: AudioContext | null = null;
 let masterGainNode: GainNode | null = null;
 let compressor: DynamicsCompressorNode | null = null;
 let sampleBuffers: Record<string, AudioBuffer> = {};
-let currentVolume = 0.4;
+let currentVolume = 0.1;
 let currentMuted = false;
 let currentAmbientEnabled = true;
 

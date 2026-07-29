@@ -21,13 +21,13 @@ export default function PresenceRoster() {
 
   return (
     <div
-      className="flex items-center gap-1.5 border-l border-border-hairline/20 pl-4"
+      className="flex items-center gap-2 border-l border-border-hairline/20 pl-4"
       title={`Also on the board: ${others.map((id) => getKnight(id)?.label).join(", ")}`}
     >
       <span className="font-share text-[12px] tracking-[0.16em] text-cyan-dim/70 uppercase hidden xl:inline">
         On board
       </span>
-      <div className="flex items-center -space-x-1">
+      <div className="flex items-center gap-1.5">
         <AnimatePresence initial={false}>
           {others.map((id) => {
             const knight = getKnight(id);
@@ -39,15 +39,20 @@ export default function PresenceRoster() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.4 }}
                 transition={{ duration: reduce ? 0 : 0.3, ease: "backOut" }}
-                className="relative w-7 h-7 rounded-full border flex items-center justify-center bg-bg-void"
-                style={{ borderColor: `${knight.accent}66` }}
+                // A rounded-SQUARE plate, not a round chip: several sigils
+                // (Red Robin) carry their own circle, and a circular frame on
+                // top read as circle-on-circle. The sigil is a uniform square
+                // mark (the full logos have wildly different aspect ratios and
+                // would size inconsistently here), sized up so it's legible.
+                className="relative w-8 h-8 rounded-md border flex items-center justify-center bg-bg-void/60"
+                style={{ borderColor: `${knight.accent}66`, boxShadow: `0 0 8px -2px ${knight.accent}80` }}
                 title={`${knight.label} is on the board`}
               >
                 <img
                   src={knight.sigil}
                   alt=""
                   draggable={false}
-                  className="w-4 h-4 object-contain"
+                  className="w-6 h-6 object-contain"
                   style={{
                     transform: `scale(${knight.sigilScale ?? 1})`,
                     filter: `drop-shadow(0 0 4px ${knight.accent}b3)`,

@@ -526,7 +526,7 @@ export const useAppStore = create<AppState>()(
       evidenceNodes: [],
       evidenceConnections: [],
       theme: DEFAULT_THEME,
-      masterVolume: 0.4,
+      masterVolume: 0.1,
       isMuted: false,
       ambientEnabled: true,
       
@@ -971,6 +971,15 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "belfry-app-store",
+      // Bumped to 1 when the default master volume dropped from 40% to 10%.
+      // Existing installs carry a persisted volume, so the new default alone
+      // would never reach them — this resets the level once so everyone opens
+      // at the quiet default and can raise it from there.
+      version: 1,
+      migrate: (persisted: any, version: number) => {
+        if (version < 1 && persisted) persisted.masterVolume = 0.1;
+        return persisted;
+      },
       /**
        * Board data (cases, nodes, connections) is deliberately absent: it is
        * owned by boardStorage, which for a knight is Supabase. Persisting it
