@@ -1,4 +1,4 @@
-import type { Case, EvidenceConnection, EvidenceNode } from "../../store/appStore";
+import type { Case, EvidenceConnection, EvidenceNode, Suspect } from "../../store/appStore";
 import { EMPTY_SNAPSHOT, type BoardSnapshot, type BoardStorage } from "./types";
 
 const KEY = "belfry-board-local";
@@ -13,6 +13,7 @@ function readSnapshot(raw: string | null): BoardSnapshot | null {
     if (!parsed || typeof parsed !== "object") return null;
     return {
       cases: Array.isArray(parsed.cases) ? parsed.cases : [],
+      suspects: Array.isArray(parsed.suspects) ? parsed.suspects : [],
       evidenceNodes: Array.isArray(parsed.evidenceNodes) ? parsed.evidenceNodes : [],
       evidenceConnections: Array.isArray(parsed.evidenceConnections) ? parsed.evidenceConnections : [],
     };
@@ -47,7 +48,10 @@ export function migrateLegacyGuestBoard(): void {
   if (!legacy) return;
 
   const isEmpty =
-    !legacy.cases.length && !legacy.evidenceNodes.length && !legacy.evidenceConnections.length;
+    !legacy.cases.length &&
+    !legacy.suspects.length &&
+    !legacy.evidenceNodes.length &&
+    !legacy.evidenceConnections.length;
   if (isEmpty) return;
 
   localStorage.setItem(KEY, JSON.stringify(legacy));
@@ -111,11 +115,25 @@ export class LocalBoardStorage implements BoardStorage {
 
   removeCase(id: string): Promise<void> {
     return this.mutate((s) => ({
+      ...s,
       cases: s.cases.filter((c) => c.id !== id),
       // Mirrors the cascade the cloud schema enforces with ON DELETE CASCADE.
       evidenceNodes: s.evidenceNodes.filter((n) => n.caseId !== id),
       evidenceConnections: s.evidenceConnections.filter((c) => c.caseId !== id),
+      // Detach the deleted case from any suspects, mirroring the store's
+      // in-memory behaviour for the same event.
+      suspects: s.suspects.map((sus) =>
+        sus.caseIds?.includes(id) ? { ...sus, caseIds: sus.caseIds.filter((c) => c !== id) } : sus
+      ),
     }));
+  }
+
+  putSuspect(value: Suspect): Promise<void> {
+    return this.mutate((s) => ({ ...s, suspects: upsert(s.suspects, value) }));
+  }
+
+  removeSuspect(id: string): Promise<void> {
+    return this.mutate((s) => ({ ...s, suspects: s.suspects.filter((x) => x.id !== id) }));
   }
 
   putNode(value: EvidenceNode): Promise<void> {

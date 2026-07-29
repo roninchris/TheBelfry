@@ -52,11 +52,12 @@ export type SuspectStatus = "UNKNOWN" | "FUGITIVE" | "IN_CUSTODY" | "DECEASED";
 export const SUSPECT_STATUSES: SuspectStatus[] = ["UNKNOWN", "FUGITIVE", "IN_CUSTODY", "DECEASED"];
 
 /**
- * A person of interest. A global roster (persisted per-device in localStorage),
- * optionally attached to a case via `caseId`. The portrait reuses the board's
- * image pipeline: `imageRef` is a data URL for a guest or a Storage object path
- * for a knight, resolved through the same `resolveAssetUrl` an evidence photo
- * uses.
+ * A person of interest. Shared board data (per identity): a guest's roster
+ * lives in their own local board, a knight's is shared with the other three
+ * via boardStorage, same as cases/evidenceNodes. The portrait reuses the
+ * board's image pipeline: `imageRef` is a data URL for a guest or a Storage
+ * object path for a knight, resolved through the same `resolveAssetUrl` an
+ * evidence photo uses.
  */
 export interface Suspect {
   id: string;
@@ -235,7 +236,11 @@ interface AppState {
    * forces ACTIVE cases to the top; within each tier this order applies.
    */
   caseOrder: string[];
-  /** Person-of-interest roster (global, per-device). Array order = display order. */
+  /**
+   * Person-of-interest roster. Board data, same as cases/evidenceNodes: owned
+   * by boardStorage (shared via Supabase for a knight, local-only for a guest)
+   * and swapped wholesale on identity change. Array order = display order.
+   */
   suspects: Suspect[];
   evidenceNodes: EvidenceNode[];
   evidenceConnections: EvidenceConnection[];
@@ -416,6 +421,13 @@ const realtimeHandlers: BoardRealtimeHandlers = {
       return { cases: mergeById(s.cases, value) };
     }),
 
+  onSuspect: (id, value) =>
+    useAppStore.setState((s) => {
+      if (!value) return { suspects: s.suspects.filter((x) => x.id !== id) };
+      if (isOwnEcho(id)) return {};
+      return { suspects: mergeById(s.suspects, value) };
+    }),
+
   onNode: (id, value) =>
     useAppStore.setState((s) => {
       if (!value) {
@@ -524,6 +536,7 @@ export const useAppStore = create<AppState>()(
           knightCursors: {},
           draggingNodeId: null,
           cases: [],
+          suspects: [],
           evidenceNodes: [],
           evidenceConnections: [],
         });
@@ -864,17 +877,22 @@ export const useAppStore = create<AppState>()(
           };
         });
         // Nodes and connections cascade server-side (and in the local adapter),
-        // so only the case itself is deleted here.
+        // so only the case itself is deleted here. Any affected suspects were
+        // already updated in-memory above; their case_ids array is re-synced
+        // the next time that suspect is edited, which is an acceptable lag for
+        // a rarely-hit edge case (deleting a case a suspect is attached to).
         syncWrite(get().boardStorage.removeCase(caseId), "CASE DELETE", get().addLog);
         get().addLog(`CASE DELETED`, "warning", "SYS");
       },
 
-      // -- Suspect dossiers (per-device localStorage; images via the board
-      //    image pipeline so they land in cloud storage for a knight) ---------
+      // -- Suspect dossiers (board data — shared via boardStorage for a
+      //    knight, local-only for a guest; images via the board image
+      //    pipeline so they land in cloud storage for a knight) -------------
       addSuspect: (suspect) => {
         const id = `sus-${Math.random().toString(36).slice(2, 9)}`;
         const newSuspect: Suspect = { ...suspect, id, createdAt: new Date().toISOString() };
         set((state) => ({ suspects: [newSuspect, ...state.suspects] }));
+        persistWrite(id, get().boardStorage.putSuspect(newSuspect), `SUSPECT ${newSuspect.name}`, get().addLog);
         get().addLog(`SUSPECT DOSSIER FILED: ${suspect.name || "UNKNOWN"}`, "info", "DOSSIER");
         return id;
       },
@@ -882,9 +900,17 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           suspects: state.suspects.map((s) => (s.id === id ? { ...s, ...updates } : s))
         }));
+        // Debounced like case notes: bio/info are per-keystroke text fields,
+        // and status/caseIds/portrait swaps are infrequent clicks that can
+        // ride the same short debounce window without being noticeable.
+        debouncedCommit(id, () => {
+          const updated = get().suspects.find((s) => s.id === id);
+          if (updated) persistWrite(id, get().boardStorage.putSuspect(updated), "SUSPECT DOSSIER", get().addLog);
+        });
       },
       deleteSuspect: (id) => {
         set((state) => ({ suspects: state.suspects.filter((s) => s.id !== id) }));
+        syncWrite(get().boardStorage.removeSuspect(id), "SUSPECT DELETE", get().addLog);
       },
 
       addEvidenceNode: (node) => {
@@ -1063,15 +1089,18 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "belfry-app-store",
-      // Bumped to 1 when the default master volume dropped from 40% to 10%.
-      // Existing installs carry a persisted volume, so the new default alone
-      // would never reach them — this resets the level once so everyone opens
-      // at the quiet default and can raise it from there.
-      version: 2,
+      // v1: default master volume dropped from 40% to 10%.
+      // v2: suspects gained multi-case attachment (caseId -> caseIds).
+      // v3: suspects moved out of local persistence entirely — they are now
+      // board data (boardStorage-owned, shared for a knight) instead of a
+      // per-device field. Any suspects still sitting in an old persisted blob
+      // are pushed into boardStorage once, then dropped from this store's
+      // persistence going forward (see partialize below and the one-time
+      // carry-over on boot).
+      version: 3,
       migrate: (persisted: any, version: number) => {
         if (!persisted) return persisted;
         if (version < 1) persisted.masterVolume = 0.1;
-        // v2: suspects gained multi-case attachment (caseId -> caseIds).
         if (version < 2 && Array.isArray(persisted.suspects)) {
           persisted.suspects = persisted.suspects.map((s: any) => {
             if (s && s.caseIds === undefined) {
@@ -1081,13 +1110,20 @@ export const useAppStore = create<AppState>()(
             return s;
           });
         }
+        // Stash pre-v3 suspects on the migrated object under a throwaway key so
+        // the one-time carry-over below can find and push them, then this key
+        // is never written back (partialize no longer includes it).
+        if (version < 3 && Array.isArray(persisted.suspects) && persisted.suspects.length) {
+          persisted.__legacySuspects = persisted.suspects;
+        }
         return persisted;
       },
       /**
-       * Board data (cases, nodes, connections) is deliberately absent: it is
-       * owned by boardStorage, which for a knight is Supabase. Persisting it
-       * here too would leave a copy of the shared board in localStorage after
-       * sign-out, and would let a stale local copy race the cloud on load.
+       * Board data (cases, suspects, nodes, connections) is deliberately
+       * absent: it is owned by boardStorage, which for a knight is Supabase.
+       * Persisting it here too would leave a copy of the shared board in
+       * localStorage after sign-out, and would let a stale local copy race the
+       * cloud on load.
        *
        * What remains is per-device: scratch notes, audio settings, and which
        * case this browser last had open. Keeping this set small also matters
@@ -1100,9 +1136,7 @@ export const useAppStore = create<AppState>()(
         isMuted: state.isMuted,
         ambientEnabled: state.ambientEnabled,
         theme: state.theme,
-        // Per-device dossier data — deliberately local (no cloud table yet).
         caseClosedAt: state.caseClosedAt,
-        suspects: state.suspects
       })
     }
   )
@@ -1125,6 +1159,59 @@ setAmbientEnabled(initialState.ambientEnabled);
 applyTheme(isThemeId(initialState.theme) ? initialState.theme : DEFAULT_THEME);
 
 /**
+ * One-time carry-over for suspects stranded in the old (pre-v3) persisted
+ * blob. `migrate` above copies them onto `(persist storage).__legacySuspects`
+ * on the persisted object; zustand's `persist` middleware does not expose that
+ * scratch field on the live store (only what's in `partialize` round-trips),
+ * so it is read directly off localStorage here, once, and then removed.
+ *
+ * Must run after setIdentity has bound a board (guest or knight) so
+ * boardStorage.putSuspect has somewhere real to write to.
+ */
+async function carryOverLegacySuspects() {
+  if (typeof localStorage === "undefined") return;
+  try {
+    const raw = localStorage.getItem("belfry-app-store");
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const legacy = parsed?.state?.__legacySuspects;
+    if (!Array.isArray(legacy) || legacy.length === 0) return;
+
+    const { boardStorage, addLog } = useAppStore.getState();
+    for (const suspect of legacy) {
+      if (!suspect?.id) continue;
+      try {
+        await boardStorage.putSuspect(suspect);
+      } catch (err) {
+        addLog(
+          `LEGACY SUSPECT CARRY-OVER FAILED // ${suspect.name ?? suspect.id}`,
+          "warning",
+          "DOSSIER"
+        );
+      }
+    }
+    useAppStore.setState((s) => ({
+      suspects: mergeManyById(s.suspects, legacy),
+    }));
+
+    // Clear it so this doesn't re-run and re-push stale data on every boot.
+    delete parsed.state.__legacySuspects;
+    localStorage.setItem("belfry-app-store", JSON.stringify(parsed));
+  } catch {
+    // Best-effort: a malformed legacy blob just means nothing to carry over.
+  }
+}
+
+function mergeManyById<T extends { id: string }>(list: T[], values: T[]): T[] {
+  let next = list;
+  for (const v of values) {
+    const i = next.findIndex((item) => item.id === v.id);
+    next = i === -1 ? [...next, v] : next.map((item, idx) => (idx === i ? v : item));
+  }
+  return next;
+}
+
+/**
  * Bind a board on boot.
  *
  * Identity comes from the auth session, so a returning knight lands on the
@@ -1132,13 +1219,13 @@ applyTheme(isThemeId(initialState.theme) ? initialState.theme : DEFAULT_THEME);
  * persist has rehydrated (localStorage rehydration is synchronous, so it has
  * completed by the time this module body executes).
  */
-void useAppStore.getState().setIdentity(null);
+void useAppStore.getState().setIdentity(null).then(carryOverLegacySuspects);
 
 void resolveSessionIdentity()
   .then((identity) => {
     // Only re-bind if a knight session exists; the guest board is already bound
     // above, and rebinding it would discard an in-progress load for no reason.
-    if (identity) return useAppStore.getState().setIdentity(identity);
+    if (identity) return useAppStore.getState().setIdentity(identity).then(carryOverLegacySuspects);
   })
   .catch(() => {
     // A failed session probe means guest, which is already bound. The user is
