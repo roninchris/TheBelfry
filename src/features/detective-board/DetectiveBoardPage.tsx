@@ -1765,7 +1765,11 @@ export default function DetectiveBoardPage() {
               const isEditing = editingNodeId === node.id;
               const isLinkingFrom = linkingFromId === node.id;
               const isRevealing = revealingNodes[node.id];
-              const isRenaming = renamingNodeId === node.id;
+              // Suppress the card's inline rename field while this node's detail
+              // modal is open — otherwise both mount with autoFocus and the card
+              // input (behind the modal) steals focus, so typing in the expanded
+              // view's rename field silently goes nowhere.
+              const isRenaming = renamingNodeId === node.id && detailNodeId !== node.id;
               const { width: cardWidthPx, height: cardHeightPx } = getNodeSize(node);
 
               // Per-node colour: cyan is the neutral default, any other palette

@@ -40,7 +40,7 @@ import {
   Legend
 } from "recharts";
 import { getTool, getToolsByCategory, asText, asResult } from "../../lib/tools/registry";
-import type { ToolEntry } from "../../lib/tools/types";
+import type { ToolEntry, ToolOptionField } from "../../lib/tools/types";
 import { useAppStore } from "../../store/appStore";
 import { Search, Star, Clock, LayoutGrid } from "lucide-react";
 import {
@@ -105,6 +105,81 @@ const englishFrequencies: Record<string, number> = {
   S: 6.3, T: 9.1, U: 2.8, V: 1.0, W: 2.4, X: 0.2, Y: 2.0, Z: 0.1
 };
 
+/* -------------------------------------------------------------------------- */
+/* Concept search — searching a property ("password", "symbol", "numbers")     */
+/* returns every cipher with that property, not just name/id substring hits.   */
+/* -------------------------------------------------------------------------- */
+
+// A field is a secret key/keyword if its name or label reads like one.
+const KEY_FIELD_RE = /key|keyword|password|passphrase|secret|primer/i;
+// Ciphers whose whole scheme is numeric even when they expose no number field.
+const NUMERIC_CIPHER_IDS = new Set([
+  "a1z26", "polybius", "nihilist", "gronsfeld", "morbit", "pollux",
+  "gematria", "grandpre", "bacon", "affine",
+]);
+
+function cipherUsesKey(c: ToolEntry): boolean {
+  return (c.optionsSchema ?? []).some(
+    (f) => (f.type === "text" || f.type === "textarea") && (KEY_FIELD_RE.test(f.name) || KEY_FIELD_RE.test(f.label))
+  );
+}
+function cipherUsesNumbers(c: ToolEntry): boolean {
+  return (
+    NUMERIC_CIPHER_IDS.has(c.id) ||
+    (c.optionsSchema ?? []).some((f) => f.type === "number" || f.type === "matrix")
+  );
+}
+function cipherUsesAlphabet(c: ToolEntry): boolean {
+  return (c.optionsSchema ?? []).some((f) => /alphabet/i.test(f.name) || /alphabet/i.test(f.label));
+}
+
+// Concept synonym → predicate. A query matches a concept when it equals one of
+// the terms, or (for queries of 3+ chars) is a prefix of one — so "pass",
+// "password", "sym", "symbols" all land on the right property.
+const CONCEPT_SEARCH: { terms: string[]; test: (c: ToolEntry) => boolean }[] = [
+  { terms: ["key", "keys", "keyed", "keyword", "keywords", "password", "passphrase", "secret"], test: cipherUsesKey },
+  { terms: ["symbol", "symbols", "symbolic", "glyph", "glyphs", "visual", "pictorial", "picture"], test: (c) => groupForCipher(c.id) === "symbolic" },
+  { terms: ["number", "numbers", "numeric", "numerical", "digit", "digits"], test: cipherUsesNumbers },
+  { terms: ["alphabet", "alphabets", "alphabetic"], test: cipherUsesAlphabet },
+];
+
+function conceptMatches(query: string, c: ToolEntry): boolean {
+  return CONCEPT_SEARCH.some(
+    (concept) =>
+      concept.terms.some((t) => t === query || (query.length >= 3 && t.startsWith(query))) && concept.test(c)
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Neutral defaults for The Codex — a pre-filled real keyword (SECRET/EXAMPLE) */
+/* reads like a hint/solution to a puzzle-solver. So in the Codex UI a secret  */
+/* key/keyword starts EMPTY (the analyst supplies it), and an alphabet field   */
+/* starts as the plain alphabet rather than a scrambled one. Scoped here on    */
+/* purpose: other modules keep the registry's working defaults.                */
+/* -------------------------------------------------------------------------- */
+const PLAIN_ALPHABET_26 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const PLAIN_ALPHABET_25 = "ABCDEFGHIKLMNOPQRSTUVWXYZ"; // I/J merged (5×5 square)
+
+function neutralDefault(field: ToolOptionField): unknown {
+  const isText = field.type === "text" || field.type === "textarea";
+  if (!isText) return field.defaultValue; // numbers, enums, matrix, booleans keep theirs
+
+  // Alphabet field → plain alphabet, matching the length the cipher expects.
+  if (/alphabet/i.test(field.name) || /alphabet/i.test(field.label)) {
+    const letters = String(field.defaultValue ?? "").replace(/[^A-Za-z]/g, "").length;
+    return letters === 25 ? PLAIN_ALPHABET_25 : PLAIN_ALPHABET_26;
+  }
+
+  // Secret key/keyword → empty. A purely numeric default (e.g. "123456789") is
+  // a structural permutation, not a solution-looking word, so it stays.
+  if (KEY_FIELD_RE.test(field.name) || KEY_FIELD_RE.test(field.label)) {
+    const cur = String(field.defaultValue ?? "");
+    return /^[0-9]+$/.test(cur) ? field.defaultValue : "";
+  }
+
+  return field.defaultValue;
+}
+
 export default function CryptoLab() {
   const [activeTab, setActiveTab] = useState<"ciphers" | "identifier" | "frequency">("ciphers");
   const [selectedCipher, setSelectedCipher] = useState<string>("caesar");
@@ -119,7 +194,7 @@ export default function CryptoLab() {
     if (tool && tool.optionsSchema) {
       const defaultOpts: Record<string, any> = {};
       tool.optionsSchema.forEach(field => {
-        defaultOpts[field.name] = field.defaultValue;
+        defaultOpts[field.name] = neutralDefault(field);
       });
       setToolOptions(defaultOpts);
     } else {
@@ -166,7 +241,10 @@ export default function CryptoLab() {
   const filteredCiphers = useMemo(() => {
     const query = cipherSearchQuery.trim().toLowerCase();
     const matches = (c: ToolEntry) =>
-      !query || c.label.toLowerCase().includes(query) || c.id.toLowerCase().includes(query);
+      !query ||
+      c.label.toLowerCase().includes(query) ||
+      c.id.toLowerCase().includes(query) ||
+      conceptMatches(query, c);
     const pool = allCiphers.filter(matches);
     if (activeGroup === "favorites") return pool.filter((c) => favorites.includes(c.id));
     if (activeGroup === "recents")
@@ -218,13 +296,24 @@ export default function CryptoLab() {
       }
     }
 
-    const output = mode === "encode" ? tool.encode(inputText, options) : tool.decode(inputText, options);
-    const parsed = asResult(output);
-    setOutputText(parsed.text);
-    setOutputHex(parsed.hex ?? "");
-    setLastOp(tool.solver ? "SOLVED" : mode === "encode" ? "ENCRYPTED" : "DECRYPTED");
-    setFlashOp(prev => prev + 1);
-    playSuccessChime();
+    // Some engines throw on missing/invalid options (e.g. an empty key now that
+    // keyed ciphers default to a blank key). Contain it as an in-fiction error
+    // rather than a silent no-op or a console throw.
+    try {
+      const output = mode === "encode" ? tool.encode(inputText, options) : tool.decode(inputText, options);
+      const parsed = asResult(output);
+      setOutputText(parsed.text);
+      setOutputHex(parsed.hex ?? "");
+      setLastOp(tool.solver ? "SOLVED" : mode === "encode" ? "ENCRYPTED" : "DECRYPTED");
+      setFlashOp(prev => prev + 1);
+      playSuccessChime();
+    } catch (err) {
+      setOutputText(`// ${mode === "encode" ? "ENCRYPTION" : "DECRYPTION"} FAILED — check the key and options`);
+      setOutputHex("");
+      setLastOp("");
+      setFlashOp(prev => prev + 1);
+      playFailBuzz();
+    }
   };
 
   const handleEncrypt = () => runCipher("encode");
