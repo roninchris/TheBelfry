@@ -1,5 +1,5 @@
 import type { KnightId } from "../identity";
-import type { Case, EvidenceConnection, EvidenceNode } from "../../store/appStore";
+import type { Case, EvidenceConnection, EvidenceNode, Suspect } from "../../store/appStore";
 
 /**
  * The complete board state owned by a storage backend.
@@ -10,12 +10,14 @@ import type { Case, EvidenceConnection, EvidenceNode } from "../../store/appStor
  */
 export interface BoardSnapshot {
   cases: Case[];
+  suspects: Suspect[];
   evidenceNodes: EvidenceNode[];
   evidenceConnections: EvidenceConnection[];
 }
 
 export const EMPTY_SNAPSHOT: BoardSnapshot = {
   cases: [],
+  suspects: [],
   evidenceNodes: [],
   evidenceConnections: [],
 };
@@ -44,6 +46,7 @@ export const EMPTY_SNAPSHOT: BoardSnapshot = {
  */
 export interface BoardRealtimeHandlers {
   onCase(id: string, value: Case | null): void;
+  onSuspect(id: string, value: Suspect | null): void;
   onNode(id: string, value: EvidenceNode | null): void;
   onConnection(id: string, value: EvidenceConnection | null): void;
   /**
@@ -93,6 +96,9 @@ export interface BoardStorage {
 
   putCase(value: Case): Promise<void>;
   removeCase(id: string): Promise<void>;
+
+  putSuspect(value: Suspect): Promise<void>;
+  removeSuspect(id: string): Promise<void>;
 
   putNode(value: EvidenceNode): Promise<void>;
   removeNode(id: string): Promise<void>;

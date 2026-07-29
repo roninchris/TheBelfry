@@ -1,5 +1,12 @@
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
-import { THREAT_LEVELS, type Case, type EvidenceConnection, type EvidenceNode } from "../../store/appStore";
+import {
+  THREAT_LEVELS,
+  type Case,
+  type EvidenceConnection,
+  type EvidenceNode,
+  type Suspect,
+  SUSPECT_STATUSES,
+} from "../../store/appStore";
 import { isKnightId, type KnightId } from "../identity";
 import type { BoardRealtimeHandlers, BoardSnapshot, BoardStorage } from "./types";
 
@@ -102,6 +109,7 @@ export class SupabaseBoardStorage implements BoardStorage {
       );
 
     table("cases", (id, row) => handlers.onCase(id, row ? toCase(row) : null));
+    table("suspects", (id, row) => handlers.onSuspect(id, row ? toSuspect(row) : null));
     table("evidence_nodes", (id, row) => handlers.onNode(id, row ? toNode(row) : null));
     table("evidence_connections", (id, row) =>
       handlers.onConnection(id, row ? toConnection(row) : null)
@@ -197,17 +205,19 @@ export class SupabaseBoardStorage implements BoardStorage {
   }
 
   async load(): Promise<BoardSnapshot> {
-    const [cases, nodes, connections] = await Promise.all([
+    const [cases, suspects, nodes, connections] = await Promise.all([
       this.client.from("cases").select("*"),
+      this.client.from("suspects").select("*"),
       this.client.from("evidence_nodes").select("*"),
       this.client.from("evidence_connections").select("*"),
     ]);
 
-    const failure = cases.error ?? nodes.error ?? connections.error;
+    const failure = cases.error ?? suspects.error ?? nodes.error ?? connections.error;
     if (failure) throw new Error(`Board load failed: ${failure.message}`);
 
     return {
       cases: (cases.data ?? []).map(toCase),
+      suspects: (suspects.data ?? []).map(toSuspect),
       evidenceNodes: (nodes.data ?? []).map(toNode),
       evidenceConnections: (connections.data ?? []).map(toConnection),
     };
@@ -231,6 +241,26 @@ export class SupabaseBoardStorage implements BoardStorage {
 
   removeCase(id: string): Promise<void> {
     return this.run("cases", this.client.from("cases").delete().eq("id", id));
+  }
+
+  async putSuspect(value: Suspect): Promise<void> {
+    await this.run(
+      "suspects",
+      this.client.from("suspects").upsert({
+        id: value.id,
+        name: value.name,
+        info: value.info,
+        bio: value.bio,
+        status: value.status,
+        image_ref: value.imageRef ?? null,
+        case_ids: value.caseIds ?? [],
+        created_at: value.createdAt,
+      })
+    );
+  }
+
+  removeSuspect(id: string): Promise<void> {
+    return this.run("suspects", this.client.from("suspects").delete().eq("id", id));
   }
 
   async putNode(value: EvidenceNode): Promise<void> {
@@ -301,6 +331,19 @@ function toCase(row: any): Case {
     notes: row.notes ?? "",
     createdBy: asKnight(row.created_by),
     threatLevel: THREAT_LEVELS.includes(row.threat_level) ? row.threat_level : undefined,
+  };
+}
+
+function toSuspect(row: any): Suspect {
+  return {
+    id: row.id,
+    name: row.name,
+    info: row.info ?? "",
+    bio: row.bio ?? "",
+    status: SUSPECT_STATUSES.includes(row.status) ? row.status : "UNKNOWN",
+    imageRef: row.image_ref ?? undefined,
+    caseIds: Array.isArray(row.case_ids) ? row.case_ids : [],
+    createdAt: row.created_at,
   };
 }
 
