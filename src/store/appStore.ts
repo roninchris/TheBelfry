@@ -43,6 +43,36 @@ export interface Case {
   threatLevel?: ThreatLevel; // absent on cases filed before this existed
 }
 
+/**
+ * Suspect dossier status. Kept intentionally generic (no franchise proper
+ * nouns) to match the app-wide fictional-data cleanup: "IN CUSTODY" rather
+ * than a named asylum.
+ */
+export type SuspectStatus = "UNKNOWN" | "FUGITIVE" | "IN_CUSTODY" | "DECEASED";
+export const SUSPECT_STATUSES: SuspectStatus[] = ["UNKNOWN", "FUGITIVE", "IN_CUSTODY", "DECEASED"];
+
+/**
+ * A person of interest. A global roster (persisted per-device in localStorage),
+ * optionally attached to a case via `caseId`. The portrait reuses the board's
+ * image pipeline: `imageRef` is a data URL for a guest or a Storage object path
+ * for a knight, resolved through the same `resolveAssetUrl` an evidence photo
+ * uses.
+ */
+export interface Suspect {
+  id: string;
+  name: string;
+  /** Short identity line — alias, occupation, affiliation. */
+  info: string;
+  /** Longer freeform biography / notes. */
+  bio: string;
+  status: SuspectStatus;
+  /** Portrait reference (data URL | Storage path), via uploadEvidenceImage. */
+  imageRef?: string;
+  /** Cases this suspect is attached to. A suspect can span several. */
+  caseIds?: string[];
+  createdAt: string;
+}
+
 export interface EvidenceNode {
   id: string;
   caseId: string;            // which case this belongs to
@@ -194,6 +224,19 @@ interface AppState {
   logs: ForensicLog[];
   cases: Case[];
   activeCaseId: string | null;
+  /**
+   * When each case was closed (moved to SOLVED/ARCHIVED), keyed by case id.
+   * Per-device (localStorage): an investigation's duration runs from createdAt
+   * until it is closed, and freezes there rather than counting forever.
+   */
+  caseClosedAt: Record<string, string>;
+  /**
+   * Manual case ordering (per-device), a sequence of case ids. Display still
+   * forces ACTIVE cases to the top; within each tier this order applies.
+   */
+  caseOrder: string[];
+  /** Person-of-interest roster (global, per-device). Array order = display order. */
+  suspects: Suspect[];
   evidenceNodes: EvidenceNode[];
   evidenceConnections: EvidenceConnection[];
   isScanning: boolean;
@@ -219,7 +262,15 @@ interface AppState {
     updates: Partial<Pick<Case, "title" | "synopsis" | "threatLevel">>
   ) => void;
   deleteCase: (caseId: string) => void;
-  
+  /** Records when a case actually became active, closed, or reopened. */
+  markCaseClosed: (caseId: string, closed: boolean) => void;
+
+  // Suspect dossiers
+  /** Returns the new suspect's id. */
+  addSuspect: (suspect: Omit<Suspect, "id" | "createdAt">) => string;
+  updateSuspect: (id: string, updates: Partial<Suspect>) => void;
+  deleteSuspect: (id: string) => void;
+
   // Evidence Board actions
   /** Returns the new node's id (or "" if there is no active case). */
   addEvidenceNode: (node: Omit<EvidenceNode, "id" | "createdAt" | "caseId" | "notes">) => string;
@@ -523,6 +574,8 @@ export const useAppStore = create<AppState>()(
       notes: [],
       activeCaseId: null,
       cases: [],
+      caseClosedAt: {},
+      suspects: [],
       evidenceNodes: [],
       evidenceConnections: [],
       theme: DEFAULT_THEME,
@@ -771,9 +824,26 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           cases: state.cases.map((c) => (c.id === caseId ? { ...c, status } : c))
         }));
+        // A case's duration freezes when it closes and resumes if reopened.
+        get().markCaseClosed(caseId, status === "SOLVED" || status === "ARCHIVED");
         const updated = get().cases.find((c) => c.id === caseId);
         if (updated) persistWrite(caseId, get().boardStorage.putCase(updated), "CASE STATUS", get().addLog);
         get().addLog(`CASE STATUS UPDATED: ${status}`, "info", "SYS");
+      },
+
+      // Stamp/clear the close time. Stamping only when unset keeps the original
+      // closure instant across re-saves; reopening clears it so the clock runs
+      // again. Purely local (localStorage) — no cloud column needed.
+      markCaseClosed: (caseId, closed) => {
+        set((state) => {
+          const map = { ...state.caseClosedAt };
+          if (closed) {
+            if (!map[caseId]) map[caseId] = new Date().toISOString();
+          } else {
+            delete map[caseId];
+          }
+          return { caseClosedAt: map };
+        });
       },
 
       deleteCase: (caseId) => {
@@ -786,13 +856,35 @@ export const useAppStore = create<AppState>()(
             cases: nextCases,
             activeCaseId: activeId,
             evidenceNodes: state.evidenceNodes.filter((n) => n.caseId !== caseId),
-            evidenceConnections: state.evidenceConnections.filter((c) => c.caseId !== caseId)
+            evidenceConnections: state.evidenceConnections.filter((c) => c.caseId !== caseId),
+            // Detach the deleted case from any suspects so no dangling ids remain.
+            suspects: state.suspects.map((s) =>
+              s.caseIds?.includes(caseId) ? { ...s, caseIds: s.caseIds.filter((id) => id !== caseId) } : s
+            )
           };
         });
         // Nodes and connections cascade server-side (and in the local adapter),
         // so only the case itself is deleted here.
         syncWrite(get().boardStorage.removeCase(caseId), "CASE DELETE", get().addLog);
         get().addLog(`CASE DELETED`, "warning", "SYS");
+      },
+
+      // -- Suspect dossiers (per-device localStorage; images via the board
+      //    image pipeline so they land in cloud storage for a knight) ---------
+      addSuspect: (suspect) => {
+        const id = `sus-${Math.random().toString(36).slice(2, 9)}`;
+        const newSuspect: Suspect = { ...suspect, id, createdAt: new Date().toISOString() };
+        set((state) => ({ suspects: [newSuspect, ...state.suspects] }));
+        get().addLog(`SUSPECT DOSSIER FILED: ${suspect.name || "UNKNOWN"}`, "info", "DOSSIER");
+        return id;
+      },
+      updateSuspect: (id, updates) => {
+        set((state) => ({
+          suspects: state.suspects.map((s) => (s.id === id ? { ...s, ...updates } : s))
+        }));
+      },
+      deleteSuspect: (id) => {
+        set((state) => ({ suspects: state.suspects.filter((s) => s.id !== id) }));
       },
 
       addEvidenceNode: (node) => {
@@ -975,9 +1067,20 @@ export const useAppStore = create<AppState>()(
       // Existing installs carry a persisted volume, so the new default alone
       // would never reach them — this resets the level once so everyone opens
       // at the quiet default and can raise it from there.
-      version: 1,
+      version: 2,
       migrate: (persisted: any, version: number) => {
-        if (version < 1 && persisted) persisted.masterVolume = 0.1;
+        if (!persisted) return persisted;
+        if (version < 1) persisted.masterVolume = 0.1;
+        // v2: suspects gained multi-case attachment (caseId -> caseIds).
+        if (version < 2 && Array.isArray(persisted.suspects)) {
+          persisted.suspects = persisted.suspects.map((s: any) => {
+            if (s && s.caseIds === undefined) {
+              s.caseIds = s.caseId ? [s.caseId] : [];
+              delete s.caseId;
+            }
+            return s;
+          });
+        }
         return persisted;
       },
       /**
@@ -996,7 +1099,10 @@ export const useAppStore = create<AppState>()(
         masterVolume: state.masterVolume,
         isMuted: state.isMuted,
         ambientEnabled: state.ambientEnabled,
-        theme: state.theme
+        theme: state.theme,
+        // Per-device dossier data — deliberately local (no cloud table yet).
+        caseClosedAt: state.caseClosedAt,
+        suspects: state.suspects
       })
     }
   )

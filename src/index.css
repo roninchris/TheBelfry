@@ -787,10 +787,25 @@ button:hover, .btn-interactive:hover {
 /* Hexagon Ambient background circuit dots */
 .crt-scanlines {
   background: linear-gradient(
-    rgba(18, 16, 16, 0) 50%, 
+    rgba(18, 16, 16, 0) 50%,
     rgba(0, 0, 0, 0.25) 50%
   );
   background-size: 100% 4px;
+}
+
+/* Suspect "Most Wanted" portrait treatment — keeps colour, gently graded. */
+.suspect-portrait-img {
+  filter: saturate(0.92) contrast(1.06) brightness(1.02);
+}
+/* Prominent CRT scanlines for suspect portraits: a dark line every 3px. */
+.suspect-scanlines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.34) 0px,
+    rgba(0, 0, 0, 0.34) 1px,
+    transparent 1px,
+    transparent 3px
+  );
 }
 
 /* Motion Reduction Safety Override */

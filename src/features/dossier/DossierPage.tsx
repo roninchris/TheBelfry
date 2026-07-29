@@ -6,6 +6,7 @@ import { playPinClick, playCaseSolvedSwell, playHoverEvidence, playReticleLock, 
 import GlassPanel from "../../components/ui/GlassPanel";
 import Badge from "../../components/ui/Badge";
 import IconTabs from "../../components/ui/IconTabs";
+import SuspectsPanel, { SuspectPortrait, STATUS_META } from "./SuspectsPanel";
 import ShinyText from "../../components/react-bits/ShinyText";
 import BlurText from "../../components/react-bits/BlurText";
 import {
@@ -150,16 +151,30 @@ export default function DossierPage() {
     activeCaseId, 
     evidenceNodes, 
     evidenceConnections, 
-    selectCase, 
-    addCase, 
-    deleteCase, 
+    selectCase,
+    addCase,
+    deleteCase,
     updateCaseNotes,
     updateCaseStatus,
     updateCaseDetails,
+    caseClosedAt,
+    markCaseClosed,
+    suspects,
     addLog
   } = useAppStore();
 
+  // Top-level view: the case archive, or the suspect dossiers.
+  const [topTab, setTopTab] = useState<"cases" | "suspects">("cases");
   const [activeTab, setActiveTab] = useState<string>("info");
+
+  // Back-fill: a case that was already closed before durations were tracked has
+  // no recorded close time, so stamp it now — its clock freezes from here.
+  useEffect(() => {
+    cases.forEach((c) => {
+      const closed = c.status === "SOLVED" || c.status === "ARCHIVED";
+      if (closed && !caseClosedAt[c.id]) markCaseClosed(c.id, true);
+    });
+  }, [cases, caseClosedAt, markCaseClosed]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newSynopsis, setNewSynopsis] = useState("");
@@ -295,16 +310,52 @@ export default function DossierPage() {
   // Compute stats
   const activeCaseNodes = activeCase ? evidenceNodes.filter(n => n.caseId === activeCase.id) : [];
   const activeCaseConnections = activeCase ? evidenceConnections.filter(c => c.caseId === activeCase.id) : [];
+  // Suspects attached to this case (a suspect can span several cases).
+  const caseSuspects = activeCase ? suspects.filter(s => s.caseIds?.includes(activeCase.id)) : [];
 
-  const getDaysElapsed = (createdAt: string) => {
-    const elapsedMs = Date.now() - new Date(createdAt).getTime();
-    const elapsedDays = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
-    return elapsedDays === 0 ? "TODAY" : `${elapsedDays} DAYS`;
+  /**
+   * Investigation duration: from when the case was opened until it closed
+   * (SOLVED/ARCHIVED), or until now if it is still running. A closed case's
+   * clock is frozen at its close time rather than counting forever.
+   */
+  const getDuration = (c: Case) => {
+    const endMs = caseClosedAt[c.id] ? new Date(caseClosedAt[c.id]).getTime() : Date.now();
+    const elapsedMs = Math.max(0, endMs - new Date(c.createdAt).getTime());
+    const days = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(elapsedMs / (1000 * 60 * 60));
+    if (days >= 1) return `${days} DAY${days === 1 ? "" : "S"}`;
+    if (hours >= 1) return `${hours} HR${hours === 1 ? "" : "S"}`;
+    return "TODAY";
   };
 
   return (
-    <div className="h-full w-full p-4 grid grid-cols-12 content-start gap-4 overflow-hidden font-chakra" id="dossier-root">
-      
+    <div className="h-full w-full p-4 flex flex-col gap-3 overflow-hidden font-chakra" id="dossier-root">
+
+      {/* Top-level view tabs: the case archive vs the suspect dossiers. */}
+      <div className="flex items-center border-b border-border-hairline/15 pb-2 shrink-0">
+        <div className="flex space-x-2">
+          {([["cases", "CASE FILES"], ["suspects", "SUSPECTS"]] as const).map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => { setTopTab(id); playPinClick(); }}
+              onMouseEnter={() => playHoverEvidence()}
+              className={`px-4 py-2 text-xs font-display font-black tracking-widest transition-all ${
+                topTab === id
+                  ? "bg-cyan-primary/[0.08] text-cyan-text border-b-2 border-cyan-primary shadow-[0_4px_10px_-2px_rgb(var(--rgb-accent) / 0.2)]"
+                  : "text-text-dim hover:text-text-primary"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {topTab === "suspects" ? (
+        <SuspectsPanel />
+      ) : (
+      <div className="grid grid-cols-12 content-start gap-4 flex-1 min-h-0 overflow-hidden">
+
       {/* ================= LEFT SECTION: ARG CASES INDEX ================= */}
       <div className="col-span-12 lg:col-span-4 flex flex-col space-y-4">
         <GlassPanel className="panel-console p-4 flex flex-col h-full" clipSize="md">
@@ -524,8 +575,44 @@ export default function DossierPage() {
                       <BlurText text={activeCase.title} delay={0.05} />
                     </h2>
                     <p className="font-share text-[13px] text-cyan-dim font-bold tracking-widest uppercase border-b border-border-hairline/25 pb-2.5">
-                      CREATED: {new Date(activeCase.createdAt).toLocaleDateString()} // ELAPSED: {getDaysElapsed(activeCase.createdAt)}
+                      CREATED: {new Date(activeCase.createdAt).toLocaleDateString()} // {caseClosedAt[activeCase.id] ? "DURATION" : "ELAPSED"}: {getDuration(activeCase)}{caseClosedAt[activeCase.id] ? " (CLOSED)" : ""}
                     </p>
+                  </div>
+
+                  {/* Suspects attached to this case. Click one to jump to the
+                      Suspects roster. Attach/detach happens there. */}
+                  <div className="shrink-0">
+                    <span className="text-[12px] font-bold text-cyan-dim tracking-widest uppercase flex items-center mb-1.5">
+                      <Crosshair className="w-3 h-3 mr-1.5" />
+                      SUSPECTS {caseSuspects.length > 0 && <span className="text-cyan-text ml-1">({caseSuspects.length})</span>}
+                    </span>
+                    {caseSuspects.length === 0 ? (
+                      <button
+                        onClick={() => { setTopTab("suspects"); playPinClick(); }}
+                        className="text-[12px] font-share text-text-dim/70 italic hover:text-cyan-text transition-colors"
+                      >
+                        — none attached · file one in the SUSPECTS tab —
+                      </button>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {caseSuspects.map((s) => {
+                          const meta = STATUS_META[s.status];
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => { setTopTab("suspects"); playPinClick(); }}
+                              onMouseEnter={() => playHoverEvidence()}
+                              title={`${s.name} · ${meta.label}`}
+                              className={`flex items-center gap-1.5 pl-1 pr-2 py-1 border bg-bg-void/50 ${meta.border} hover:bg-cyan-primary/[0.06] transition-colors`}
+                            >
+                              <SuspectPortrait suspect={s} className="w-6 h-7 shrink-0" />
+                              <span className="font-display text-[12px] font-black tracking-wider uppercase text-cyan-text truncate max-w-[120px]">{s.name}</span>
+                              <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {/* Spec metrics bento cards */}
@@ -535,7 +622,7 @@ export default function DossierPage() {
                         <Clock className="w-3 h-3 mr-1 text-cyan-dim" />
                         DURATION
                       </span>
-                      <span className="text-text-primary font-mono font-bold text-xs uppercase">{getDaysElapsed(activeCase.createdAt)}</span>
+                      <span className="text-text-primary font-mono font-bold text-xs uppercase">{getDuration(activeCase)}</span>
                     </div>
                     <div className="bg-bg-void/60 border border-border-hairline/15 p-2 rounded-sm flex flex-col">
                       <span className="text-text-dim text-[12px] uppercase flex items-center mb-0.5">
@@ -660,6 +747,9 @@ export default function DossierPage() {
           </div>
         )}
       </div>
+
+      </div>
+      )}
 
       {/* --- CREATE CASE DIALOG MODAL --- */}
       {showCreateModal && (
