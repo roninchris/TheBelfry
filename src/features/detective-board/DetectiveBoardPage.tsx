@@ -29,6 +29,7 @@ import SplitText from "../../components/react-bits/SplitText";
 import DataWall from "../../components/ui/DataWall";
 import { detectCoordinates, formatDecimal, formatDMS } from "../../lib/geo/coordinates";
 import { compressBoardImage } from "../../lib/image/compressBoardImage";
+import { getKnight } from "../../lib/identity";
 import {
   Network,
   Plus,
@@ -178,6 +179,12 @@ export default function DetectiveBoardPage() {
   const updateEvidenceConnectionLabel = useAppStore((state) => state.updateEvidenceConnectionLabel);
   const addCase = useAppStore((state) => state.addCase);
   const addLog = useAppStore((state) => state.addLog);
+  // Multiplayer presence: this knight's identity, who else is on the board, and
+  // their live cursor positions (all empty/no-op for a guest).
+  const currentIdentity = useAppStore((state) => state.currentIdentity);
+  const presentKnights = useAppStore((state) => state.presentKnights);
+  const knightCursors = useAppStore((state) => state.knightCursors);
+  const broadcastCursor = useAppStore((state) => state.broadcastCursor);
 
   const [isLoading, setIsLoading] = useState(true);
   const audioPlayed = useRef(false);
@@ -474,6 +481,14 @@ export default function DetectiveBoardPage() {
   };
 
   const handleBgPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Publish this knight's cursor (in canvas coords, so it lands at the same
+    // board point on every screen regardless of their pan/zoom). No-op for a
+    // guest; throttled in the storage layer. Runs whether or not we are panning.
+    if (currentIdentity) {
+      const p = clientToCanvas(e.clientX, e.clientY);
+      broadcastCursor(p.x, p.y);
+    }
+
     if (!isPanning) return;
     setPan({
       x: e.clientX - panStart.x,
@@ -1883,7 +1898,74 @@ export default function DetectiveBoardPage() {
               );
             })}
           </div>
+
+          {/* Live knight cursors (multiplayer presence). Positioned in canvas
+              space so each marker sits on the same board point for everyone, and
+              counter-scaled by 1/zoom so it stays a constant on-screen size like
+              a real cursor. The knight's Full logo rides at the bottom of the
+              pointer in place of a name. Knights only — empty for a guest. */}
+          {Object.entries(knightCursors).map(([id, c]) => {
+            if (id === currentIdentity) return null;
+            if (!presentKnights.includes(id as any)) return null;
+            const knight = getKnight(id as any);
+            if (!knight) return null;
+            if (Date.now() - c.at > 10000) return null; // gone quiet — hide it
+            return (
+              <div key={id} className="absolute pointer-events-none z-[70]" style={{ left: c.x, top: c.y }}>
+                <div style={{ transform: `scale(${1 / zoom})`, transformOrigin: "top left" }}>
+                  <svg width="22" height="24" viewBox="0 0 22 24" style={{ filter: `drop-shadow(0 0 4px ${knight.accent})` }}>
+                    <path
+                      d="M3 2 L3 19 L8 14.4 L11.2 21 L14 19.7 L10.9 13.2 L17.5 13 Z"
+                      fill={knight.accent}
+                      stroke="var(--color-bg-void)"
+                      strokeWidth="1"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <div
+                    className="mt-[-2px] ml-3 inline-flex items-center h-6 px-1.5 rounded-full border backdrop-blur-sm"
+                    style={{ borderColor: `${knight.accent}`, background: "var(--color-bg-void)", boxShadow: `0 0 8px ${knight.accent}80` }}
+                  >
+                    <img
+                      src={knight.fullLogo}
+                      alt={knight.label}
+                      draggable={false}
+                      className="h-5 w-auto object-contain"
+                      style={{ filter: `drop-shadow(0 0 3px ${knight.accent})` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
+
+        {/* Present-operatives roster — the Full logos of every knight on the
+            board (self included), so a signed-in knight always sees the roster. */}
+        {currentIdentity && presentKnights.length > 0 && (
+          <div className="absolute top-3 right-3 z-40 flex items-center gap-2 pointer-events-none">
+            {presentKnights.map((id) => {
+              const k = getKnight(id);
+              if (!k) return null;
+              const isSelf = id === currentIdentity;
+              return (
+                <div key={id} className="flex flex-col items-center" title={isSelf ? `${k.label} (You)` : k.label}>
+                  <div
+                    className="h-9 px-2 flex items-center rounded-md border bg-bg-void/80 backdrop-blur-sm"
+                    style={{ borderColor: `${k.accent}80`, boxShadow: `0 0 10px ${k.accent}55` }}
+                  >
+                    <img src={k.fullLogo} alt={k.label} draggable={false} className="h-6 w-auto object-contain" style={{ filter: `drop-shadow(0 0 4px ${k.accent})` }} />
+                  </div>
+                  {isSelf && (
+                    <span className="text-[9px] font-mono uppercase tracking-widest mt-0.5" style={{ color: k.accent }}>
+                      You
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Drag-and-drop image target overlay — appears while a file is dragged
             over the canvas, and the image lands exactly where it is dropped. */}

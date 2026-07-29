@@ -134,6 +134,16 @@ interface AppState {
   presentKnights: KnightId[];
 
   /**
+   * The other knights' live cursor positions, in CANVAS coordinates keyed by
+   * knight. Ephemeral and never persisted — pruned to whoever is present, and
+   * empty for a guest (no realtime channel to receive them). `at` is the local
+   * receipt time, used to expire a cursor that has gone quiet.
+   */
+  knightCursors: Record<string, { x: number; y: number; at: number }>;
+  /** Publishes this knight's cursor (canvas coords) to the others. No-op locally. */
+  broadcastCursor: (x: number, y: number) => void;
+
+  /**
    * The node this browser is dragging right now, if any.
    *
    * Remote updates for it are ignored while it is held: a change echoing back
@@ -397,7 +407,22 @@ const realtimeHandlers: BoardRealtimeHandlers = {
       };
     }),
 
-  onPresence: (knights) => useAppStore.setState({ presentKnights: knights }),
+  onCursor: (knightId, x, y) =>
+    useAppStore.setState((s) => ({
+      knightCursors: { ...s.knightCursors, [knightId]: { x, y, at: Date.now() } },
+    })),
+
+  onPresence: (knights) =>
+    useAppStore.setState((s) => {
+      // Drop cursors for anyone no longer on the board so a departed knight's
+      // marker cannot linger.
+      const present = new Set<string>(knights);
+      const knightCursors: Record<string, { x: number; y: number; at: number }> = {};
+      for (const [id, c] of Object.entries(s.knightCursors)) {
+        if (present.has(id)) knightCursors[id] = c;
+      }
+      return { presentKnights: knights, knightCursors };
+    }),
 };
 
 // Ordering matters: board fields are no longer persisted, so the store's first
@@ -417,12 +442,17 @@ export const useAppStore = create<AppState>()(
       boardStatus: "ready",
       boardError: null,
       presentKnights: [],
+      knightCursors: {},
       draggingNodeId: null,
 
       setDraggingNode: (id) => set({ draggingNodeId: id }),
 
       broadcastDrag: (nodeId, x, y) => {
         get().boardStorage.broadcastDrag?.(nodeId, x, y);
+      },
+
+      broadcastCursor: (x, y) => {
+        get().boardStorage.broadcastCursor?.(x, y);
       },
 
       setIdentity: async (id) => {
@@ -440,6 +470,7 @@ export const useAppStore = create<AppState>()(
           boardStatus: "loading",
           boardError: null,
           presentKnights: [],
+          knightCursors: {},
           draggingNodeId: null,
           cases: [],
           evidenceNodes: [],

@@ -12,6 +12,14 @@ import type { BoardRealtimeHandlers, BoardSnapshot, BoardStorage } from "./types
  */
 const DRAG_BROADCAST_INTERVAL_MS = 50;
 
+/**
+ * Minimum gap between broadcast cursor frames, in ms.
+ *
+ * A shade slower than drag: a presence cursor reads as live at ~15/sec and this
+ * keeps the channel budget sane when several knights are moving at once.
+ */
+const CURSOR_BROADCAST_INTERVAL_MS = 60;
+
 /** Private Storage bucket holding evidence images. Create it in the dashboard. */
 const EVIDENCE_BUCKET = "evidence";
 
@@ -48,6 +56,7 @@ export class SupabaseBoardStorage implements BoardStorage {
 
   private channel: RealtimeChannel | null = null;
   private lastDragSentAt = 0;
+  private lastCursorSentAt = 0;
 
   /**
    * Identifies this tab, not this knight.
@@ -106,6 +115,13 @@ export class SupabaseBoardStorage implements BoardStorage {
       handlers.onDrag(payload.nodeId, payload.x, payload.y);
     });
 
+    channel.on("broadcast", { event: "cursor" }, ({ payload }: any) => {
+      // Ignore our own frames (per-tab) so a second tab of the same knight does
+      // not render this knight's own cursor back to them.
+      if (!payload || payload.by === this.clientId) return;
+      if (isKnightId(payload.knightId)) handlers.onCursor(payload.knightId, payload.x, payload.y);
+    });
+
     channel.on("presence", { event: "sync" }, () => {
       const state = channel.presenceState();
       const knights = Object.keys(state).filter(isKnightId);
@@ -129,6 +145,17 @@ export class SupabaseBoardStorage implements BoardStorage {
       type: "broadcast",
       event: "drag",
       payload: { nodeId, x, y, by: this.clientId },
+    });
+  }
+
+  broadcastCursor(x: number, y: number): void {
+    const now = Date.now();
+    if (now - this.lastCursorSentAt < CURSOR_BROADCAST_INTERVAL_MS) return;
+    this.lastCursorSentAt = now;
+    void this.channel?.send({
+      type: "broadcast",
+      event: "cursor",
+      payload: { knightId: this.knightId, x, y, by: this.clientId },
     });
   }
 

@@ -51,6 +51,11 @@ export interface BoardRealtimeHandlers {
    * these are ephemeral and never touch the database — see broadcastDrag.
    */
   onDrag(nodeId: string, x: number, y: number): void;
+  /**
+   * Another knight's live cursor position, in canvas coordinates. Ephemeral,
+   * never persisted — the multiplayer presence cursor. See broadcastCursor.
+   */
+  onCursor(knightId: KnightId, x: number, y: number): void;
   /** Who is currently on the board, including yourself. */
   onPresence(knights: KnightId[]): void;
 }
@@ -112,6 +117,15 @@ export interface BoardStorage {
    * written once, on pointer release.
    */
   broadcastDrag?(nodeId: string, x: number, y: number): void;
+
+  /**
+   * Publishes this knight's cursor position (canvas coordinates) to the others.
+   *
+   * Ephemeral like broadcastDrag and throttled the same way — a cursor emits
+   * continuously and none of it is ever persisted. Absent on the local backend:
+   * a guest has nobody to show a cursor to.
+   */
+  broadcastCursor?(x: number, y: number): void;
 
   /** Releases subscriptions/channels. Called when the identity changes. */
   dispose?(): void;
