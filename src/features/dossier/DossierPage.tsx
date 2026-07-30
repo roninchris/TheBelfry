@@ -7,6 +7,8 @@ import GlassPanel from "../../components/ui/GlassPanel";
 import Badge from "../../components/ui/Badge";
 import IconTabs from "../../components/ui/IconTabs";
 import SuspectsPanel, { SuspectPortrait, STATUS_META } from "./SuspectsPanel";
+import { suppressDragImage } from "../../lib/dnd";
+import { GripVertical } from "lucide-react";
 import ShinyText from "../../components/react-bits/ShinyText";
 import BlurText from "../../components/react-bits/BlurText";
 import {
@@ -159,9 +161,16 @@ export default function DossierPage() {
     updateCaseDetails,
     caseClosedAt,
     markCaseClosed,
+    caseOrder,
+    setCaseOrder,
     suspects,
     addLog
   } = useAppStore();
+
+  // Drag state for reordering the archive list: the dragged case and the case
+  // it is hovering over (the drop target). Reorder commits on drop.
+  const [dragCaseId, setDragCaseId] = useState<string | null>(null);
+  const [dropCaseId, setDropCaseId] = useState<string | null>(null);
 
   // Top-level view: the case archive, or the suspect dossiers.
   const [topTab, setTopTab] = useState<"cases" | "suspects">("cases");
@@ -205,21 +214,74 @@ export default function DossierPage() {
 
   // Get active case file details
   const activeCase = cases.find((c) => c.id === activeCaseId);
-  // Archive ordering is fixed: open work first, then closed, then shelved.
-  // Storage returns creation order, which buried active cases under solved ones.
+
+  // Display order: ACTIVE cases always float to the top, then the operative's
+  // manual order (caseOrder) applies within each tier. Drag reorders caseOrder.
   const STATUS_RANK: Record<Case["status"], number> = {
     ACTIVE: 0,
     STALLED: 1,
     SOLVED: 2,
     ARCHIVED: 3,
   };
-  const orderedCases = React.useMemo(
-    () =>
-      [...cases].sort(
-        (a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9),
-      ),
-    [cases],
-  );
+  const isActiveTier = (c: Case) => c.status === "ACTIVE";
+  const orderedCases = React.useMemo(() => {
+    const idx = (id: string) => {
+      const i = caseOrder.indexOf(id);
+      return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+    };
+    return [...cases].sort(
+      (a, b) =>
+        (isActiveTier(a) ? 0 : 1) - (isActiveTier(b) ? 0 : 1) ||
+        idx(a.id) - idx(b.id) ||
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+  }, [cases, caseOrder]);
+
+  // Keep caseOrder in sync with the case set: drop deleted ids, append new ones
+  // in a sensible default (status rank, then creation). Preserves manual order.
+  useEffect(() => {
+    const ids = cases.map((c) => c.id);
+    const known = caseOrder.filter((id) => ids.includes(id));
+    const missing = cases
+      .filter((c) => !caseOrder.includes(c.id))
+      .sort(
+        (a, b) =>
+          (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9) ||
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      )
+      .map((c) => c.id);
+    if (missing.length > 0 || known.length !== caseOrder.length) {
+      setCaseOrder([...known, ...missing]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cases]);
+
+  // Marks the drop target while dragging — but only within the same tier (a
+  // non-active case can't jump above the ACTIVE group, so active stays on top).
+  // The actual reorder commits on drop, so the drag stays smooth (no live churn).
+  const handleCaseDragOver = (e: React.DragEvent, overId: string) => {
+    if (!dragCaseId || dragCaseId === overId) return;
+    const dragCase = cases.find((c) => c.id === dragCaseId);
+    const overCase = cases.find((c) => c.id === overId);
+    if (!dragCase || !overCase || isActiveTier(dragCase) !== isActiveTier(overCase)) return;
+    e.preventDefault();
+    if (dropCaseId !== overId) setDropCaseId(overId);
+  };
+
+  const commitCaseReorder = () => {
+    if (dragCaseId && dropCaseId && dragCaseId !== dropCaseId) {
+      const ids = orderedCases.map((c) => c.id);
+      const from = ids.indexOf(dragCaseId);
+      const to = ids.indexOf(dropCaseId);
+      if (from !== -1 && to !== -1 && from !== to) {
+        ids.splice(from, 1);
+        ids.splice(to, 0, dragCaseId);
+        setCaseOrder(ids);
+      }
+    }
+    setDragCaseId(null);
+    setDropCaseId(null);
+  };
 
 
   const getStatusBadgeVariant = (status: Case["status"]) => {
@@ -415,13 +477,20 @@ export default function DossierPage() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ 
+                      transition={{
                         delay: index * 0.05,
                         type: "spring",
                         stiffness: 100,
                         damping: 15
                       }}
-                      className={`hud-target relative p-3 border transition-all duration-300 flex flex-col text-left group ${
+                      draggable
+                      title="Drag to reorder"
+                      onDragStartCapture={(e: React.DragEvent) => { suppressDragImage(e); setDragCaseId(c.id); setDropCaseId(null); }}
+                      onDragOver={(e: React.DragEvent) => handleCaseDragOver(e, c.id)}
+                      onDragEndCapture={commitCaseReorder}
+                      className={`hud-target relative p-3 pl-6 border select-none flex flex-col text-left group cursor-grab active:cursor-grabbing transition-all duration-300 ${
+                        dropCaseId === c.id ? "ring-2 ring-cyan-primary shadow-[0_6px_24px_-4px_rgb(var(--rgb-accent)/0.5)] z-20" : ""
+                      } ${dragCaseId === c.id ? "opacity-35" : ""} ${
                         isSelected
                           ? "bg-cyan-primary/[0.04] border-cyan-primary text-text-primary shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.08)]"
                           : "bg-bg-void/40 border-border-hairline/15 text-text-dim hover:border-border-hairline/35 hover:text-text-primary"
@@ -430,6 +499,10 @@ export default function DossierPage() {
                         clipPath: "polygon(0 0, 100% 0, 96% 100%, 0 100%)",
                       }}
                     >
+                    {/* Drag affordance — signals the row can be reordered. */}
+                    <span className="absolute left-1 top-1/2 -translate-y-1/2 text-text-dim/40 group-hover:text-cyan-primary/70 transition-colors pointer-events-none">
+                      <GripVertical className="w-3.5 h-3.5" />
+                    </span>
                     <div className="flex justify-between items-start" onClick={() => selectCase(c.id)}>
                       <div 
                         className="cursor-pointer flex-1 mr-2"

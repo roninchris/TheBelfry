@@ -254,6 +254,7 @@ export class SupabaseBoardStorage implements BoardStorage {
         status: value.status,
         image_ref: value.imageRef ?? null,
         case_ids: value.caseIds ?? [],
+        position: value.position ?? null,
         created_at: value.createdAt,
       })
     );
@@ -343,6 +344,7 @@ function toSuspect(row: any): Suspect {
     status: SUSPECT_STATUSES.includes(row.status) ? row.status : "UNKNOWN",
     imageRef: row.image_ref ?? undefined,
     caseIds: Array.isArray(row.case_ids) ? row.case_ids : [],
+    position: typeof row.position === "number" ? row.position : undefined,
     createdAt: row.created_at,
   };
 }

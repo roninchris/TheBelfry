@@ -71,6 +71,12 @@ export interface Suspect {
   imageRef?: string;
   /** Cases this suspect is attached to. A suspect can span several. */
   caseIds?: string[];
+  /**
+   * Manual sort position on the Most-Wanted grid. Shared board state (a cloud
+   * column) so a reorder shows for every knight. Lower sorts first; a suspect
+   * with no position yet falls back to createdAt.
+   */
+  position?: number;
   createdAt: string;
 }
 
@@ -239,7 +245,8 @@ interface AppState {
   /**
    * Person-of-interest roster. Board data, same as cases/evidenceNodes: owned
    * by boardStorage (shared via Supabase for a knight, local-only for a guest)
-   * and swapped wholesale on identity change. Array order = display order.
+   * and swapped wholesale on identity change. Manual grid order is the shared
+   * `Suspect.position` field, not a per-device list.
    */
   suspects: Suspect[];
   evidenceNodes: EvidenceNode[];
@@ -269,12 +276,19 @@ interface AppState {
   deleteCase: (caseId: string) => void;
   /** Records when a case actually became active, closed, or reopened. */
   markCaseClosed: (caseId: string, closed: boolean) => void;
+  /** Sets the manual case ordering (a sequence of case ids). */
+  setCaseOrder: (ids: string[]) => void;
 
   // Suspect dossiers
   /** Returns the new suspect's id. */
   addSuspect: (suspect: Omit<Suspect, "id" | "createdAt">) => string;
   updateSuspect: (id: string, updates: Partial<Suspect>) => void;
   deleteSuspect: (id: string) => void;
+  /**
+   * Reorders the roster to match the given id sequence and persists the new
+   * positions (shared board state, so every knight sees the order).
+   */
+  reorderSuspects: (orderedIds: string[]) => void;
 
   // Evidence Board actions
   /** Returns the new node's id (or "" if there is no active case). */
@@ -588,6 +602,7 @@ export const useAppStore = create<AppState>()(
       activeCaseId: null,
       cases: [],
       caseClosedAt: {},
+      caseOrder: [],
       suspects: [],
       evidenceNodes: [],
       evidenceConnections: [],
@@ -859,6 +874,8 @@ export const useAppStore = create<AppState>()(
         });
       },
 
+      setCaseOrder: (ids) => set({ caseOrder: ids }),
+
       deleteCase: (caseId) => {
         set((state) => {
           const nextCases = state.cases.filter((c) => c.id !== caseId);
@@ -911,6 +928,29 @@ export const useAppStore = create<AppState>()(
       deleteSuspect: (id) => {
         set((state) => ({ suspects: state.suspects.filter((s) => s.id !== id) }));
         syncWrite(get().boardStorage.removeSuspect(id), "SUSPECT DELETE", get().addLog);
+      },
+      reorderSuspects: (orderedIds) => {
+        // Assign a fresh spaced position per id in the new order, update local
+        // state, and persist only the suspects whose position actually changed
+        // (a reorder usually only touches a contiguous run). Shared, so the
+        // order replicates to every knight over Realtime.
+        const changed: Suspect[] = [];
+        set((state) => {
+          const rank = new Map(orderedIds.map((id, i) => [id, i * 1000]));
+          const suspects = state.suspects.map((s) => {
+            const pos = rank.get(s.id);
+            if (pos !== undefined && pos !== s.position) {
+              const next = { ...s, position: pos };
+              changed.push(next);
+              return next;
+            }
+            return s;
+          });
+          return { suspects };
+        });
+        changed.forEach((s) =>
+          persistWrite(s.id, get().boardStorage.putSuspect(s), "SUSPECT ORDER", get().addLog)
+        );
       },
 
       addEvidenceNode: (node) => {
@@ -1137,6 +1177,7 @@ export const useAppStore = create<AppState>()(
         ambientEnabled: state.ambientEnabled,
         theme: state.theme,
         caseClosedAt: state.caseClosedAt,
+        caseOrder: state.caseOrder,
       })
     }
   )

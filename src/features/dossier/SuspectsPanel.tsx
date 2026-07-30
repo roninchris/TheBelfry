@@ -19,7 +19,9 @@ import {
   Loader2,
   Image as ImageIcon,
   Users,
+  GripVertical,
 } from "lucide-react";
+import { suppressDragImage } from "../../lib/dnd";
 import {
   playPinClick,
   playHoverEvidence,
@@ -96,11 +98,11 @@ export function SuspectPortrait({
         <>
           <div
             className="absolute inset-0 pointer-events-none"
-            style={{ background: "rgb(var(--rgb-accent) / 0.24)", mixBlendMode: "soft-light" }}
+            style={{ background: "rgb(var(--rgb-accent) / 0.34)", mixBlendMode: "soft-light" }}
           />
           <div
             className="absolute inset-0 pointer-events-none"
-            style={{ background: "rgb(var(--rgb-accent) / 0.10)", mixBlendMode: "color" }}
+            style={{ background: "rgb(var(--rgb-accent) / 0.16)", mixBlendMode: "color" }}
           />
         </>
       )}
@@ -156,10 +158,10 @@ async function bakeSuspectPortrait(url: string, name: string): Promise<File | nu
     const [ar, ag, ab] = themeAccentRGB();
     ctx.fillStyle = `rgb(${ar}, ${ag}, ${ab})`;
     ctx.globalCompositeOperation = "soft-light";
-    ctx.globalAlpha = 0.42;
+    ctx.globalAlpha = 0.52;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "color";
-    ctx.globalAlpha = 0.1;
+    ctx.globalAlpha = 0.16;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = 1;
@@ -190,6 +192,8 @@ export default function SuspectsPanel() {
   const setModule = useAppStore((s) => s.setModule);
   const addLog = useAppStore((s) => s.addLog);
 
+  const reorderSuspects = useAppStore((s) => s.reorderSuspects);
+
   const [statusFilter, setStatusFilter] = useState<"ALL" | SuspectStatus>("ALL");
   const [detailId, setDetailId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -198,15 +202,53 @@ export default function SuspectsPanel() {
   const [isUploading, setIsUploading] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  // Drag state: the card being dragged and the card it is hovering over. The
+  // reorder only commits on drop (not live), so the drag stays smooth.
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropId, setDropId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const detail = suspects.find((s) => s.id === detailId) || null;
   const caseTitle = (id?: string) => cases.find((c) => c.id === id)?.title;
 
-  const filtered = useMemo(
-    () => (statusFilter === "ALL" ? suspects : suspects.filter((s) => s.status === statusFilter)),
-    [suspects, statusFilter]
+  // Roster in the shared manual order (Suspect.position), then created time,
+  // then the status filter.
+  const ordered = useMemo(
+    () =>
+      [...suspects].sort(
+        (a, b) =>
+          (a.position ?? Number.MAX_SAFE_INTEGER) - (b.position ?? Number.MAX_SAFE_INTEGER) ||
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      ),
+    [suspects]
   );
+
+  const filtered = useMemo(
+    () => (statusFilter === "ALL" ? ordered : ordered.filter((s) => s.status === statusFilter)),
+    [ordered, statusFilter]
+  );
+
+  // Commit the reorder on drop: move dragId to dropId's slot, persist positions.
+  const commitReorder = () => {
+    if (dragId && dropId && dragId !== dropId) {
+      const ids = ordered.map((s) => s.id);
+      const from = ids.indexOf(dragId);
+      const to = ids.indexOf(dropId);
+      if (from !== -1 && to !== -1 && from !== to) {
+        ids.splice(from, 1);
+        ids.splice(to, 0, dragId);
+        reorderSuspects(ids);
+      }
+    }
+    setDragId(null);
+    setDropId(null);
+  };
+
+  const onCardDragOver = (e: React.DragEvent, id: string) => {
+    if (!dragId || dragId === id) return;
+    e.preventDefault();
+    if (dropId !== id) setDropId(id);
+  };
 
   const counts = useMemo(() => {
     const m: Record<string, number> = { ALL: suspects.length };
@@ -369,12 +411,23 @@ export default function SuspectsPanel() {
                   key={s.id}
                   initial={{ opacity: 0, scale: 0.94 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  onClick={() => { setDetailId(s.id); playOpenFile(); }}
+                  onClick={() => { if (!dragId) { setDetailId(s.id); playOpenFile(); } }}
                   onMouseEnter={() => playHoverEvidence()}
-                  className={`hud-target group relative text-left border ${meta.border} bg-bg-void/50 overflow-hidden transition-all hover:shadow-[0_0_14px_-2px_rgb(var(--rgb-accent)/0.3)]`}
+                  draggable
+                  title="Drag to reorder"
+                  onDragStartCapture={(e: React.DragEvent) => { suppressDragImage(e); setDragId(s.id); setDropId(null); }}
+                  onDragOver={(e: React.DragEvent) => onCardDragOver(e, s.id)}
+                  onDragEndCapture={commitReorder}
+                  className={`hud-target group relative text-left border bg-bg-void/50 overflow-hidden hover:shadow-[0_0_14px_-2px_rgb(var(--rgb-accent)/0.3)] cursor-grab active:cursor-grabbing transition-all ${
+                    dropId === s.id ? "ring-2 ring-cyan-primary scale-[1.04] z-20 shadow-[0_0_22px_-2px_rgb(var(--rgb-accent)/0.6)]" : meta.border
+                  } ${dragId === s.id ? "opacity-35" : ""}`}
                   style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)" }}
                 >
                   <SuspectPortrait suspect={s} className="w-full aspect-[3/4]" />
+                  {/* Drag affordance — a grip that appears on hover. */}
+                  <span className="absolute top-1.5 right-1.5 z-10 p-0.5 rounded bg-bg-void/70 text-cyan-primary/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <GripVertical className="w-3.5 h-3.5" />
+                  </span>
                   {/* Status flag */}
                   <span className={`absolute top-1.5 left-1.5 px-1.5 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase border bg-bg-void/80 ${meta.chip}`}>
                     {meta.label}

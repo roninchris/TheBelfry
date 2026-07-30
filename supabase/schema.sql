@@ -115,6 +115,31 @@ create index if not exists evidence_nodes_case_id_idx
 create index if not exists evidence_connections_case_id_idx
   on public.evidence_connections (case_id);
 
+-- Suspects (Most Wanted dossiers). A suspect can be attached to several cases;
+-- rather than a junction table, the attachments are a text[] of case ids
+-- (`case_ids`), mirroring the client's Suspect.caseIds. This keeps a suspect one
+-- row that syncs atomically over Realtime — a junction table meant the client's
+-- single putSuspect write couldn't carry the attachments and they never synced.
+create table if not exists public.suspects (
+  id         text primary key,
+  name       text not null,
+  info       text not null default '',
+  bio        text not null default '',
+  status     text not null default 'UNKNOWN'
+    check (status in ('FUGITIVE', 'IN_CUSTODY', 'DECEASED', 'UNKNOWN')),
+  image_ref  text,
+  case_ids   text[] not null default '{}',
+  -- Manual grid order, shared so a reorder shows for every knight.
+  position   double precision,
+  created_at timestamptz not null default now(),
+  created_by text
+);
+
+-- Migrations for databases created before these columns existed (idempotent;
+-- no-ops on a fresh database).
+alter table public.suspects add column if not exists case_ids text[] not null default '{}';
+alter table public.suspects add column if not exists position double precision;
+
 
 -- 3. Server-authoritative attribution -----------------------------------------
 -- created_by is set from the session, never from the request body, so a knight
@@ -155,6 +180,11 @@ create trigger stamp_created_by
   before insert or update on public.evidence_connections
   for each row execute function public.stamp_created_by();
 
+drop trigger if exists stamp_created_by on public.suspects;
+create trigger stamp_created_by
+  before insert or update on public.suspects
+  for each row execute function public.stamp_created_by();
+
 
 -- 4. Row Level Security -------------------------------------------------------
 -- With RLS on and no policy for a role, that role gets nothing. anon therefore
@@ -166,6 +196,7 @@ alter table public.knights              enable row level security;
 alter table public.cases                enable row level security;
 alter table public.evidence_nodes       enable row level security;
 alter table public.evidence_connections enable row level security;
+alter table public.suspects             enable row level security;
 
 -- Belt and braces: Supabase grants table privileges to anon by default. RLS
 -- already blocks it, but removing the grant means a future policy mistake
@@ -174,6 +205,7 @@ revoke all on public.knights              from anon;
 revoke all on public.cases                from anon;
 revoke all on public.evidence_nodes       from anon;
 revoke all on public.evidence_connections from anon;
+revoke all on public.suspects             from anon;
 
 -- knights: a knight may read only their own mapping, and nobody may write it
 -- through the API. Seed it yourself in the SQL editor (section 6).
@@ -188,7 +220,7 @@ create policy "knight reads own mapping" on public.knights
 do $$
 declare t text;
 begin
-  foreach t in array array['cases', 'evidence_nodes', 'evidence_connections'] loop
+  foreach t in array array['cases', 'evidence_nodes', 'evidence_connections', 'suspects'] loop
     execute format('drop policy if exists "knights read %1$s" on public.%1$I', t);
     execute format($p$
       create policy "knights read %1$s" on public.%1$I
@@ -241,6 +273,12 @@ end $$;
 do $$
 begin
   alter publication supabase_realtime add table public.evidence_connections;
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.suspects;
 exception when duplicate_object then null;
 end $$;
 
