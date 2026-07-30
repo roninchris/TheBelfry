@@ -484,18 +484,31 @@ export default function AudioForensicsLab() {
   const [noiseReductionEnabled, setNoiseReductionEnabled] = useState(false);
   const [lsbPayload, setLsbPayload] = useState<string | null>(null);
 
-  // Spectrogram view controls (time-axis zoom / pan and display gain).
+  // Spectrogram view controls. Time (horizontal) and frequency (vertical) each
+  // have an independent zoom + offset so a message sitting in a narrow, low
+  // frequency band can be expanded and scrolled to without also zooming time.
   const [spectroZoom, setSpectroZoom] = useState(1);
   const [spectroOffset, setSpectroOffset] = useState(0); // left-edge fraction 0..1
+  const [spectroFreqZoom, setSpectroFreqZoom] = useState(1);
+  const [spectroFreqOffset, setSpectroFreqOffset] = useState(0); // top-edge fraction 0..1
   const [spectroGain, setSpectroGain] = useState(1);
   // Cached, fully-rendered spectrogram. Built once per buffer/gain change; the
   // animation loop only blits and crops it, instead of recolouring every pixel
   // 60 times a second.
   const spectrogramImageRef = useRef<HTMLCanvasElement | null>(null);
-  const panStateRef = useRef<{ dragging: boolean; startX: number; startOffset: number; moved: boolean }>({
+  const panStateRef = useRef<{
+    dragging: boolean;
+    startX: number;
+    startY: number;
+    startOffset: number;
+    startFreqOffset: number;
+    moved: boolean;
+  }>({
     dragging: false,
     startX: 0,
+    startY: 0,
     startOffset: 0,
+    startFreqOffset: 0,
     moved: false,
   });
 
@@ -648,6 +661,8 @@ export default function AudioForensicsLab() {
   useEffect(() => {
     setSpectroZoom(1);
     setSpectroOffset(0);
+    setSpectroFreqZoom(1);
+    setSpectroFreqOffset(0);
   }, [decodedBuffer]);
 
   // Build the cached spectrogram bitmap once (per buffer or gain change). This
@@ -683,20 +698,31 @@ export default function AudioForensicsLab() {
     const range = Math.max(1e-6, maxDb - floorDb);
     const invGain = 1 / spectroGain;
 
+    // Render onto a LINEAR frequency axis (top = highest, bottom = 0 Hz).
+    // Linear on purpose: these puzzles hide a drawn image (text/glyphs) in the
+    // frequency domain, and a log axis would warp it unreadable — Boxentriq et
+    // al. keep it linear. A tall bitmap gives the low band enough resolution.
+    const rows = 900;
+    const binMax = usableBins - 1;
+
     const off = spectrogramImageRef.current || document.createElement("canvas");
     off.width = cols;
-    off.height = usableBins;
+    off.height = rows;
     const octx = off.getContext("2d");
     if (!octx) return;
-    const img = octx.createImageData(cols, usableBins);
+    const img = octx.createImageData(cols, rows);
     const px = img.data;
 
     for (let x = 0; x < cols; x++) {
       const s = spectrogramData[x];
-      for (let row = 0; row < usableBins; row++) {
-        // row 0 = top of canvas = highest frequency bin.
-        const binIndex = usableBins - 1 - row;
-        const mag = s[binIndex] || 0;
+      for (let row = 0; row < rows; row++) {
+        // row 0 = top = highest freq; bottom = 0 Hz. Interpolate between bins.
+        const bf = row / (rows - 1); // 0 top .. 1 bottom
+        const fbin = (1 - bf) * binMax; // binMax at top, 0 at bottom
+        const b0 = Math.floor(fbin);
+        const b1 = Math.min(binMax, b0 + 1);
+        const t = fbin - b0;
+        const mag = (s[b0] || 0) * (1 - t) + (s[b1] || 0) * t;
         const db = 20 * Math.log10(mag + 1e-9);
         let v = (db - floorDb) / range;
         v = v < 0 ? 0 : v > 1 ? 1 : v;
@@ -987,18 +1013,42 @@ export default function AudioForensicsLab() {
             const viewStart = Math.min(Math.max(spectroOffset, 0), Math.max(0, 1 - viewSpan));
             const srcX = viewStart * off.width;
             const srcW = viewSpan * off.width;
+            // Frequency window: crop the bitmap vertically too, so zooming the
+            // frequency axis expands a slice to fill the canvas height.
+            const freqSpan = 1 / spectroFreqZoom;
+            const freqStart = Math.min(Math.max(spectroFreqOffset, 0), Math.max(0, 1 - freqSpan));
+            const srcY = freqStart * off.height;
+            const srcH = freqSpan * off.height;
 
             ctx.imageSmoothingEnabled = true;
             (ctx as any).imageSmoothingQuality = "high";
-            ctx.drawImage(off, srcX, 0, srcW, off.height, 0, 0, width, height);
+            ctx.drawImage(off, srcX, srcY, srcW, srcH, 0, 0, width, height);
 
-            // Overlay horizontal frequency guide tags
-            ctx.fillStyle = themeRgba("--rgb-accent", 0.6);
+            // Linear-frequency ruler — faint gridlines + labels at round
+            // frequencies, clipped to the current view window. The bitmap spans
+            // 0..0.9·Nyquist top-to-bottom, linearly.
+            const bitmapTopFreq = (decodedBuffer.sampleRate / 2) * 0.9;
+            const yForFreq = (hz: number): number | null => {
+              const bf = 1 - hz / bitmapTopFreq; // 0 top .. 1 bottom
+              const vf = (bf - freqStart) / freqSpan;
+              if (vf < 0 || vf > 1) return null;
+              return vf * height;
+            };
+            const fmtHz = (hz: number) =>
+              hz >= 1000 ? `${(hz / 1000).toFixed(hz % 1000 === 0 ? 0 : 1)} kHz` : `${Math.round(hz)} Hz`;
             ctx.font = "10px monospace";
-            const maxFreq = decodedBuffer.sampleRate / 2;
-            ctx.fillText(`${(maxFreq / 1000 * 0.9).toFixed(1)} kHz`, 5, 14);
-            ctx.fillText(`${(maxFreq / 1000 * 0.45).toFixed(1)} kHz`, 5, height / 2);
-            ctx.fillText("0 Hz", 5, height - 6);
+            for (const hz of [1000, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000]) {
+              const y = yForFreq(hz);
+              if (y == null) continue;
+              ctx.strokeStyle = themeRgba("--rgb-accent", 0.1);
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(42, y);
+              ctx.lineTo(width, y);
+              ctx.stroke();
+              ctx.fillStyle = themeRgba("--rgb-accent", 0.6);
+              ctx.fillText(fmtHz(hz), 5, Math.min(Math.max(y - 2, 10), height - 2));
+            }
 
             // Playhead/scanline, mapped through the zoom window so it still
             // lines up with the audio when magnified.
@@ -1107,10 +1157,12 @@ export default function AudioForensicsLab() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [currentTime, currentSample, isPlaying, activeTab, selectedSampleId, decodedBuffer, waveformPeaks, spectrogramData, spectroZoom, spectroOffset]);
+  }, [currentTime, currentSample, isPlaying, activeTab, selectedSampleId, decodedBuffer, waveformPeaks, spectrogramData, spectroZoom, spectroOffset, spectroFreqZoom, spectroFreqOffset]);
 
-  // Non-passive wheel handler for time-axis zoom on the spectrogram, centred on
-  // the cursor so the point under the pointer stays put as you zoom.
+  // Non-passive wheel-zoom on the spectrogram, centred on the cursor so the
+  // point under the pointer stays put. Plain scroll zooms FREQUENCY (the axis
+  // messages hide in); Shift+scroll zooms TIME. Both clamp to 1 so scrolling
+  // back out always returns to the full view.
   useEffect(() => {
     const canvas = waveformCanvasRef.current;
     if (!canvas) return;
@@ -1118,21 +1170,34 @@ export default function AudioForensicsLab() {
       if (activeTab !== "spectrogram" || !decodedBuffer) return;
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
-      const cursorFrac = (e.clientX - rect.left) / rect.width;
-      const oldSpan = 1 / spectroZoom;
-      const oldStart = Math.min(Math.max(spectroOffset, 0), Math.max(0, 1 - oldSpan));
-      const focusFrac = oldStart + cursorFrac * oldSpan;
       const factor = e.deltaY < 0 ? 1.2 : 1 / 1.2;
-      const newZoom = Math.min(40, Math.max(1, spectroZoom * factor));
-      const newSpan = 1 / newZoom;
-      let newStart = focusFrac - cursorFrac * newSpan;
-      newStart = Math.min(Math.max(newStart, 0), Math.max(0, 1 - newSpan));
-      setSpectroZoom(newZoom);
-      setSpectroOffset(newStart);
+      if (e.shiftKey) {
+        const cursorFrac = (e.clientX - rect.left) / rect.width;
+        const oldSpan = 1 / spectroZoom;
+        const oldStart = Math.min(Math.max(spectroOffset, 0), Math.max(0, 1 - oldSpan));
+        const focusFrac = oldStart + cursorFrac * oldSpan;
+        const newZoom = Math.min(40, Math.max(1, spectroZoom * factor));
+        const newSpan = 1 / newZoom;
+        let newStart = focusFrac - cursorFrac * newSpan;
+        newStart = Math.min(Math.max(newStart, 0), Math.max(0, 1 - newSpan));
+        setSpectroZoom(newZoom);
+        setSpectroOffset(newStart);
+      } else {
+        const cursorFrac = (e.clientY - rect.top) / rect.height;
+        const oldSpan = 1 / spectroFreqZoom;
+        const oldStart = Math.min(Math.max(spectroFreqOffset, 0), Math.max(0, 1 - oldSpan));
+        const focusFrac = oldStart + cursorFrac * oldSpan;
+        const newZoom = Math.min(40, Math.max(1, spectroFreqZoom * factor));
+        const newSpan = 1 / newZoom;
+        let newStart = focusFrac - cursorFrac * newSpan;
+        newStart = Math.min(Math.max(newStart, 0), Math.max(0, 1 - newSpan));
+        setSpectroFreqZoom(newZoom);
+        setSpectroFreqOffset(newStart);
+      }
     };
     canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => canvas.removeEventListener("wheel", onWheel);
-  }, [activeTab, decodedBuffer, spectroZoom, spectroOffset]);
+  }, [activeTab, decodedBuffer, spectroZoom, spectroOffset, spectroFreqZoom, spectroFreqOffset]);
 
   // Handle Dragging (page-wide: attached to lab root, not just the upload box)
   const dragCounterRef = useRef(0);
@@ -1616,6 +1681,20 @@ ${currentSample.analysisSummary}`;
     setSpectroOffset(newStart);
   };
 
+  // Frequency-axis counterpart of applyZoom (focus is a 0..1 fraction down the
+  // current view). Used by the on-screen FREQ +/- buttons.
+  const applyFreqZoom = (newZoomRaw: number, focus = 0.5) => {
+    const newZoom = Math.min(40, Math.max(1, newZoomRaw));
+    const oldSpan = 1 / spectroFreqZoom;
+    const oldStart = Math.min(Math.max(spectroFreqOffset, 0), Math.max(0, 1 - oldSpan));
+    const focusFrac = oldStart + focus * oldSpan;
+    const newSpan = 1 / newZoom;
+    let newStart = focusFrac - focus * newSpan;
+    newStart = Math.min(Math.max(newStart, 0), Math.max(0, 1 - newSpan));
+    setSpectroFreqZoom(newZoom);
+    setSpectroFreqOffset(newStart);
+  };
+
   return (
     <div
       className="h-full w-full p-4 flex flex-col space-y-4 overflow-hidden font-chakra select-none text-text-primary relative"
@@ -1694,7 +1773,7 @@ ${currentSample.analysisSummary}`;
         </div>
 
         {/* Core Canvas Viewport */}
-        <div className="flex-1 bg-bg-void/90 border border-cyan-primary/10 p-3 relative min-h-[220px] overflow-hidden group">
+        <div className="flex-1 bg-bg-void/90 border border-cyan-primary/10 p-3 relative min-h-[440px] overflow-hidden group">
           <div className="absolute inset-0 border-[3px] border-cyan-primary animate-signal-lock pointer-events-none z-10 opacity-0 shadow-[inset_0_0_20px_rgb(var(--rgb-accent) / 0.5)]" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-primary/20 to-transparent w-full h-[10%] animate-scanline-vertical opacity-30 mix-blend-screen pointer-events-none" />
           
@@ -1795,28 +1874,42 @@ ${currentSample.analysisSummary}`;
             <canvas
               ref={waveformCanvasRef}
               width={1000}
-              height={220}
-              className={`w-full h-full object-cover border border-cyan-primary/5 shadow-[inset_0_0_12px_rgb(var(--rgb-accent) / 0.05)] ${
+              height={480}
+              className={`w-full h-full object-fill border border-cyan-primary/5 shadow-[inset_0_0_12px_rgb(var(--rgb-accent) / 0.05)] ${
                 !currentSample
                   ? "cursor-not-allowed"
-                  : activeTab === "spectrogram" && spectroZoom > 1
+                  : activeTab === "spectrogram" && (spectroZoom > 1 || spectroFreqZoom > 1)
                   ? "cursor-grab active:cursor-grabbing"
                   : "cursor-pointer"
               }`}
               onMouseDown={(e) => {
-                if (activeTab !== "spectrogram" || spectroZoom <= 1) return;
-                panStateRef.current = { dragging: true, startX: e.clientX, startOffset: spectroOffset, moved: false };
+                if (activeTab !== "spectrogram" || (spectroZoom <= 1 && spectroFreqZoom <= 1)) return;
+                panStateRef.current = {
+                  dragging: true,
+                  startX: e.clientX,
+                  startY: e.clientY,
+                  startOffset: spectroOffset,
+                  startFreqOffset: spectroFreqOffset,
+                  moved: false,
+                };
               }}
               onMouseMove={(e) => {
                 const ps = panStateRef.current;
                 if (!ps.dragging) return;
                 const rect = e.currentTarget.getBoundingClientRect();
                 const dx = (e.clientX - ps.startX) / rect.width;
-                if (Math.abs(dx) > 0.005) ps.moved = true;
-                const span = 1 / spectroZoom;
-                let newStart = ps.startOffset - dx * span;
-                newStart = Math.min(Math.max(newStart, 0), Math.max(0, 1 - span));
-                setSpectroOffset(newStart);
+                const dy = (e.clientY - ps.startY) / rect.height;
+                if (Math.abs(dx) > 0.005 || Math.abs(dy) > 0.005) ps.moved = true;
+                // Drag pans both axes (grab-pan): left/right = time, up/down =
+                // frequency, so you can pull a low band up into view.
+                if (spectroZoom > 1) {
+                  const span = 1 / spectroZoom;
+                  setSpectroOffset(Math.min(Math.max(ps.startOffset - dx * span, 0), Math.max(0, 1 - span)));
+                }
+                if (spectroFreqZoom > 1) {
+                  const fSpan = 1 / spectroFreqZoom;
+                  setSpectroFreqOffset(Math.min(Math.max(ps.startFreqOffset - dy * fSpan, 0), Math.max(0, 1 - fSpan)));
+                }
               }}
               onMouseUp={() => {
                 panStateRef.current.dragging = false;
@@ -1850,7 +1943,22 @@ ${currentSample.analysisSummary}`;
           {/* Spectrogram zoom / gain controls */}
           {activeTab === "spectrogram" && decodedBuffer && (
             <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-bg-void/85 border border-cyan-primary/25 px-1.5 py-1 font-mono text-[11px] shadow-[0_0_10px_rgb(var(--rgb-accent) / 0.15)]">
-              <span className="text-text-dim uppercase tracking-wider">Zoom</span>
+              <span className="text-text-dim uppercase tracking-wider">Freq</span>
+              <button
+                onClick={() => { playPinClick(); applyFreqZoom(spectroFreqZoom / 1.5); }}
+                className="w-5 h-5 flex items-center justify-center border border-border-hairline/25 text-text-dim hover:text-cyan-text hover:border-cyan-primary/40 transition-colors"
+              >
+                −
+              </button>
+              <span className="text-cyan-text w-9 text-center tabular-nums">{spectroFreqZoom.toFixed(1)}x</span>
+              <button
+                onClick={() => { playPinClick(); applyFreqZoom(spectroFreqZoom * 1.5); }}
+                className="w-5 h-5 flex items-center justify-center border border-border-hairline/25 text-text-dim hover:text-cyan-text hover:border-cyan-primary/40 transition-colors"
+              >
+                +
+              </button>
+              <span className="mx-1 text-border-hairline/40">|</span>
+              <span className="text-text-dim uppercase tracking-wider">Time</span>
               <button
                 onClick={() => { playPinClick(); applyZoom(spectroZoom / 1.5); }}
                 className="w-5 h-5 flex items-center justify-center border border-border-hairline/25 text-text-dim hover:text-cyan-text hover:border-cyan-primary/40 transition-colors"
@@ -1881,16 +1989,16 @@ ${currentSample.analysisSummary}`;
               </button>
               <span className="mx-1 text-border-hairline/40">|</span>
               <button
-                onClick={() => { playPinClick(); setSpectroZoom(1); setSpectroOffset(0); setSpectroGain(1); }}
+                onClick={() => { playPinClick(); setSpectroZoom(1); setSpectroOffset(0); setSpectroFreqZoom(1); setSpectroFreqOffset(0); setSpectroGain(1); }}
                 className="px-1.5 h-5 flex items-center justify-center border border-border-hairline/25 text-text-dim hover:text-cyan-text hover:border-cyan-primary/40 transition-colors uppercase tracking-wider"
               >
                 Reset
               </button>
             </div>
           )}
-          {activeTab === "spectrogram" && decodedBuffer && spectroZoom > 1 && (
+          {activeTab === "spectrogram" && decodedBuffer && (
             <div className="absolute bottom-2 left-2 z-20 font-mono text-[10px] text-text-dim/70 uppercase tracking-wider pointer-events-none">
-              Scroll to zoom · drag to pan
+              Scroll = freq zoom · Shift+scroll = time · drag to pan
             </div>
           )}
 

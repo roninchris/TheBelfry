@@ -235,6 +235,7 @@ export class SupabaseBoardStorage implements BoardStorage {
         color_tag: value.colorTag ?? null,
         notes: value.notes,
         threat_level: value.threatLevel ?? null,
+        position: value.position ?? null,
       })
     );
   }
@@ -332,6 +333,7 @@ function toCase(row: any): Case {
     notes: row.notes ?? "",
     createdBy: asKnight(row.created_by),
     threatLevel: THREAT_LEVELS.includes(row.threat_level) ? row.threat_level : undefined,
+    position: typeof row.position === "number" ? row.position : undefined,
   };
 }
 

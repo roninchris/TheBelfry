@@ -161,8 +161,7 @@ export default function DossierPage() {
     updateCaseDetails,
     caseClosedAt,
     markCaseClosed,
-    caseOrder,
-    setCaseOrder,
+    reorderCases,
     suspects,
     addLog
   } = useAppStore();
@@ -215,8 +214,9 @@ export default function DossierPage() {
   // Get active case file details
   const activeCase = cases.find((c) => c.id === activeCaseId);
 
-  // Display order: ACTIVE cases always float to the top, then the operative's
-  // manual order (caseOrder) applies within each tier. Drag reorders caseOrder.
+  // Display order: ACTIVE cases always float to the top, then the shared manual
+  // order (Case.position), falling back to status rank + creation before any
+  // reorder. Drag reorders via reorderCases (persists positions to the cloud).
   const STATUS_RANK: Record<Case["status"], number> = {
     ACTIVE: 0,
     STALLED: 1,
@@ -225,35 +225,13 @@ export default function DossierPage() {
   };
   const isActiveTier = (c: Case) => c.status === "ACTIVE";
   const orderedCases = React.useMemo(() => {
-    const idx = (id: string) => {
-      const i = caseOrder.indexOf(id);
-      return i === -1 ? Number.MAX_SAFE_INTEGER : i;
-    };
     return [...cases].sort(
       (a, b) =>
         (isActiveTier(a) ? 0 : 1) - (isActiveTier(b) ? 0 : 1) ||
-        idx(a.id) - idx(b.id) ||
+        (a.position ?? Number.MAX_SAFE_INTEGER) - (b.position ?? Number.MAX_SAFE_INTEGER) ||
+        (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9) ||
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     );
-  }, [cases, caseOrder]);
-
-  // Keep caseOrder in sync with the case set: drop deleted ids, append new ones
-  // in a sensible default (status rank, then creation). Preserves manual order.
-  useEffect(() => {
-    const ids = cases.map((c) => c.id);
-    const known = caseOrder.filter((id) => ids.includes(id));
-    const missing = cases
-      .filter((c) => !caseOrder.includes(c.id))
-      .sort(
-        (a, b) =>
-          (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9) ||
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      )
-      .map((c) => c.id);
-    if (missing.length > 0 || known.length !== caseOrder.length) {
-      setCaseOrder([...known, ...missing]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cases]);
 
   // Marks the drop target while dragging — but only within the same tier (a
@@ -276,7 +254,7 @@ export default function DossierPage() {
       if (from !== -1 && to !== -1 && from !== to) {
         ids.splice(from, 1);
         ids.splice(to, 0, dragCaseId);
-        setCaseOrder(ids);
+        reorderCases(ids);
       }
     }
     setDragCaseId(null);

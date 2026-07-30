@@ -58,12 +58,16 @@ create table if not exists public.cases (
   created_by   text,
   -- Nullable: cases filed before threat levels existed simply have none.
   threat_level text
-    check (threat_level is null or threat_level in ('LOW', 'MODERATE', 'HIGH', 'CRITICAL'))
+    check (threat_level is null or threat_level in ('LOW', 'MODERATE', 'HIGH', 'CRITICAL')),
+  -- Manual archive order, shared so a reorder shows for every knight.
+  position     double precision
 );
 
 -- Migration for projects created before threat levels existed. `if not exists`
 -- makes this a no-op on a fresh database, where the column is already above.
 alter table public.cases add column if not exists threat_level text;
+-- Migration for the shared manual case order (idempotent).
+alter table public.cases add column if not exists position double precision;
 
 do $$
 begin

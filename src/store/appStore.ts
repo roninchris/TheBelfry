@@ -41,6 +41,12 @@ export interface Case {
   notes: string;             // freeform markdown/journal notes for the case
   createdBy?: KnightId;      // absent = opened by a guest on their local board
   threatLevel?: ThreatLevel; // absent on cases filed before this existed
+  /**
+   * Manual sort position in the archive. Shared board state (a cloud column) so
+   * a reorder shows for every knight. ACTIVE cases still float to the top; this
+   * orders within each tier. Absent = falls back to status rank + createdAt.
+   */
+  position?: number;
 }
 
 /**
@@ -238,11 +244,6 @@ interface AppState {
    */
   caseClosedAt: Record<string, string>;
   /**
-   * Manual case ordering (per-device), a sequence of case ids. Display still
-   * forces ACTIVE cases to the top; within each tier this order applies.
-   */
-  caseOrder: string[];
-  /**
    * Person-of-interest roster. Board data, same as cases/evidenceNodes: owned
    * by boardStorage (shared via Supabase for a knight, local-only for a guest)
    * and swapped wholesale on identity change. Manual grid order is the shared
@@ -276,8 +277,11 @@ interface AppState {
   deleteCase: (caseId: string) => void;
   /** Records when a case actually became active, closed, or reopened. */
   markCaseClosed: (caseId: string, closed: boolean) => void;
-  /** Sets the manual case ordering (a sequence of case ids). */
-  setCaseOrder: (ids: string[]) => void;
+  /**
+   * Reorders cases to match the given id sequence and persists the new
+   * positions (shared board state, so every knight sees the order).
+   */
+  reorderCases: (orderedIds: string[]) => void;
 
   // Suspect dossiers
   /** Returns the new suspect's id. */
@@ -602,7 +606,6 @@ export const useAppStore = create<AppState>()(
       activeCaseId: null,
       cases: [],
       caseClosedAt: {},
-      caseOrder: [],
       suspects: [],
       evidenceNodes: [],
       evidenceConnections: [],
@@ -874,7 +877,28 @@ export const useAppStore = create<AppState>()(
         });
       },
 
-      setCaseOrder: (ids) => set({ caseOrder: ids }),
+      reorderCases: (orderedIds) => {
+        // Assign a spaced position per id in the new order, update local state,
+        // and persist only the cases whose position changed. Shared, so the
+        // order replicates to every knight over Realtime.
+        const changed: Case[] = [];
+        set((state) => {
+          const rank = new Map(orderedIds.map((id, i) => [id, i * 1000]));
+          const cases = state.cases.map((c) => {
+            const pos = rank.get(c.id);
+            if (pos !== undefined && pos !== c.position) {
+              const next = { ...c, position: pos };
+              changed.push(next);
+              return next;
+            }
+            return c;
+          });
+          return { cases };
+        });
+        changed.forEach((c) =>
+          persistWrite(c.id, get().boardStorage.putCase(c), "CASE ORDER", get().addLog)
+        );
+      },
 
       deleteCase: (caseId) => {
         set((state) => {
@@ -1177,7 +1201,6 @@ export const useAppStore = create<AppState>()(
         ambientEnabled: state.ambientEnabled,
         theme: state.theme,
         caseClosedAt: state.caseClosedAt,
-        caseOrder: state.caseOrder,
       })
     }
   )

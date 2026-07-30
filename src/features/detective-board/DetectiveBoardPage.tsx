@@ -346,6 +346,45 @@ export default function DetectiveBoardPage() {
   const workspaceRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Live pan/zoom for the native wheel handler (avoids re-attaching the
+  // listener on every pan/zoom change and reading stale closure values).
+  const panRef = useRef(pan);
+  const zoomRef = useRef(zoom);
+  panRef.current = pan;
+  zoomRef.current = zoom;
+
+  // Wheel-zoom, attached natively with { passive: false } so preventDefault
+  // actually stops the page from scrolling — React's onWheel is passive, which
+  // is why the wheel scrolled up/down instead of zooming. Zooms toward the
+  // cursor: the board point under the pointer stays put as the scale changes.
+  // Attached via a CALLBACK REF so it binds exactly when the workspace mounts
+  // (which is after the loading screen — a plain mount effect would miss it,
+  // since workspaceRef is null while the loader is up).
+  const wheelCleanupRef = useRef<(() => void) | null>(null);
+  const setWorkspaceRef = React.useCallback((node: HTMLDivElement | null) => {
+    workspaceRef.current = node;
+    wheelCleanupRef.current?.();
+    wheelCleanupRef.current = null;
+    if (!node) return;
+    const onWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = node.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const z0 = zoomRef.current;
+      const z1 = Math.min(2.5, Math.max(0.4, z0 * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+      if (z1 === z0) return;
+      const p0 = panRef.current;
+      // Keep the canvas point under the cursor fixed across the zoom.
+      const cx = (mx - p0.x) / z0;
+      const cy = (my - p0.y) / z0;
+      setPan({ x: mx - cx * z1, y: my - cy * z1 });
+      setZoom(z1);
+    };
+    node.addEventListener("wheel", onWheelNative, { passive: false });
+    wheelCleanupRef.current = () => node.removeEventListener("wheel", onWheelNative);
+  }, []);
+
   // Context Menu State
   const [bgMenu, setBgMenu] = useState<{ x: number, y: number, canvasX: number, canvasY: number } | null>(null);
   const [nodeMenu, setNodeMenu] = useState<{ x: number, y: number, nodeId: string } | null>(null);
@@ -573,19 +612,6 @@ export default function DetectiveBoardPage() {
     if (!isPanning) return;
     setIsPanning(false);
     e.currentTarget.releasePointerCapture(e.pointerId);
-  };
-
-  // Zoom Handling
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const zoomFactor = 1.1;
-    let nextZoom = zoom;
-    if (e.deltaY < 0) {
-      nextZoom = Math.min(zoom * zoomFactor, 2.5);
-    } else {
-      nextZoom = Math.max(zoom / zoomFactor, 0.4);
-    }
-    setZoom(nextZoom);
   };
 
   // Node dragging state for transition disabling
@@ -1309,13 +1335,12 @@ export default function DetectiveBoardPage() {
       </div>
 
       {/* RIGHT: Main Interactive Canvas */}
-      <div 
-        ref={workspaceRef}
+      <div
+        ref={setWorkspaceRef}
         className={`flex-1 bg-bg-void/45 relative overflow-hidden h-[500px] lg:h-full border-t lg:border-t-0 border-border-hairline/15 ${activeTool === "select" ? "cursor-grab active:cursor-grabbing" : "cursor-crosshair"}`}
         onPointerDown={handleBgPointerDown}
         onPointerMove={handleBgPointerMove}
         onPointerUp={handleBgPointerUp}
-        onWheel={handleWheel}
         onContextMenu={handleBgContextMenu}
         onDoubleClick={handleBgDoubleClick}
         onDragEnter={handleImageDragEnter}
