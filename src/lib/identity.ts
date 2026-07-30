@@ -83,7 +83,7 @@ export const KNIGHTS: Record<KnightId, Knight> = {
     label: "Batgirl",
     sigil: assetUrl("/assets/Logos/sigil-batgirl.png"),
     fullLogo: assetUrl("/assets/Logos/BatgirlFull.png"),
-    accent: "#ff9ee5",
+    accent: "#8648ff",
   },
 };
 
